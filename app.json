@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/test/test",
+    "pages/index/index",
+    "pages/room/room",
+    "pages/game/game",
+    "pages/result/result"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1a1626",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "同学会之夜",
+    "backgroundColor": "#1a1626",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

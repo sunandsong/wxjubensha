@@ -1,0 +1,134 @@
+.hero { padding: 40rpx 8rpx 8rpx; text-align: center; }
+.hero .title { font-size: 56rpx; }
+.hero .subtitle { margin-top: 16rpx; }
+
+.resume {
+  display: flex; align-items: center;
+  background: linear-gradient(90deg, #6d4bd6, #a06be0);
+  border-radius: 16rpx; padding: 24rpx 26rpx; margin-bottom: 24rpx;
+}
+.resume-main { flex: 1; }
+.resume-title { font-size: 32rpx; font-weight: 600; color: #fff; }
+.resume-sub { font-size: 24rpx; color: rgba(255,255,255,0.85); margin-top: 6rpx; }
+.resume-x { color: rgba(255,255,255,0.8); font-size: 32rpx; padding: 0 8rpx 0 20rpx; }
+
+.label { font-size: 26rpx; color: #b3a6cc; margin-bottom: 14rpx; }
+
+.auth-mask {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(12,9,20,0.92);
+  display: flex; align-items: center; justify-content: center; padding: 48rpx;
+}
+.auth-card {
+  width: 100%; background: #241c33; border-radius: 28rpx;
+  padding: 48rpx 40rpx; text-align: center;
+  border: 1rpx solid rgba(255,255,255,0.1);
+}
+.auth-title { font-size: 38rpx; font-weight: 600; color: #fff; }
+.auth-sub { font-size: 26rpx; color: #b3a6cc; margin: 16rpx 0 36rpx; line-height: 1.5; }
+.auth-avatar { width: 160rpx !important; height: 160rpx !important; margin: 0 auto 28rpx; }
+.auth-input { margin-bottom: 32rpx; text-align: center; }
+.auth-tip { font-size: 22rpx; color: #8a7da6; margin-top: 20rpx; }
+
+.me-row { display: flex; align-items: center; gap: 20rpx; margin-bottom: 16rpx; }
+/* 正圆头像按钮：强制正方形，清掉 button 默认内边距/边框 */
+.avatar-btn {
+  width: 96rpx; height: 96rpx; padding: 0 !important; margin: 0;
+  box-sizing: border-box; flex: none; overflow: hidden;
+  border-radius: 50%; line-height: 1; min-height: 0;
+  background: rgba(0,0,0,0.25); border: 1rpx solid rgba(255,255,255,0.12);
+}
+.avatar-btn::after { display: none; border: none; }
+.avatar-img { width: 100%; height: 100%; display: block; }
+.avatar-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22rpx; color: #b3a6cc;
+}
+.me-nick { flex: 1; }
+.me-hint { font-size: 22rpx; color: #8a7da6; }
+
+/* 头像昵称只读展示 */
+.profile {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16rpx 0 36rpx;
+}
+.profile-avatar {
+  width: 140rpx; height: 140rpx; border-radius: 50%;
+  background: rgba(0,0,0,0.25); border: 1rpx solid rgba(255,255,255,0.12);
+}
+.profile-ph {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24rpx; color: #b3a6cc;
+}
+.profile-nick { margin-top: 20rpx; font-size: 34rpx; font-weight: 600; color: #fff; }
+
+/* 通栏大按钮：横向充满屏幕（抵消 .container 的左右 28rpx 内边距） */
+.big-btn {
+  width: calc(100% + 56rpx);
+  margin-left: -28rpx; margin-right: -28rpx;
+  box-sizing: border-box;
+  margin-top: 28rpx; padding: 44rpx 0; font-size: 40rpx;
+  border-radius: 0;
+}
+
+/* 剧本封面卡片选择层 */
+.pick-mask {
+  position: fixed; inset: 0; z-index: 90;
+  background: #15101f; display: flex; flex-direction: column;
+}
+.pick-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 40rpx 36rpx 20rpx;
+}
+.pick-h-title { font-size: 38rpx; font-weight: 600; color: #fff; }
+.pick-close { font-size: 40rpx; color: #b3a6cc; padding: 0 10rpx; }
+.pick-scroll { flex: 1; padding: 8rpx 32rpx 48rpx; box-sizing: border-box; }
+.pick-card {
+  background: #241c33; border-radius: 24rpx; overflow: hidden;
+  margin-bottom: 28rpx; border: 1rpx solid rgba(255,255,255,0.08);
+}
+.pick-cover {
+  position: relative; height: 240rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.pick-emoji { font-size: 110rpx; opacity: 0.92; }
+.pick-tag {
+  position: absolute; top: 20rpx; left: 24rpx;
+  font-size: 22rpx; color: #fff; background: rgba(0,0,0,0.32);
+  padding: 6rpx 16rpx; border-radius: 999rpx;
+}
+.pick-cover-title {
+  position: absolute; left: 28rpx; bottom: 22rpx;
+  font-size: 42rpx; font-weight: 700; color: #fff;
+  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.5);
+}
+.pick-body { padding: 22rpx 28rpx 26rpx; }
+.pick-sub { font-size: 28rpx; color: #ddd6ee; }
+.pick-meta { font-size: 24rpx; color: #8a7da6; margin-top: 12rpx; }
+.pick-bottom-tip { text-align: center; font-size: 24rpx; color: #8a7da6; padding: 8rpx 0 24rpx; }
+.input {
+  background: rgba(0,0,0,0.25);
+  border: 1rpx solid rgba(255,255,255,0.12);
+  border-radius: 16rpx;
+  padding: 22rpx 24rpx;
+  font-size: 30rpx;
+  color: #fff;
+}
+
+.scripts { display: flex; flex-direction: column; gap: 18rpx; }
+.script {
+  position: relative; padding: 24rpx 26rpx; border-radius: 18rpx;
+  background: rgba(0,0,0,0.22); border: 1rpx solid rgba(255,255,255,0.1);
+}
+.script.on { border-color: #c44dff; background: rgba(196,77,255,0.16); }
+.s-head { display: flex; align-items: center; gap: 14rpx; }
+.s-title { font-size: 32rpx; font-weight: 700; }
+.s-tag { font-size: 20rpx; color: #cdbcff; background: rgba(123,92,255,0.25); border-radius: 999rpx; padding: 2rpx 14rpx; }
+.s-sub { font-size: 25rpx; color: #c3b8db; margin-top: 8rpx; }
+.s-meta { font-size: 23rpx; color: #9a8fb5; margin-top: 8rpx; }
+.s-check { position: absolute; top: 22rpx; right: 24rpx; color: #c44dff; font-size: 34rpx; font-weight: 700; }
+
+.howto { margin-top: 40rpx; padding: 0 8rpx; }
+.howto-title { font-size: 28rpx; color: #cdbcff; margin-bottom: 16rpx; font-weight: 600; }
+.howto .muted { line-height: 2; }

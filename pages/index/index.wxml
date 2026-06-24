@@ -1,0 +1,55 @@
+<!-- 强制授权门：未完善头像昵称不能进入 -->
+<view class="auth-mask" wx:if="{{needAuth}}" catchtouchmove="noop">
+  <view class="auth-card">
+    <view class="auth-title">完善头像和昵称</view>
+    <view class="auth-sub">进入游戏需要你的头像和昵称，方便群友辨认身份</view>
+    <button class="avatar-btn auth-avatar" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+      <image wx:if="{{avatar}}" class="avatar-img" src="{{avatar}}" mode="aspectFill" />
+      <view wx:else class="avatar-ph">＋ 头像</view>
+    </button>
+    <input class="input auth-input" type="nickname" placeholder="点这里填写微信昵称" value="{{nick}}" bindinput="onNick" bindblur="onNick" maxlength="8" />
+    <button class="btn" bindtap="confirmAuth" disabled="{{uploading}}">{{uploading ? '头像上传中…' : '授权并进入'}}</button>
+    <view class="auth-tip">不提供头像和昵称将无法进入</view>
+  </view>
+</view>
+
+<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+
+<view class="container">
+  <view class="hero">
+    <view class="title">微信群剧本杀</view>
+  </view>
+
+  <!-- 我的头像昵称（只读展示） -->
+  <view class="profile">
+    <image wx:if="{{avatar}}" class="profile-avatar" src="{{avatar}}" mode="aspectFill" />
+    <view wx:else class="profile-avatar profile-ph">头像</view>
+    <view class="profile-nick">{{nick}}</view>
+  </view>
+
+  <!-- 两个入口：全宽大按钮 -->
+  <button class="btn big-btn" bindtap="becomeHost" disabled="{{loading}}">我是房主</button>
+  <button class="btn btn-ghost big-btn" bindtap="enterRoom" disabled="{{loading}}">进入房间</button>
+</view>
+
+<!-- 剧本封面卡片选择层 -->
+<view class="pick-mask" wx:if="{{picking}}" catchtouchmove="noop">
+  <view class="pick-head">
+    <view class="pick-h-title">选择剧本</view>
+    <view class="pick-close" catchtap="closePicker">✕</view>
+  </view>
+  <scroll-view class="pick-scroll" scroll-y>
+    <view class="pick-card" wx:for="{{scripts}}" wx:key="id" data-id="{{item.id}}" bindtap="pickAndCreate">
+      <view class="pick-cover" style="background:{{item.cover.gradient}}">
+        <text class="pick-emoji">{{item.cover.emoji}}</text>
+        <text class="pick-tag">{{item.tag}}</text>
+        <text class="pick-cover-title">{{item.title}}</text>
+      </view>
+      <view class="pick-body">
+        <view class="pick-sub">{{item.subtitle}}</view>
+        <view class="pick-meta">{{item.players}} · {{item.duration}}</view>
+      </view>
+    </view>
+    <view class="pick-bottom-tip">点封面即创建房间，你将成为房主</view>
+  </scroll-view>
+</view>

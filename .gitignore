@@ -1,0 +1,13 @@
+# 依赖
+node_modules/
+miniprogram_npm/
+
+# 系统/编辑器
+.DS_Store
+*.log
+
+# 微信开发者工具本地私有配置
+project.private.config.json
+
+# Claude Code 本地配置
+.claude/

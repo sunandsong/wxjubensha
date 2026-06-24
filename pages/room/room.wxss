@@ -1,0 +1,36 @@
+.script-card .sc-title { font-size: 38rpx; font-weight: 700; margin: 8rpx 0; }
+.code-card { display: flex; align-items: center; justify-content: space-between; }
+.code { font-size: 56rpx; font-weight: 700; letter-spacing: 12rpx; color: #fff; margin-top: 8rpx; }
+.btn-mini {
+  background: rgba(123,92,255,0.3); color: #ddd2ff; font-size: 26rpx;
+  padding: 12rpx 28rpx; border-radius: 999rpx; line-height: 1.6;
+}
+.btn-mini::after { border: none; }
+
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.sec-title { font-size: 30rpx; font-weight: 600; }
+.tip { margin-top: 20rpx; }
+
+.players { display: flex; flex-wrap: wrap; gap: 24rpx; margin-top: 24rpx; }
+.player { position: relative; width: 120rpx; text-align: center; }
+.avatar {
+  width: 96rpx; height: 96rpx; line-height: 96rpx; margin: 0 auto;
+  border-radius: 50%; font-size: 40rpx; color: #fff; overflow: hidden;
+  background: linear-gradient(135deg, #7b5cff, #c44dff);
+}
+.avatar .avatar-img { width: 96rpx; height: 96rpx; display: block; }
+.pname { font-size: 24rpx; margin-top: 10rpx; color: #ddd6ee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.host-badge {
+  position: absolute; top: -8rpx; right: 6rpx; font-size: 18rpx;
+  background: #ffb347; color: #3a2a00; border-radius: 999rpx; padding: 2rpx 10rpx;
+}
+.center { text-align: center; margin-top: 28rpx; }
+.warn { color: #ffb347; }
+
+/* 开始游戏：通栏大按钮，横向充满（抵消 .container 左右 28rpx 内边距）*/
+.start-btn {
+  width: calc(100% + 56rpx);
+  margin-left: -28rpx; margin-right: -28rpx;
+  margin-top: 32rpx; padding: 44rpx 0; font-size: 40rpx;
+  border-radius: 0;
+}

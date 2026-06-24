@@ -1,0 +1,82 @@
+/* 全局样式 —— 暗夜悬疑风 */
+page {
+  background: linear-gradient(160deg, #1a1626 0%, #241b33 60%, #2b1f2e 100%);
+  color: #ece8f5;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+  min-height: 100vh;
+}
+
+.container {
+  padding: 32rpx 28rpx 60rpx;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+}
+.subtitle {
+  font-size: 26rpx;
+  color: #b3a6cc;
+  margin-top: 10rpx;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-top: 24rpx;
+}
+
+.btn {
+  margin-top: 28rpx;
+  background: linear-gradient(90deg, #7b5cff, #c44dff);
+  color: #fff;
+  border-radius: 999rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  padding: 22rpx 0;
+  text-align: center;
+  border: none;
+}
+.btn::after { border: none; }
+.btn[disabled] {
+  background: #2c2740;
+  color: #6a6385;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1rpx solid rgba(255,255,255,0.25);
+  color: #d9d2ec;
+}
+.btn-ghost[disabled] {
+  background: transparent;
+  border-color: rgba(255,255,255,0.12);
+  color: #6a6385;
+}
+
+/* 测试用：切换身份角标 */
+.test-switch {
+  position: fixed; right: 20rpx; top: 20rpx; z-index: 200;
+  background: rgba(196,77,255,0.85); color: #fff;
+  font-size: 24rpx; padding: 10rpx 20rpx; border-radius: 999rpx;
+}
+
+.muted { color: #9a8fb5; font-size: 26rpx; }
+.tag {
+  display: inline-block;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(123,92,255,0.25);
+  color: #cdbcff;
+  margin-right: 12rpx;
+}
+.pre {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  font-size: 28rpx;
+  color: #ddd6ee;
+}

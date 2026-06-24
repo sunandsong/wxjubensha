@@ -1,0 +1,41 @@
+<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+
+<view class="container">
+  <view class="card script-card">
+    <view class="muted">本局剧本</view>
+    <view class="sc-title">{{scriptTitle}}</view>
+    <view class="muted">{{scriptSub}}</view>
+  </view>
+
+  <view class="card code-card">
+    <view>
+      <view class="muted">房间号（发到群里邀请好友）</view>
+      <view class="code">{{roomCode}}</view>
+    </view>
+    <button class="btn-mini" bindtap="copyCode">复制</button>
+  </view>
+
+  <view class="card">
+    <view class="row-between">
+      <view class="sec-title">玩家 {{realCount}} 人</view>
+      <view class="muted {{canStart ? '' : 'warn'}}">{{canStart ? '房主为主持人，不参与' : '至少需要 1 名玩家加入'}}</view>
+    </view>
+    <view class="players">
+      <view class="player" wx:for="{{players}}" wx:key="openid">
+        <view class="avatar">
+          <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+          <block wx:else>{{item.nick[0]}}</block>
+        </view>
+        <view class="pname">{{item.nick}}</view>
+        <view class="host-badge" wx:if="{{item.isModerator}}">主持人</view>
+      </view>
+    </view>
+    <view class="muted tip">主持人只推进流程、公布真相；其余玩家由系统发牌分配角色。</view>
+  </view>
+
+  <block wx:if="{{isHost}}">
+    <button class="btn start-btn" bindtap="startGame" disabled="{{!canStart || starting}}">开始游戏</button>
+    <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
+  </block>
+  <view wx:else class="muted center">等待主持人开始游戏…</view>
+</view>

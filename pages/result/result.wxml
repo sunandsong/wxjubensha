@@ -1,0 +1,31 @@
+<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+
+<view class="container">
+  <view class="verdict {{caught?'win':'lose'}}">
+    <view class="verdict-icon">{{caught ? '🎉' : '🕵️'}}</view>
+    <view class="verdict-text">{{caught ? '真凶落网！' : '凶手逃脱了…'}}</view>
+    <view class="muted">大家指认：{{accusedName}}　·　真凶：{{murdererName}}</view>
+  </view>
+
+  <view class="card my-result" wx:if="{{myResult}}">{{myResult}}</view>
+
+  <view class="card">
+    <view class="sec-title">投票结果</view>
+    <view class="tally-item" wx:for="{{tally}}" wx:key="name">
+      <view class="t-name">
+        {{item.name}}<text class="t-title">{{item.title}}</text>
+        <text class="t-player">· {{item.playerNick}}</text>
+        <text class="t-killer" wx:if="{{item.isMurderer}}">真凶</text>
+      </view>
+      <view class="t-count">{{item.count}} 票</view>
+    </view>
+  </view>
+
+  <view class="card truth">
+    <view class="sec-title">{{truth.title}}</view>
+    <view class="pre">{{truth.text}}</view>
+  </view>
+
+  <button wx:if="{{isHost}}" class="btn" bindtap="replay">再来一局（换角色）</button>
+  <button class="btn btn-ghost" bindtap="backHome">返回首页</button>
+</view>

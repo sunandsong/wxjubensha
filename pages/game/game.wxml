@@ -47,26 +47,13 @@
       <view class="pre">{{actNarration}}</view>
     </view>
 
-    <!-- 我这一幕的私密剧情 + 本幕盘问（人设见「我的角色」tab）-->
+    <!-- 我这一幕的私密剧情（仅自己视角，靠它去提问、嫁祸别人）-->
     <view class="card mychar" wx:if="{{myChar}}">
       <view class="muted">你的角色 · {{myChar.name}}</view>
       <view class="act-secret">
         <view class="secret-label">🔒 你这一幕的剧情（仅你可见）</view>
         <view class="pre">{{myActStory}}</view>
       </view>
-      <view wx:if="{{myActAsks.length}}" class="asks">
-        <view class="field-label">🎯 这一幕你要盘问</view>
-        <view class="ask-item" wx:for="{{myActAsks}}" wx:key="*this">{{item}}</view>
-      </view>
-    </view>
-
-    <!-- 本幕任务（全员完成主持人才能推进）-->
-    <view class="card" wx:if="{{myChar && myActTasks.length}}">
-      <view class="sec-title">📋 本幕任务</view>
-      <view class="task-item" wx:for="{{myActTasks}}" wx:key="*this">· {{item}}</view>
-      <view wx:if="{{iAmReady}}" class="task-done">✓ 你已完成本幕任务，等其他人…</view>
-      <view wx:else class="task-btn" bindtap="finishTask">完成本幕任务</view>
-      <view class="muted tip">已完成 {{readyCount}}/{{totalPlayers}}，全员完成后主持人才能推进。</view>
     </view>
 
     <!-- 主持人流程提示 -->
@@ -79,11 +66,22 @@
         <view class="field-label">💬 冷场时，挑一句直接问</view>
         <view class="ask-item" wx:for="{{actHostPrompts}}" wx:key="*this">{{item}}</view>
       </view>
-      <view class="task-progress {{allReady ? 'ok' : ''}}">本幕任务完成：{{readyCount}}/{{totalPlayers}}{{allReady ? ' · 可推进' : ' · 未全部完成'}}</view>
       <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
     </view>
 
-    <!-- 搜证区：本幕的搜查点 -->
+    <!-- 已公开线索：随幕自动公开（autoClues 本子）-->
+    <view class="card" wx:if="{{autoClues && clues.length}}">
+      <view class="sec-title">🔎 已公开线索</view>
+      <view class="clue-grid">
+        <view class="clue open" wx:for="{{clues}}" wx:key="id">
+          <view class="clue-icon">{{item.icon}}</view>
+          <view class="clue-name">{{item.name}}</view>
+          <view class="clue-text">{{item.text}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 搜证区：本幕的搜查点（非 autoClues 本子）-->
     <view class="card" wx:if="{{spots.length}}">
       <view class="row-between">
         <view class="sec-title">🔍 搜证 · 本幕搜查点</view>
@@ -124,20 +122,6 @@
       </view>
     </view>
 
-    <!-- 在场人物 -->
-    <view class="card">
-      <view class="sec-title">在场人物</view>
-      <view class="roster">
-        <view class="rmember" wx:for="{{roster}}" wx:key="id">
-          <image wx:if="{{item.avatar}}" class="ravatar" src="{{item.avatar}}" mode="aspectFill" />
-          <text class="rname">{{item.name}}</text>
-          <text class="rtitle">{{item.title}}</text>
-          <text class="rme" wx:if="{{item.isMe}}">（你）</text>
-          <text class="rnpc" wx:if="{{item.isNpc}}">公开嫌疑人</text>
-        </view>
-      </view>
-      <view class="muted tip">「公开嫌疑人」是本局没人扮演的角色，其嫌疑同样会出现在线索中。</view>
-    </view>
     </block>
   </block>
 
@@ -158,8 +142,8 @@
 
   <!-- 主持人控制（固定底部）-->
   <view class="host-ctrl" wx:if="{{isHost}}">
-    <button wx:if="{{status==='playing' && !isLastAct}}" class="btn {{allReady ? '' : 'btn-wait'}}" bindtap="advance">{{allReady ? '进入下一幕（第'+(actNum+1)+'幕）' : '待完成 '+readyCount+'/'+totalPlayers+' · 仍可推进'}}</button>
-    <button wx:if="{{status==='playing' && isLastAct}}" class="btn {{allReady ? '' : 'btn-wait'}}" bindtap="advance">{{allReady ? '本幕结束，进入投票' : '待完成 '+readyCount+'/'+totalPlayers+' · 进入投票'}}</button>
+    <button wx:if="{{status==='playing' && !isLastAct}}" class="btn" bindtap="advance">进入下一幕（第{{actNum+1}}幕）</button>
+    <button wx:if="{{status==='playing' && isLastAct}}" class="btn" bindtap="advance">本幕结束，进入投票</button>
     <button wx:if="{{status==='voting'}}" class="btn" bindtap="advance">公布真相</button>
   </view>
 </view>

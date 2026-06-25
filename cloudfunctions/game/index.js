@@ -139,19 +139,8 @@ exports.main = async (event) => {
       const npc = meta.charIds.filter((id) => !dealt.includes(id));
 
       await rooms.doc(event.roomId).update({
-        data: { players, npcChars: npc, status: 'playing', actIndex: 0, votes: {}, searches: {}, ready: {} },
+        data: { players, npcChars: npc, status: 'playing', actIndex: 0, votes: {}, searches: {} },
       });
-      return { ok: true };
-    }
-
-    // ── 玩家标记「本幕任务已完成」（房主无任务）──
-    if (action === 'taskDone') {
-      const room = await rooms.doc(event.roomId).get().then((r) => r.data);
-      if (room.hostOpenid === OPENID) return { ok: false, msg: '主持人没有任务' };
-      if (room.status !== 'playing') return { ok: false, msg: '当前不在剧情阶段' };
-      const idx = room.actIndex || 0;
-      // ready[openid] = 已完成到第几幕（index）；推进后该值 < 新幕，自动变回未完成
-      await rooms.doc(event.roomId).update({ data: { ['ready.' + OPENID]: idx } });
       return { ok: true };
     }
 
@@ -185,17 +174,6 @@ exports.main = async (event) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有主持人可以推进流程' };
       const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
-      // 剧情阶段推进前，须全员完成本幕任务（主持人可传 force 强行推进）
-      if (room.status !== 'voting' && room.status !== 'finished' && !event.force) {
-        const idx = room.actIndex || 0;
-        const ready = room.ready || {};
-        const notReady = (room.players || []).filter(
-          (p) => p.openid !== room.hostOpenid && !((ready[p.openid] != null) && ready[p.openid] >= idx)
-        );
-        if (notReady.length) {
-          return { ok: false, msg: `还有 ${notReady.length} 人未完成本幕任务`, needForce: true };
-        }
-      }
       const data = {};
       if (room.status === 'voting') {
         data.status = 'finished';                              // 公布真相
@@ -239,7 +217,7 @@ exports.main = async (event) => {
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以重开' };
       const players = room.players.map((p) => ({ ...p, charId: '' }));
       await rooms.doc(event.roomId).update({
-        data: { players, status: 'waiting', actIndex: 0, votes: {}, npcChars: [], searches: {}, ready: {} },
+        data: { players, status: 'waiting', actIndex: 0, votes: {}, npcChars: [], searches: {} },
       });
       return { ok: true };
     }

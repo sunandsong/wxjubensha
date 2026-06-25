@@ -23,12 +23,9 @@ Page({
     script: null,
     myChar: null,       // 我的角色对象
     myActStory: '',     // 我这一幕的私密剧情
-    myActAsks: [],      // 我这一幕的盘问任务
-    myActTasks: [],     // 我这一幕要完成的任务
-    iAmReady: false,    // 我是否已完成本幕任务
-    readyCount: 0,      // 已完成本幕任务的人数
-    allReady: false,    // 是否全员完成本幕任务
     roster: [],         // 全部角色公开名册（含是否NPC）
+    autoClues: false,   // 是否随幕自动公开线索（咖啡馆用，关闭搜证）
+    clues: [],          // 自动公开模式下已公开的线索
     spots: [],          // 当前幕的搜查点
     myClues: [],        // 我亲自搜到的线索（跨幕累积，仅我可见）
     searchLimit: 1,     // 每幕搜证次数上限
@@ -68,20 +65,6 @@ Page({
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
   switchTab(e) { this.setData({ tab: e.currentTarget.dataset.tab }); },
-
-  // 玩家标记本幕任务已完成
-  async finishTask() {
-    if (this.data.iAmReady) return;
-    const ok = await this.confirm('确定本幕任务都做完了吗？全员完成后主持人才能推进下一幕。');
-    if (!ok) return;
-    let res;
-    try {
-      res = await app.runOnce('taskDone', () => app.callGame({ action: 'taskDone', roomId: this.data.roomId }), '提交中');
-    } catch (err) {
-      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-    }
-    if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '提交失败', icon: 'none' });
-  },
 
   // 玩家搜查某个地点（地点不一定有线索）
   async search(e) {
@@ -142,8 +125,6 @@ Page({
       objective: ap(srcChar.objective),
       secret: ap(srcChar.secret),
     } : null;
-    // 本幕盘问任务（每幕不同，放在「第X幕」tab）
-    const myActAsks = apList(srcChar && srcChar.actAsks ? (srcChar.actAsks[actIndex] || []) : []);
 
     // 公开名册：所有角色，名字用昵称，标注是否为「公开嫌疑人」(NPC)
     const roster = SCRIPT.characters.map((c) => {
@@ -156,59 +137,53 @@ Page({
       };
     });
 
-    // ── 限次搜证（按地点搜，地点不一定有线索）──
     const isHost = room.hostOpenid === openid;
-    const searches = room.searches || {};
-    const mySearch = searches[openid] || [];
-    const searchLimit = SCRIPT.searchPerAct || 1;
     const findClue = (id) => SCRIPT.clues.find((c) => c.id === id);
-    // 取某幕的地点表：优先 act.spots；没有则用 clueIds 兜底（地点 id = 线索 id）
-    const spotsOfAct = (a) => a
-      ? (a.spots || (a.clueIds || []).map((id, i) => ({ id, clueId: id, place: (findClue(id) || {}).place || ('搜查点' + (i + 1)) })))
-      : [];
+    const autoClues = !!SCRIPT.autoClues;
 
-    // 当前幕的搜查地点：搜过/主持人可见结果（线索 or 一无所获），其余人只见地名；公开「谁搜过」
-    const curSpots = spotsOfAct(act);
-    const spots = curSpots.map((sp) => {
-      const c = sp.clueId ? (findClue(sp.clueId) || null) : null;
-      const mineFound = mySearch.includes(sp.id);
-      const reveal = mineFound || isHost;
-      const searchers = players
-        .filter((p) => p.openid !== room.hostOpenid && (searches[p.openid] || []).includes(sp.id))
-        .map((p) => p.nick);
-      return {
-        id: sp.id,
-        place: sp.place || '某处',
-        icon: c ? (c.icon || '🔍') : '🔍',
-        empty: !c,
-        mineFound,
-        reveal,
-        name: reveal ? (c ? c.name : '一无所获') : '',
-        text: reveal ? (c ? ap(c.text) : '这里没找到有用的东西。') : '',
-        searchedCount: searchers.length,
-        searchedBy: searchers.join('、'),
-      };
-    });
-    const curSpotIds = curSpots.map((sp) => sp.id);
-    const usedThisAct = curSpotIds.filter((id) => mySearch.includes(id)).length;
-    const searchLeft = Math.max(0, searchLimit - usedThisAct);
+    // ── 线索：autoClues=随幕自动公开（公开）；否则=限次搜证 ──
+    let clues = [];                 // 自动公开模式：累积到当前幕的公开线索
+    let spots = [], myClues = [], searchLimit = 0, searchLeft = 0;
+    if (autoClues) {
+      // 推进到第 i 幕时，累积公开第 0..i 幕的 clueIds
+      const revealedIds = [];
+      for (let i = 0; i <= actIndex && i < acts.length; i++) {
+        (acts[i].clueIds || []).forEach((id) => { if (!revealedIds.includes(id)) revealedIds.push(id); });
+      }
+      clues = revealedIds.map(findClue).filter(Boolean)
+        .map((c) => ({ id: c.id, name: c.name, icon: c.icon, text: ap(c.text) }));
+    } else {
+      const searches = room.searches || {};
+      const mySearch = searches[openid] || [];
+      searchLimit = SCRIPT.searchPerAct || 1;
+      const spotsOfAct = (a) => a
+        ? (a.spots || (a.clueIds || []).map((id, i) => ({ id, clueId: id, place: (findClue(id) || {}).place || ('搜查点' + (i + 1)) })))
+        : [];
+      const curSpots = spotsOfAct(act);
+      spots = curSpots.map((sp) => {
+        const c = sp.clueId ? (findClue(sp.clueId) || null) : null;
+        const mineFound = mySearch.includes(sp.id);
+        const reveal = mineFound || isHost;
+        const searchers = players
+          .filter((p) => p.openid !== room.hostOpenid && (searches[p.openid] || []).includes(sp.id))
+          .map((p) => p.nick);
+        return {
+          id: sp.id, place: sp.place || '某处',
+          icon: c ? (c.icon || '🔍') : '🔍', empty: !c, mineFound, reveal,
+          name: reveal ? (c ? c.name : '一无所获') : '',
+          text: reveal ? (c ? ap(c.text) : '这里没找到有用的东西。') : '',
+          searchedCount: searchers.length, searchedBy: searchers.join('、'),
+        };
+      });
+      const usedThisAct = curSpots.map((sp) => sp.id).filter((id) => mySearch.includes(id)).length;
+      searchLeft = Math.max(0, searchLimit - usedThisAct);
+      const spotToClue = {};
+      acts.forEach((a) => spotsOfAct(a).forEach((sp) => { if (sp.clueId) spotToClue[sp.id] = sp.clueId; }));
+      myClues = mySearch.map((sid) => (spotToClue[sid] ? findClue(spotToClue[sid]) : null))
+        .filter(Boolean)
+        .map((c) => ({ id: c.id, name: c.name, icon: c.icon, place: c.place || '', text: ap(c.text) }));
+    }
 
-    // 我的线索本：我搜过的地点里「真的有线索」的那些，跨幕累积，仅我可见
-    const spotToClue = {};
-    acts.forEach((a) => spotsOfAct(a).forEach((sp) => { if (sp.clueId) spotToClue[sp.id] = sp.clueId; }));
-    const myClues = mySearch
-      .map((sid) => (spotToClue[sid] ? findClue(spotToClue[sid]) : null))
-      .filter(Boolean)
-      .map((c) => ({ id: c.id, name: c.name, icon: c.icon, place: c.place || '', text: ap(c.text) }));
-
-    // ── 本幕任务 + 完成进度（全员完成主持人才能推进）──
-    const myActTasks = apList(srcChar && srcChar.actTasks ? (srcChar.actTasks[actIndex] || []) : []);
-    const ready = room.ready || {};
-    const isDone = (oid) => ready[oid] != null && ready[oid] >= actIndex;
-    const realPlayers = players.filter((p) => p.openid !== room.hostOpenid);
-    const iAmReady = !isHost && isDone(openid);
-    const readyCount = realPlayers.filter((p) => isDone(p.openid)).length;
-    const allReady = realPlayers.length > 0 && readyCount === realPlayers.length;
 
     const votes = room.votes || {};
     const myVote = votes[openid] || '';
@@ -233,12 +208,9 @@ Page({
       script: SCRIPT,
       myChar,
       myActStory,
-      myActAsks,
-      myActTasks,
-      iAmReady,
-      readyCount,
-      allReady,
       roster,
+      autoClues,
+      clues,
       spots,
       myClues,
       searchLimit,
@@ -290,20 +262,10 @@ Page({
     if (this.data.status === 'voting') {
       const ok = await this.confirm('确定公布真相？投票将结束。');
       if (!ok) return;
-    } else if (!this.data.allReady) {
-      // 还有人没完成本幕任务：让主持人确认是否强行推进
-      const n = this.data.totalPlayers - this.data.readyCount;
-      const ok = await this.confirm(`还有 ${n} 人未完成本幕任务，确定强行推进？`);
-      if (!ok) return;
-      return this._doAdvance(true);
     }
-    return this._doAdvance(false);
-  },
-
-  async _doAdvance(force) {
     let res;
     try {
-      res = await app.runOnce('advance', () => app.callGame({ action: 'advance', roomId: this.data.roomId, force }), '推进中');
+      res = await app.runOnce('advance', () => app.callGame({ action: 'advance', roomId: this.data.roomId }), '推进中');
     } catch (err) {
       return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }

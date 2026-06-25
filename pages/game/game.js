@@ -13,10 +13,10 @@ Page({
     actNum: 1,
     actTotal: 1,
     actTitle: '',
+    actLabel: '',
     actNarration: '',
     worldview: '',
     relations: [],
-    tab: 'act',         // 当前 tab：act(第X幕) / world(世界观) / relations(人物关系)
     actHostPrompts: [],
     isLastAct: false,
     isHost: false,
@@ -64,7 +64,6 @@ Page({
 
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
-  switchTab(e) { this.setData({ tab: e.currentTarget.dataset.tab }); },
 
   // 玩家搜查某个地点（地点不一定有线索）
   async search(e) {
@@ -193,10 +192,9 @@ Page({
 
     this.setData({
       status,
-      // 世界观/我的角色/人物关系只在第一幕开放；之后强制回到「第X幕」tab
-      tab: actIndex === 0 ? this.data.tab : 'act',
       actIndex,
       actNum: actIndex + 1,
+      actLabel: '第' + (['一', '二', '三', '四', '五', '六', '七', '八'][actIndex] || actIndex + 1) + '幕',
       actTotal: acts.length,
       actTitle: act ? act.title : '',
       actNarration: ap(act ? act.narration : ''),

@@ -3,57 +3,18 @@
 <view class="container">
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">
-    <!-- Tab 导航：第X幕 / 世界观 / 人物关系 -->
-    <view class="tab-bar">
-      <view class="tab {{tab==='act'?'on':''}}" bindtap="switchTab" data-tab="act">第{{actNum}}幕</view>
-      <view wx:if="{{myChar && actNum===1}}" class="tab {{tab==='role'?'on':''}}" bindtap="switchTab" data-tab="role">我的角色</view>
-      <view wx:if="{{worldview && actNum===1}}" class="tab {{tab==='world'?'on':''}}" bindtap="switchTab" data-tab="world">世界观</view>
-      <view wx:if="{{relations.length && actNum===1}}" class="tab {{tab==='relations'?'on':''}}" bindtap="switchTab" data-tab="relations">人物关系</view>
-    </view>
-
-    <!-- ===== Tab：世界观 ===== -->
-    <view wx:if="{{tab==='world'}}" class="card">
-      <view class="sec-title">🌍 世界观设定</view>
+    <!-- 主持人：第一幕背景（夜深了…）+ 本幕公开剧情，读给大家听 -->
+    <view wx:if="{{isHost && actNum===1 && worldview}}" class="card">
       <view class="pre world-text">{{worldview}}</view>
     </view>
-
-    <!-- ===== Tab：人物关系 ===== -->
-    <view wx:elif="{{tab==='relations'}}" class="card">
-      <view class="sec-title">🕸 人物关系（可自由脑补发挥）</view>
-      <view class="rel-item" wx:for="{{relations}}" wx:key="*this">{{item}}</view>
-    </view>
-
-    <!-- ===== Tab：我的角色（全程不变的人设，仅你可见）===== -->
-    <view wx:elif="{{tab==='role'}}" class="card mychar">
-      <view class="muted">你的角色</view>
-      <view class="char-name">{{myChar.name}} <text class="tag">{{myChar.title}}</text></view>
-      <view wx:if="{{myChar.persona}}" class="persona"><text class="field-label">人物性格：</text>{{myChar.persona}}</view>
-      <view wx:if="{{myChar.timeline.length}}" class="timeline">
-        <view class="field-label">你的时间线（仅你可见）</view>
-        <view class="tl-item" wx:for="{{myChar.timeline}}" wx:key="*this">{{item}}</view>
-      </view>
-      <view class="objective"><text class="obj-label">行动目标：</text>{{myChar.objective}}</view>
-      <view wx:if="{{myChar.secret}}" class="secret-box">
-        <view class="field-label">🤫 你的小秘密（仅你可见，能藏就藏）</view>
-        <view class="pre secret-body">{{myChar.secret}}</view>
-      </view>
-    </view>
-
-    <!-- ===== Tab：第X幕 ===== -->
-    <block wx:else>
-    <!-- 当前幕公开剧情 -->
-    <view class="card act-card">
-      <view class="act-title">{{actTitle}}</view>
+    <view wx:if="{{isHost}}" class="card act-card">
       <view class="pre">{{actNarration}}</view>
     </view>
 
-    <!-- 我这一幕的私密剧情（仅自己视角，靠它去提问、嫁祸别人）-->
-    <view class="card mychar" wx:if="{{myChar}}">
-      <view class="muted">你的角色 · {{myChar.name}}</view>
-      <view class="act-secret">
-        <view class="secret-label">🔒 你这一幕的剧情（仅你可见）</view>
-        <view class="pre">{{myActStory}}</view>
-      </view>
+    <!-- 玩家：你这一幕的故事（第一人称）-->
+    <view wx:if="{{myChar && myActStory}}" class="card mychar">
+      <view class="act-title">{{actLabel}}</view>
+      <view class="pre">{{myActStory}}</view>
     </view>
 
     <!-- 主持人流程提示 -->
@@ -122,7 +83,6 @@
       </view>
     </view>
 
-    </block>
   </block>
 
   <!-- ============ 投票阶段 ============ -->

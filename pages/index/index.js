@@ -105,35 +105,39 @@ Page({
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
     this.setData({ loading: true });
+    let res;
     try {
-      const res = await app.callGame({ action: 'create', nick, avatar, scriptId });
-      const r = res.result;
-      if (!r.ok) return wx.showToast({ title: r.msg || '创建失败', icon: 'none' });
-      app.setLogin(r.openid);
-      app.saveSession({ roomId: r.roomId, roomCode: r.roomCode });
-      wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
+      res = await app.runOnce('create', () => app.callGame({ action: 'create', nick, avatar, scriptId }), '创建中');
     } catch (e) {
-      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-    } finally {
       this.setData({ loading: false });
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
+    this.setData({ loading: false });
+    const r = res && res.result;
+    if (!r) return;                         // 被防抖忽略
+    if (!r.ok) return wx.showToast({ title: r.msg || '创建失败', icon: 'none' });
+    app.setLogin(r.openid);
+    app.saveSession({ roomId: r.roomId, roomCode: r.roomCode });
+    wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
   },
 
   async joinRoom(code) {
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
     this.setData({ loading: true });
+    let res;
     try {
-      const res = await app.callGame({ action: 'join', roomCode: code, nick, avatar });
-      const r = res.result;
-      if (!r.ok) return wx.showToast({ title: r.msg || '加入失败', icon: 'none' });
-      app.setLogin(r.openid);
-      app.saveSession({ roomId: r.roomId, roomCode: r.roomCode });
-      wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
+      res = await app.runOnce('join', () => app.callGame({ action: 'join', roomCode: code, nick, avatar }), '加入中');
     } catch (e) {
-      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-    } finally {
       this.setData({ loading: false });
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
+    this.setData({ loading: false });
+    const r = res && res.result;
+    if (!r) return;                         // 被防抖忽略
+    if (!r.ok) return wx.showToast({ title: r.msg || '加入失败', icon: 'none' });
+    app.setLogin(r.openid);
+    app.saveSession({ roomId: r.roomId, roomCode: r.roomCode });
+    wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
   },
 });

@@ -14,13 +14,25 @@ Page({
     actTotal: 1,
     actTitle: '',
     actNarration: '',
+    worldview: '',
+    relations: [],
+    tab: 'act',         // 当前 tab：act(第X幕) / world(世界观) / relations(人物关系)
+    actHostPrompts: [],
     isLastAct: false,
     isHost: false,
     script: null,
     myChar: null,       // 我的角色对象
     myActStory: '',     // 我这一幕的私密剧情
+    myActAsks: [],      // 我这一幕的盘问任务
+    myActTasks: [],     // 我这一幕要完成的任务
+    iAmReady: false,    // 我是否已完成本幕任务
+    readyCount: 0,      // 已完成本幕任务的人数
+    allReady: false,    // 是否全员完成本幕任务
     roster: [],         // 全部角色公开名册（含是否NPC）
-    clues: [],          // 已随幕公开的线索
+    spots: [],          // 当前幕的搜查点
+    myClues: [],        // 我亲自搜到的线索（跨幕累积，仅我可见）
+    searchLimit: 1,     // 每幕搜证次数上限
+    searchLeft: 1,      // 本幕剩余搜证次数
     myVote: '',
     votedCount: 0,
     totalPlayers: 0,
@@ -55,6 +67,37 @@ Page({
 
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
+  switchTab(e) { this.setData({ tab: e.currentTarget.dataset.tab }); },
+
+  // 玩家标记本幕任务已完成
+  async finishTask() {
+    if (this.data.iAmReady) return;
+    const ok = await this.confirm('确定本幕任务都做完了吗？全员完成后主持人才能推进下一幕。');
+    if (!ok) return;
+    let res;
+    try {
+      res = await app.runOnce('taskDone', () => app.callGame({ action: 'taskDone', roomId: this.data.roomId }), '提交中');
+    } catch (err) {
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '提交失败', icon: 'none' });
+  },
+
+  // 玩家搜查某个地点（地点不一定有线索）
+  async search(e) {
+    const spotId = e.currentTarget.dataset.id;
+    if (this.data.searchLeft <= 0) return wx.showToast({ title: '本幕搜证次数已用完', icon: 'none' });
+    const ok = await this.confirm('确定搜查这里吗？本幕搜证次数有限、未必有发现，搜到的线索只有你自己能看到。');
+    if (!ok) return;
+    let res;
+    try {
+      res = await app.runOnce('search', () => app.callGame({ action: 'search', roomId: this.data.roomId, spotId }), '搜查中');
+    } catch (err) {
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '搜证失败', icon: 'none' });
+  },
+
   startWatch() {
     if (this.watcher) return;
     this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
@@ -72,36 +115,100 @@ Page({
   },
 
   render(room) {
+    this.lastRoom = room;   // 记住最近一次完整房间数据，供推进后即时渲染
     const SCRIPT = SCRIPTS.byId(room.scriptId);
     const openid = this.data.openid;
     const players = room.players || [];
     const me = players.find((p) => p.openid === openid);
-    const myChar = me && me.charId ? SCRIPT.characters.find((c) => c.id === me.charId) : null;
+    const srcChar = me && me.charId ? SCRIPT.characters.find((c) => c.id === me.charId) : null;
+
+    // 名字替换：剧本里的角色名统一换成玩家昵称（NPC 保留原名）
+    const namer = SCRIPTS.makeNamer(SCRIPT, players);
+    const ap = (s) => namer.apply(s);
+    const apList = (arr) => (arr || []).map(ap);
 
     const acts = SCRIPT.acts || [];
     const actIndex = Math.min(room.actIndex || 0, Math.max(0, acts.length - 1));
     const act = acts[actIndex] || null;
     const isLastAct = actIndex >= acts.length - 1;
-    const myActStory = myChar && myChar.actStories ? (myChar.actStories[actIndex] || '') : '';
+    const myActStory = ap(srcChar && srcChar.actStories ? (srcChar.actStories[actIndex] || '') : '');
 
-    // 公开名册：所有角色，标注是否为「公开嫌疑人」(NPC)
+    // 我的角色卡：名字用昵称，正文里的角色名也一并替换
+    const myChar = srcChar ? {
+      id: srcChar.id, title: srcChar.title, gender: srcChar.gender,
+      name: namer.name(srcChar.id),
+      persona: ap(srcChar.persona),
+      timeline: apList(srcChar.timeline),
+      objective: ap(srcChar.objective),
+      secret: ap(srcChar.secret),
+    } : null;
+    // 本幕盘问任务（每幕不同，放在「第X幕」tab）
+    const myActAsks = apList(srcChar && srcChar.actAsks ? (srcChar.actAsks[actIndex] || []) : []);
+
+    // 公开名册：所有角色，名字用昵称，标注是否为「公开嫌疑人」(NPC)
     const roster = SCRIPT.characters.map((c) => {
       const owner = players.find((p) => p.charId === c.id);
       return {
-        id: c.id, name: c.name, title: c.title, gender: c.gender,
+        id: c.id, name: namer.name(c.id), title: c.title, gender: c.gender,
         isNpc: !owner,
-        playerNick: owner ? owner.nick : '',
         avatar: owner ? owner.avatar : '',
         isMe: owner && owner.openid === openid,
       };
     });
 
-    // 线索随幕公开：累积第 0..actIndex 幕的 clueIds
-    const revealedIds = [];
-    for (let i = 0; i <= actIndex && i < acts.length; i++) {
-      (acts[i].clueIds || []).forEach((id) => { if (!revealedIds.includes(id)) revealedIds.push(id); });
-    }
-    const clues = revealedIds.map((id) => SCRIPT.clues.find((c) => c.id === id)).filter(Boolean);
+    // ── 限次搜证（按地点搜，地点不一定有线索）──
+    const isHost = room.hostOpenid === openid;
+    const searches = room.searches || {};
+    const mySearch = searches[openid] || [];
+    const searchLimit = SCRIPT.searchPerAct || 1;
+    const findClue = (id) => SCRIPT.clues.find((c) => c.id === id);
+    // 取某幕的地点表：优先 act.spots；没有则用 clueIds 兜底（地点 id = 线索 id）
+    const spotsOfAct = (a) => a
+      ? (a.spots || (a.clueIds || []).map((id, i) => ({ id, clueId: id, place: (findClue(id) || {}).place || ('搜查点' + (i + 1)) })))
+      : [];
+
+    // 当前幕的搜查地点：搜过/主持人可见结果（线索 or 一无所获），其余人只见地名；公开「谁搜过」
+    const curSpots = spotsOfAct(act);
+    const spots = curSpots.map((sp) => {
+      const c = sp.clueId ? (findClue(sp.clueId) || null) : null;
+      const mineFound = mySearch.includes(sp.id);
+      const reveal = mineFound || isHost;
+      const searchers = players
+        .filter((p) => p.openid !== room.hostOpenid && (searches[p.openid] || []).includes(sp.id))
+        .map((p) => p.nick);
+      return {
+        id: sp.id,
+        place: sp.place || '某处',
+        icon: c ? (c.icon || '🔍') : '🔍',
+        empty: !c,
+        mineFound,
+        reveal,
+        name: reveal ? (c ? c.name : '一无所获') : '',
+        text: reveal ? (c ? ap(c.text) : '这里没找到有用的东西。') : '',
+        searchedCount: searchers.length,
+        searchedBy: searchers.join('、'),
+      };
+    });
+    const curSpotIds = curSpots.map((sp) => sp.id);
+    const usedThisAct = curSpotIds.filter((id) => mySearch.includes(id)).length;
+    const searchLeft = Math.max(0, searchLimit - usedThisAct);
+
+    // 我的线索本：我搜过的地点里「真的有线索」的那些，跨幕累积，仅我可见
+    const spotToClue = {};
+    acts.forEach((a) => spotsOfAct(a).forEach((sp) => { if (sp.clueId) spotToClue[sp.id] = sp.clueId; }));
+    const myClues = mySearch
+      .map((sid) => (spotToClue[sid] ? findClue(spotToClue[sid]) : null))
+      .filter(Boolean)
+      .map((c) => ({ id: c.id, name: c.name, icon: c.icon, place: c.place || '', text: ap(c.text) }));
+
+    // ── 本幕任务 + 完成进度（全员完成主持人才能推进）──
+    const myActTasks = apList(srcChar && srcChar.actTasks ? (srcChar.actTasks[actIndex] || []) : []);
+    const ready = room.ready || {};
+    const isDone = (oid) => ready[oid] != null && ready[oid] >= actIndex;
+    const realPlayers = players.filter((p) => p.openid !== room.hostOpenid);
+    const iAmReady = !isHost && isDone(openid);
+    const readyCount = realPlayers.filter((p) => isDone(p.openid)).length;
+    const allReady = realPlayers.length > 0 && readyCount === realPlayers.length;
 
     const votes = room.votes || {};
     const myVote = votes[openid] || '';
@@ -111,18 +218,31 @@ Page({
 
     this.setData({
       status,
+      // 世界观/我的角色/人物关系只在第一幕开放；之后强制回到「第X幕」tab
+      tab: actIndex === 0 ? this.data.tab : 'act',
       actIndex,
       actNum: actIndex + 1,
       actTotal: acts.length,
       actTitle: act ? act.title : '',
-      actNarration: act ? act.narration : '',
+      actNarration: ap(act ? act.narration : ''),
+      worldview: ap(SCRIPT.worldview || ''),
+      relations: apList(SCRIPT.relations),
+      actHostPrompts: apList(act && act.hostPrompts ? act.hostPrompts : []),
       isLastAct,
-      isHost: room.hostOpenid === openid,
+      isHost,
       script: SCRIPT,
       myChar,
       myActStory,
+      myActAsks,
+      myActTasks,
+      iAmReady,
+      readyCount,
+      allReady,
       roster,
-      clues,
+      spots,
+      myClues,
+      searchLimit,
+      searchLeft,
       myVote,
       votedCount: Object.keys(votes).length,
       totalPlayers: players.filter((p) => p.openid !== room.hostOpenid).length,
@@ -144,15 +264,23 @@ Page({
   async endGame() {
     const ok = await this.confirm('确定结束本局并解散房间吗？');
     if (!ok) return;
-    this.closeWatch();
-    app.clearSession();
-    await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
-    wx.reLaunch({ url: '/pages/index/index' });
+    await app.runOnce('dissolve', async () => {
+      this.closeWatch();
+      app.clearSession();
+      await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '结束中');
   },
 
   async vote(e) {
     const charId = e.currentTarget.dataset.id;
-    const res = await app.callGame({ action: 'vote', roomId: this.data.roomId, charId });
+    let res;
+    try {
+      res = await app.runOnce('vote', () => app.callGame({ action: 'vote', roomId: this.data.roomId, charId }), '');
+    } catch (err) {
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    if (!res) return; // 被防抖忽略
     if (res.result && !res.result.ok) return wx.showToast({ title: res.result.msg || '投票失败', icon: 'none' });
     wx.showToast({ title: '已投票', icon: 'success' });
   },
@@ -162,12 +290,29 @@ Page({
     if (this.data.status === 'voting') {
       const ok = await this.confirm('确定公布真相？投票将结束。');
       if (!ok) return;
+    } else if (!this.data.allReady) {
+      // 还有人没完成本幕任务：让主持人确认是否强行推进
+      const n = this.data.totalPlayers - this.data.readyCount;
+      const ok = await this.confirm(`还有 ${n} 人未完成本幕任务，确定强行推进？`);
+      if (!ok) return;
+      return this._doAdvance(true);
     }
+    return this._doAdvance(false);
+  },
+
+  async _doAdvance(force) {
+    let res;
     try {
-      const res = await app.callGame({ action: 'advance', roomId: this.data.roomId });
-      if (!res.result.ok) wx.showToast({ title: res.result.msg || '推进失败', icon: 'none' });
+      res = await app.runOnce('advance', () => app.callGame({ action: 'advance', roomId: this.data.roomId, force }), '推进中');
     } catch (err) {
-      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    if (!res || !res.result) return;        // 被防抖忽略
+    const r = res.result;
+    if (!r.ok) return wx.showToast({ title: r.msg || '推进失败', icon: 'none' });
+    // 即时渲染新一幕，不等实时推送（watch 稍后会再同步一次，幂等）
+    if (this.lastRoom && typeof r.actIndex !== 'undefined') {
+      this.render({ ...this.lastRoom, actIndex: r.actIndex, status: r.status });
     }
   },
 

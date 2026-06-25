@@ -1,14 +1,14 @@
-.phase-bar { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
-.phase {
+.tab-bar { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
+.tab {
   flex: 1; text-align: center; font-size: 26rpx; color: #8a809e;
-  padding: 14rpx 0; border-radius: 14rpx; background: rgba(255,255,255,0.04);
+  padding: 16rpx 0; border-radius: 14rpx; background: rgba(255,255,255,0.04);
 }
-.phase.on { color: #fff; background: linear-gradient(90deg, #7b5cff, #c44dff); font-weight: 600; }
+.tab.on { color: #fff; background: linear-gradient(90deg, #7b5cff, #c44dff); font-weight: 600; }
 
 .sec-title { font-size: 32rpx; font-weight: 700; margin-bottom: 14rpx; }
 .tip { margin-top: 16rpx; display: block; }
 
-.act-card { border: 1rpx solid rgba(255,179,71,0.35); background: rgba(255,179,71,0.06); }
+.act-card { border: 1rpx solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
 .act-title { font-size: 36rpx; font-weight: 700; margin-bottom: 14rpx; color: #ffd9a8; }
 
 .act-secret {
@@ -18,10 +18,78 @@
 .secret-label { font-size: 24rpx; color: #c44dff; font-weight: 600; margin-bottom: 12rpx; }
 .end-inline { margin-top: 24rpx; }
 
-.mychar { border: 1rpx solid rgba(196,77,255,0.4); background: rgba(123,92,255,0.1); }
+.mychar { border: 1rpx solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
+
+/* 主持人流程提示 */
+.guide-foot { margin-top: 12rpx; display: block; font-size: 27rpx; line-height: 1.55; color: #ddd6ee; }
 .char-name { font-size: 38rpx; font-weight: 700; margin: 8rpx 0 16rpx; }
 .objective { margin-top: 20rpx; font-size: 28rpx; color: #ffd9a8; line-height: 1.6; }
 .obj-label { color: #ffb347; font-weight: 600; }
+
+.field-label { color: #c44dff; font-weight: 600; }
+.persona { margin-top: 16rpx; font-size: 27rpx; line-height: 1.6; color: #ddd6ee; }
+.timeline { margin-top: 20rpx; }
+.tl-item {
+  position: relative; margin-top: 12rpx; padding-left: 26rpx;
+  font-size: 26rpx; line-height: 1.55; color: #ddd6ee;
+}
+.tl-item::before {
+  content: ''; position: absolute; left: 4rpx; top: 14rpx;
+  width: 10rpx; height: 10rpx; border-radius: 50%; background: #c44dff;
+}
+
+/* 世界观折叠卡片 */
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.world-text { margin-top: 16rpx; }
+
+/* 小秘密 */
+.secret-box {
+  margin-top: 20rpx; padding: 20rpx;
+  border: 1rpx dashed rgba(255,255,255,0.2); border-radius: 16rpx;
+  background: rgba(255,255,255,0.04);
+}
+.secret-body { margin-top: 12rpx; }
+
+/* 盘问任务 / 主持人追问钩子 */
+.asks, .host-prompts { margin-top: 20rpx; }
+.ask-item {
+  margin-top: 12rpx; padding: 16rpx 20rpx;
+  font-size: 26rpx; line-height: 1.5; color: #ddd6ee;
+  background: rgba(255,255,255,0.05); border-radius: 14rpx;
+}
+.host-prompts { padding-top: 20rpx; border-top: 1rpx dashed rgba(255,255,255,0.15); }
+
+/* 本幕任务 */
+.task-item {
+  margin-top: 12rpx; padding-left: 8rpx;
+  font-size: 27rpx; line-height: 1.55; color: #ddd6ee;
+}
+.task-btn {
+  margin-top: 20rpx; padding: 22rpx 0; text-align: center;
+  background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff;
+  font-size: 30rpx; font-weight: 600; border-radius: 16rpx;
+}
+.task-done {
+  margin-top: 20rpx; padding: 22rpx 0; text-align: center;
+  background: rgba(123,92,255,0.12); color: #b7a6ff;
+  font-size: 28rpx; border-radius: 16rpx;
+}
+.task-progress {
+  margin-top: 20rpx; font-size: 26rpx; color: #ffb347;
+}
+.task-progress.ok { color: #7fe0a8; }
+/* 等待中的推进按钮：置灰提示尚未全员完成（仍可点强行推进）*/
+.btn-wait { background: #3a3450; color: #b3a6cc; }
+
+/* 关系网 */
+.rel-item {
+  margin-top: 14rpx; padding-left: 26rpx; position: relative;
+  font-size: 26rpx; line-height: 1.55; color: #ddd6ee;
+}
+.rel-item::before {
+  content: '·'; position: absolute; left: 8rpx; top: -2rpx;
+  color: #c44dff; font-weight: 700;
+}
 
 .roster { display: flex; flex-direction: column; gap: 14rpx; }
 .rmember { display: flex; align-items: center; gap: 14rpx; flex-wrap: wrap; }
@@ -38,10 +106,22 @@
   background: rgba(255,255,255,0.05); border: 1rpx dashed rgba(255,255,255,0.2);
   border-radius: 20rpx; padding: 24rpx; text-align: center;
 }
-.clue.open { border-style: solid; border-color: rgba(196,77,255,0.4); background: rgba(123,92,255,0.12); text-align: left; }
+.clue.open { border-style: solid; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); text-align: left; }
+.clue.searched-empty { border-style: solid; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); text-align: left; opacity: 0.6; }
 .clue-icon { font-size: 48rpx; }
 .clue-name { font-size: 28rpx; font-weight: 600; margin-top: 10rpx; }
 .clue-text { font-size: 24rpx; line-height: 1.5; margin-top: 10rpx; color: #ddd6ee; }
+
+/* 搜证 */
+.search-btn {
+  margin-top: 16rpx; padding: 12rpx 0;
+  color: #c4a8ff; text-align: center; font-size: 26rpx;
+}
+.small { font-size: 22rpx; margin-top: 16rpx; }
+.searchers {
+  margin-top: 14rpx; font-size: 20rpx; color: #ffb347;
+  border-top: 1rpx dashed rgba(255,255,255,0.12); padding-top: 10rpx;
+}
 
 .vote-list { margin-top: 20rpx; display: flex; flex-direction: column; gap: 16rpx; }
 .vote-item {

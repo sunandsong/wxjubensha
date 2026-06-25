@@ -18,15 +18,19 @@ Page({
   pick(e) {
     const uid = e.currentTarget.dataset.uid;
     const nick = e.currentTarget.dataset.nick;
-    app.setTestUid(uid);
-    wx.setStorageSync('nick', nick);
-    wx.setStorageSync('avatar', ''); // 测试身份用字母头像
-    wx.reLaunch({ url: '/pages/index/index' });
+    app.runOnce('switchIdentity', () => {
+      app.setTestUid(uid);
+      wx.setStorageSync('nick', nick);
+      wx.setStorageSync('avatar', ''); // 测试身份用字母头像
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '');
   },
 
   // 用真实微信账号（清除模拟身份）
   useReal() {
-    app.setTestUid(null);
-    wx.reLaunch({ url: '/pages/index/index' });
+    app.runOnce('switchIdentity', () => {
+      app.setTestUid(null);
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '');
   },
 });

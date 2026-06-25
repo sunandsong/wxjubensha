@@ -89,12 +89,15 @@ Page({
   async startGame() {
     if (!this.data.canStart) return wx.showToast({ title: '至少需要 1 名玩家（房主不参与）', icon: 'none' });
     this.setData({ starting: true });
+    let res;
     try {
-      const res = await app.callGame({ action: 'start', roomId: this.data.roomId });
-      if (!res.result.ok) wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
-    } finally {
+      res = await app.runOnce('start', () => app.callGame({ action: 'start', roomId: this.data.roomId }), '开始中');
+    } catch (e) {
       this.setData({ starting: false });
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
+    this.setData({ starting: false });
+    if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
   },
 
   copyCode() {
@@ -107,17 +110,21 @@ Page({
       wx.showModal({ title: '结束游戏', content: '确定结束本局并解散房间吗？', success: (r) => res(r.confirm) });
     });
     if (!ok) return;
-    this.closeWatch();
-    app.clearSession();
-    await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
-    wx.reLaunch({ url: '/pages/index/index' });
+    await app.runOnce('dissolve', async () => {
+      this.closeWatch();
+      app.clearSession();
+      await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '结束中');
   },
 
   async leaveRoom() {
-    this.closeWatch();
-    app.clearSession();   // 主动离开 → 不再续局
-    await app.callGame({ action: 'leave', roomId: this.data.roomId }).catch(() => {});
-    wx.reLaunch({ url: '/pages/index/index' });
+    await app.runOnce('leave', async () => {
+      this.closeWatch();
+      app.clearSession();   // 主动离开 → 不再续局
+      await app.callGame({ action: 'leave', roomId: this.data.roomId }).catch(() => {});
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '退出中');
   },
 
   onUnload() {

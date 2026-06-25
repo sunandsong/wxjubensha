@@ -48,17 +48,19 @@ Page({
     const players = room.players || [];
     const votes = room.votes || {};
     const murderer = SCRIPT.truth.murderer;
-    const murdererChar = SCRIPT.characters.find((c) => c.id === murderer);
 
-    // 统计每个角色得票，并带上扮演的玩家名字
+    // 名字替换：角色名统一换成玩家昵称（NPC 保留原名）
+    const namer = SCRIPTS.makeNamer(SCRIPT, players);
+
+    // 统计每个角色得票，名字用昵称
     const counts = {};
     Object.values(votes).forEach((cid) => { counts[cid] = (counts[cid] || 0) + 1; });
     const tally = SCRIPT.characters
       .map((c) => {
         const owner = players.find((p) => p.charId === c.id);
         return {
-          name: c.name, title: c.title,
-          playerNick: owner ? owner.nick : '公开嫌疑人',
+          id: c.id, name: namer.name(c.id), title: c.title,
+          playerNick: owner ? '' : '公开嫌疑人',
           count: counts[c.id] || 0, isMurderer: c.id === murderer,
         };
       })
@@ -81,8 +83,8 @@ Page({
 
     this.setData({
       isHost: room.hostOpenid === this.data.openid,
-      truth: SCRIPT.truth,
-      murdererName: murdererChar.name,
+      truth: { title: namer.apply(SCRIPT.truth.title), text: namer.apply(SCRIPT.truth.text) },
+      murdererName: namer.name(murderer),
       tally,
       accusedName: accused ? accused.name : '无人得票',
       caught,
@@ -109,13 +111,21 @@ Page({
   },
 
   async replay() {
-    await app.callGame({ action: 'reset', roomId: this.data.roomId });
+    let res;
+    try {
+      res = await app.runOnce('reset', () => app.callGame({ action: 'reset', roomId: this.data.roomId }), '重开中');
+    } catch (e) {
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '重开失败', icon: 'none' });
   },
 
   backHome() {
-    this.closeWatch();
-    app.clearSession();   // 回到首页 → 结束续局
-    wx.reLaunch({ url: '/pages/index/index' });
+    app.runOnce('backHome', () => {
+      this.closeWatch();
+      app.clearSession();   // 回到首页 → 结束续局
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '');
   },
 
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },

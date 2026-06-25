@@ -68,8 +68,8 @@
   width: calc(100% + 56rpx);
   margin-left: -28rpx; margin-right: -28rpx;
   box-sizing: border-box;
-  margin-top: 28rpx; padding: 44rpx 0; font-size: 40rpx;
-  border-radius: 0;
+  margin-top: 28rpx; padding: 48rpx 0; font-size: 40rpx;
+  border-radius: 16rpx;
 }
 
 /* 剧本封面卡片选择层 */

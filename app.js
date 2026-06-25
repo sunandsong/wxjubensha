@@ -41,6 +41,23 @@ App({
     return wx.cloud.callFunction({ name: 'game', data: uid ? { ...data, uid } : data });
   },
 
+  // ── 防抖执行：同一 key 正在执行时忽略重复点击，并显示 loading；结束自动解锁 ──
+  // loading 传字符串则显示带遮罩的 loading；传空串则只防抖不显示
+  runOnce(key, fn, loading = '请稍候') {
+    if (!this._busy) this._busy = {};
+    if (this._busy[key]) return Promise.resolve();
+    this._busy[key] = true;
+    if (loading) wx.showLoading({ title: loading, mask: true });
+    return (async () => {
+      try {
+        return await fn();
+      } finally {
+        if (loading) wx.hideLoading();
+        this._busy[key] = false;
+      }
+    })();
+  },
+
   // ── 登录：拿到稳定的身份标识，缓存到本地，重启后仍可用 ──
   ensureLogin() {
     // 测试身份直接用模拟 uid，不走云端

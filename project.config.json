@@ -12,7 +12,6 @@
     "minified": true,
     "newFeature": true,
     "nodeModules": false,
-    "cloudfunctionRoot": "cloudfunctions/",
     "compileWorklet": false,
     "uglifyFileName": false,
     "uploadWithSourceMap": true,
@@ -36,7 +35,7 @@
   "libVersion": "3.15.2",
   "appid": "wx40e747199ebb5556",
   "projectname": "tongxuehui-juben",
-  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
+  "cloudfunctionRoot": "cloudfunctions/",
   "condition": {},
   "simulatorPluginLibVersion": {},
   "editorSetting": {}

@@ -1,44 +1,122 @@
 <view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
 
 <view class="container">
-  <!-- 进度 -->
-  <view class="phase-bar">
-    <view class="phase {{status==='playing'?'on':''}}">{{status==='playing' ? '第'+actNum+'/'+actTotal+'幕' : '剧情'}}</view>
-    <view class="phase {{status==='voting'?'on':''}}">投票</view>
-    <view class="phase {{status==='finished'?'on':''}}">真相</view>
-  </view>
-
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">
+    <!-- Tab 导航：第X幕 / 世界观 / 人物关系 -->
+    <view class="tab-bar">
+      <view class="tab {{tab==='act'?'on':''}}" bindtap="switchTab" data-tab="act">第{{actNum}}幕</view>
+      <view wx:if="{{myChar && actNum===1}}" class="tab {{tab==='role'?'on':''}}" bindtap="switchTab" data-tab="role">我的角色</view>
+      <view wx:if="{{worldview && actNum===1}}" class="tab {{tab==='world'?'on':''}}" bindtap="switchTab" data-tab="world">世界观</view>
+      <view wx:if="{{relations.length && actNum===1}}" class="tab {{tab==='relations'?'on':''}}" bindtap="switchTab" data-tab="relations">人物关系</view>
+    </view>
+
+    <!-- ===== Tab：世界观 ===== -->
+    <view wx:if="{{tab==='world'}}" class="card">
+      <view class="sec-title">🌍 世界观设定</view>
+      <view class="pre world-text">{{worldview}}</view>
+    </view>
+
+    <!-- ===== Tab：人物关系 ===== -->
+    <view wx:elif="{{tab==='relations'}}" class="card">
+      <view class="sec-title">🕸 人物关系（可自由脑补发挥）</view>
+      <view class="rel-item" wx:for="{{relations}}" wx:key="*this">{{item}}</view>
+    </view>
+
+    <!-- ===== Tab：我的角色（全程不变的人设，仅你可见）===== -->
+    <view wx:elif="{{tab==='role'}}" class="card mychar">
+      <view class="muted">你的角色</view>
+      <view class="char-name">{{myChar.name}} <text class="tag">{{myChar.title}}</text></view>
+      <view wx:if="{{myChar.persona}}" class="persona"><text class="field-label">人物性格：</text>{{myChar.persona}}</view>
+      <view wx:if="{{myChar.timeline.length}}" class="timeline">
+        <view class="field-label">你的时间线（仅你可见）</view>
+        <view class="tl-item" wx:for="{{myChar.timeline}}" wx:key="*this">{{item}}</view>
+      </view>
+      <view class="objective"><text class="obj-label">行动目标：</text>{{myChar.objective}}</view>
+      <view wx:if="{{myChar.secret}}" class="secret-box">
+        <view class="field-label">🤫 你的小秘密（仅你可见，能藏就藏）</view>
+        <view class="pre secret-body">{{myChar.secret}}</view>
+      </view>
+    </view>
+
+    <!-- ===== Tab：第X幕 ===== -->
+    <block wx:else>
     <!-- 当前幕公开剧情 -->
     <view class="card act-card">
       <view class="act-title">{{actTitle}}</view>
       <view class="pre">{{actNarration}}</view>
     </view>
 
-    <!-- 我的角色 + 这一幕的私密剧情 -->
+    <!-- 我这一幕的私密剧情 + 本幕盘问（人设见「我的角色」tab）-->
     <view class="card mychar" wx:if="{{myChar}}">
-      <view class="muted">你的角色</view>
-      <view class="char-name">{{myChar.name}} <text class="tag">{{myChar.title}}</text></view>
-      <view class="objective"><text class="obj-label">行动目标：</text>{{myChar.objective}}</view>
+      <view class="muted">你的角色 · {{myChar.name}}</view>
       <view class="act-secret">
         <view class="secret-label">🔒 你这一幕的剧情（仅你可见）</view>
         <view class="pre">{{myActStory}}</view>
       </view>
+      <view wx:if="{{myActAsks.length}}" class="asks">
+        <view class="field-label">🎯 这一幕你要盘问</view>
+        <view class="ask-item" wx:for="{{myActAsks}}" wx:key="*this">{{item}}</view>
+      </view>
     </view>
 
-    <!-- 主持人提示 -->
-    <view class="card mychar" wx:if="{{isHost}}">
-      <view class="muted">你是主持人</view>
-      <view class="pre">你不参与角色，只负责逐幕推进剧情、公布真相。每推进一幕，玩家会看到自己这一幕的私密剧情，新线索也会随之公开。</view>
+    <!-- 本幕任务（全员完成主持人才能推进）-->
+    <view class="card" wx:if="{{myChar && myActTasks.length}}">
+      <view class="sec-title">📋 本幕任务</view>
+      <view class="task-item" wx:for="{{myActTasks}}" wx:key="*this">· {{item}}</view>
+      <view wx:if="{{iAmReady}}" class="task-done">✓ 你已完成本幕任务，等其他人…</view>
+      <view wx:else class="task-btn" bindtap="finishTask">完成本幕任务</view>
+      <view class="muted tip">已完成 {{readyCount}}/{{totalPlayers}}，全员完成后主持人才能推进。</view>
+    </view>
+
+    <!-- 主持人流程提示 -->
+    <view class="card mychar host-guide" wx:if="{{isHost}}">
+      <view class="muted">你是主持人 · 不参与角色</view>
+      <view class="guide-foot" wx:if="{{actNum===1}}">让大家轮流自我介绍（说角色名+公开身份）→ 每人读本幕私密剧情 → 念出本幕线索 → 每人轮流发言一次 → 点底部进入下一幕。</view>
+      <view class="guide-foot" wx:elif="{{!isLastAct}}">每人读本幕私密剧情 → 念出本幕新线索 → 每人针对线索发言一次、互相提问 → 点底部进入下一幕。</view>
+      <view class="guide-foot" wx:else>每人读本幕私密剧情 → 念出本幕新线索 → 每人做最后陈述 → 点底部进入投票。</view>
+      <view wx:if="{{actHostPrompts.length}}" class="host-prompts">
+        <view class="field-label">💬 冷场时，挑一句直接问</view>
+        <view class="ask-item" wx:for="{{actHostPrompts}}" wx:key="*this">{{item}}</view>
+      </view>
+      <view class="task-progress {{allReady ? 'ok' : ''}}">本幕任务完成：{{readyCount}}/{{totalPlayers}}{{allReady ? ' · 可推进' : ' · 未全部完成'}}</view>
       <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
     </view>
 
-    <!-- 已公开线索 -->
-    <view class="card" wx:if="{{clues.length}}">
-      <view class="sec-title">已公开线索</view>
+    <!-- 搜证区：本幕的搜查点 -->
+    <view class="card" wx:if="{{spots.length}}">
+      <view class="row-between">
+        <view class="sec-title">🔍 搜证 · 本幕搜查点</view>
+        <text wx:if="{{!isHost}}" class="muted">剩余 {{searchLeft}}/{{searchLimit}} 次</text>
+        <text wx:else class="muted">主持人可见全部</text>
+      </view>
+      <view class="muted tip" wx:if="{{!isHost}}">每幕限搜 {{searchLimit}} 处，搜到的线索只有你自己看到——其余靠大家在群里交换。</view>
       <view class="clue-grid">
-        <view class="clue open" wx:for="{{clues}}" wx:key="id">
+        <view class="clue {{item.reveal ? (item.empty ? 'searched-empty' : 'open') : ''}}" wx:for="{{spots}}" wx:key="id">
+          <view class="clue-icon">{{item.empty && item.reveal ? '🚫' : item.icon}}</view>
+          <!-- 已搜 / 主持人：显示结果（线索 或 一无所获）-->
+          <block wx:if="{{item.reveal}}">
+            <view class="muted small">{{item.place}}</view>
+            <view class="clue-name">{{item.name}}</view>
+            <view class="clue-text">{{item.text}}</view>
+          </block>
+          <!-- 未搜：只显示地点 + 搜查 -->
+          <block wx:else>
+            <view class="clue-name">{{item.place}}</view>
+            <view wx:if="{{searchLeft>0}}" class="search-btn" data-id="{{item.id}}" bindtap="search">搜查这里</view>
+            <view wx:else class="muted small">本幕已搜完</view>
+          </block>
+          <!-- 谁搜过（公开）-->
+          <view wx:if="{{item.searchedCount}}" class="searchers">已搜：{{item.searchedBy}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的线索本：我亲自搜到的，跨幕累积，仅我可见 -->
+    <view class="card" wx:if="{{myClues.length}}">
+      <view class="sec-title">🗂 我的线索本（仅你可见）</view>
+      <view class="clue-grid">
+        <view class="clue open" wx:for="{{myClues}}" wx:key="id">
           <view class="clue-icon">{{item.icon}}</view>
           <view class="clue-name">{{item.name}}</view>
           <view class="clue-text">{{item.text}}</view>
@@ -54,20 +132,20 @@
           <image wx:if="{{item.avatar}}" class="ravatar" src="{{item.avatar}}" mode="aspectFill" />
           <text class="rname">{{item.name}}</text>
           <text class="rtitle">{{item.title}}</text>
-          <text class="rplayer" wx:if="{{item.playerNick}}">· {{item.playerNick}}</text>
           <text class="rme" wx:if="{{item.isMe}}">（你）</text>
           <text class="rnpc" wx:if="{{item.isNpc}}">公开嫌疑人</text>
         </view>
       </view>
       <view class="muted tip">「公开嫌疑人」是本局没人扮演的角色，其嫌疑同样会出现在线索中。</view>
     </view>
+    </block>
   </block>
 
   <!-- ============ 投票阶段 ============ -->
   <block wx:if="{{status==='voting'}}">
     <view class="card">
       <view class="sec-title">指认凶手</view>
-      <view wx:if="{{isHost}}" class="muted">主持人不投票。已投票 {{votedCount}}/{{totalPlayers}}，等大家投完后点底部「公布真相」。</view>
+      <view wx:if="{{isHost}}" class="guide-foot">让每人说出怀疑对象和理由 → 各自点选真凶 → 已投 {{votedCount}}/{{totalPlayers}}，投满后点底部公布真相。主持人不投票。</view>
       <view wx:else class="muted">回群里讨论后再投。已投票 {{votedCount}}/{{totalPlayers}}，选定你认为的真凶，可改票。</view>
     </view>
     <view class="vote-list" wx:if="{{!isHost}}">
@@ -80,9 +158,8 @@
 
   <!-- 主持人控制（固定底部）-->
   <view class="host-ctrl" wx:if="{{isHost}}">
-    <button wx:if="{{status==='playing' && !isLastAct}}" class="btn" bindtap="advance">进入下一幕（第{{actNum+1}}幕）</button>
-    <button wx:if="{{status==='playing' && isLastAct}}" class="btn" bindtap="advance">本幕结束，进入投票</button>
+    <button wx:if="{{status==='playing' && !isLastAct}}" class="btn {{allReady ? '' : 'btn-wait'}}" bindtap="advance">{{allReady ? '进入下一幕（第'+(actNum+1)+'幕）' : '待完成 '+readyCount+'/'+totalPlayers+' · 仍可推进'}}</button>
+    <button wx:if="{{status==='playing' && isLastAct}}" class="btn {{allReady ? '' : 'btn-wait'}}" bindtap="advance">{{allReady ? '本幕结束，进入投票' : '待完成 '+readyCount+'/'+totalPlayers+' · 进入投票'}}</button>
     <button wx:if="{{status==='voting'}}" class="btn" bindtap="advance">公布真相</button>
   </view>
-  <view wx:else class="muted center">等待主持人推进剧情…</view>
 </view>

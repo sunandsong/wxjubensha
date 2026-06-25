@@ -14,7 +14,7 @@
     <view class="tally-item" wx:for="{{tally}}" wx:key="name">
       <view class="t-name">
         {{item.name}}<text class="t-title">{{item.title}}</text>
-        <text class="t-player">· {{item.playerNick}}</text>
+        <text class="t-player" wx:if="{{item.playerNick}}">· {{item.playerNick}}</text>
         <text class="t-killer" wx:if="{{item.isMurderer}}">真凶</text>
       </view>
       <view class="t-count">{{item.count}} 票</view>

@@ -1,6 +1,6 @@
 /* 全局样式 —— 暗夜悬疑风 */
 page {
-  background: linear-gradient(160deg, #1a1626 0%, #241b33 60%, #2b1f2e 100%);
+  background: #1e1830;
   color: #ece8f5;
   font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
   min-height: 100vh;
@@ -34,26 +34,24 @@ page {
   margin-top: 28rpx;
   background: linear-gradient(90deg, #7b5cff, #c44dff);
   color: #fff;
-  border-radius: 999rpx;
-  font-size: 32rpx;
+  border-radius: 16rpx;
+  font-size: 34rpx;
   font-weight: 600;
-  padding: 22rpx 0;
+  padding: 32rpx 0;
   text-align: center;
   border: none;
 }
 .btn::after { border: none; }
-.btn[disabled] {
-  background: #2c2740;
-  color: #6a6385;
-}
 .btn-ghost {
   background: transparent;
   border: 1rpx solid rgba(255,255,255,0.25);
   color: #d9d2ec;
 }
+/* 统一禁用态：实心、置灰、无边框 */
+.btn[disabled],
 .btn-ghost[disabled] {
-  background: transparent;
-  border-color: rgba(255,255,255,0.12);
+  background: #2c2740;
+  border: none;
   color: #6a6385;
 }
 

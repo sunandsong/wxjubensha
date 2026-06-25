@@ -38,12 +38,20 @@ Page({
     wx.showLoading({ title: '加载中', mask: true });
     let room;
     try {
-      room = await db.collection('rooms').doc(this.data.roomId).get().then((r) => r.data);
+      // 用 where 查询：房间不存在时返回空数组（不会 reject）
+      const res = await db.collection('rooms').where({ _id: this.data.roomId }).get();
+      room = res.data[0] || null;
     } catch (e) {
       wx.hideLoading();
       return wx.showToast({ title: '加载失败，请重试', icon: 'none' });
     }
     wx.hideLoading();
+    if (!room) {                          // 房主已结束游戏、房间解散 → 退出
+      this.closeWatch();
+      app.clearSession();
+      wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+      return;
+    }
     const SCRIPT = SCRIPTS.byId(room.scriptId);
     const players = room.players || [];
     const votes = room.votes || {};
@@ -97,7 +105,13 @@ Page({
     this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
       onChange: (snap) => {
         const room = snap.docs && snap.docs[0];
-        if (room && room.status === 'waiting') {
+        if (!room) {                       // 房主结束游戏、房间被解散
+          this.closeWatch();
+          app.clearSession();
+          wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+          return;
+        }
+        if (room.status === 'waiting') {   // 房主点了「再来一局」
           this.closeWatch();
           wx.redirectTo({ url: `/pages/room/room?roomId=${this.data.roomId}&roomCode=${this.data.roomCode}` });
         }
@@ -120,6 +134,17 @@ Page({
     if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '重开失败', icon: 'none' });
   },
 
+  // 房主：结束本局、解散房间，让所有玩家一起退出
+  async endGame() {
+    await app.runOnce('dissolve', async () => {
+      this.closeWatch();
+      app.clearSession();
+      await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '结束中');
+  },
+
+  // 玩家：自己返回首页（房间仍在，主持人可继续/解散）
   backHome() {
     app.runOnce('backHome', () => {
       this.closeWatch();

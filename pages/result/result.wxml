@@ -27,5 +27,6 @@
   </view>
 
   <button wx:if="{{isHost}}" class="btn" bindtap="replay">再来一局（换角色）</button>
-  <button class="btn btn-ghost" bindtap="backHome">返回首页</button>
+  <button wx:if="{{isHost}}" class="btn btn-ghost" bindtap="endGame">结束游戏（解散房间）</button>
+  <button wx:else class="btn btn-ghost" bindtap="backHome">返回首页</button>
 </view>

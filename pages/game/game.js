@@ -50,8 +50,11 @@ Page({
     // 每次进入都重新请求最新数据（不依赖缓存），带 Loading
     wx.showLoading({ title: '加载中', mask: true });
     try {
-      const room = await db.collection('rooms').doc(this.data.roomId).get().then((r) => r.data);
+      // 用 where 查询：房间不存在时返回空数组（不会 reject）
+      const res = await db.collection('rooms').where({ _id: this.data.roomId }).get();
+      const room = res.data[0] || null;
       if (room) this.render(room);
+      else { wx.hideLoading(); return this.onDissolved(); }   // 房间已解散 → 退出
     } catch (e) {
       wx.showToast({ title: '加载失败，请重试', icon: 'none' });
     } finally {

@@ -20,3 +20,7 @@
 .t-count { font-size: 28rpx; color: #cdbcff; }
 
 .truth { border: 1rpx solid rgba(196,77,255,0.35); }
+.letter { border-color: rgba(255,196,77,0.45); }
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.tip { margin: 12rpx 0; }
+.letter-img { width: 100%; border-radius: 14rpx; margin-top: 12rpx; display: block; }

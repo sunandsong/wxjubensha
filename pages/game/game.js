@@ -18,6 +18,8 @@ Page({
     worldview: '',
     relations: [],
     actHostPrompts: [],
+    actHostStory: '',
+    actHostActivities: [],
     isLastAct: false,
     isHost: false,
     script: null,
@@ -115,6 +117,7 @@ Page({
     const acts = SCRIPT.acts || [];
     const actIndex = Math.min(room.actIndex || 0, Math.max(0, acts.length - 1));
     const act = acts[actIndex] || null;
+    const actHost = act && act.host ? act.host : null;  // 主持人专属：小说式剧情 + 群活动
     const isLastAct = actIndex >= acts.length - 1;
     const myActStory = ap(srcChar && srcChar.actStories ? (srcChar.actStories[actIndex] || '') : '');
 
@@ -147,13 +150,9 @@ Page({
     let clues = [];                 // 自动公开模式：累积到当前幕的公开线索
     let spots = [], myClues = [], searchLimit = 0, searchLeft = 0;
     if (autoClues) {
-      // 推进到第 i 幕时，累积公开第 0..i 幕的 clueIds
-      const revealedIds = [];
-      for (let i = 0; i <= actIndex && i < acts.length; i++) {
-        (acts[i].clueIds || []).forEach((id) => { if (!revealedIds.includes(id)) revealedIds.push(id); });
-      }
-      clues = revealedIds.map(findClue).filter(Boolean)
-        .map((c) => ({ id: c.id, name: c.name, icon: c.icon, text: ap(c.text) }));
+      // 只展示当前这一幕的新线索（主持人逐幕发群，不重复旧线索）
+      clues = ((act && act.clueIds) || []).map(findClue).filter(Boolean)
+        .map((c) => ({ id: c.id, name: c.name, icon: c.icon, text: ap(c.text), img: c.img || '' }));
     } else {
       const searches = room.searches || {};
       const mySearch = searches[openid] || [];
@@ -204,6 +203,9 @@ Page({
       worldview: ap(SCRIPT.worldview || ''),
       relations: apList(SCRIPT.relations),
       actHostPrompts: apList(act && act.hostPrompts ? act.hostPrompts : []),
+      // 主持人剧情：每幕一整块故事（第一幕的故事本身已含世界观背景，不再拼接）
+      actHostStory: ap(actHost ? actHost.story : ''),
+      actHostActivities: apList(actHost ? actHost.activities : []),
       isLastAct,
       isHost,
       script: SCRIPT,

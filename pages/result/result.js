@@ -9,6 +9,8 @@ Page({
     openid: '',
     isHost: false,
     truth: null,
+    letter: '',         // 遗书：仅主持人可见，发到群里
+    letterImg: '',      // 遗书图片（可选，留给 AI 生成的信件图）
     murdererName: '',
     tally: [],          // [{name, count, isMurderer}]
     accusedName: '',    // 得票最多者
@@ -92,6 +94,8 @@ Page({
     this.setData({
       isHost: room.hostOpenid === this.data.openid,
       truth: { title: namer.apply(SCRIPT.truth.title), text: namer.apply(SCRIPT.truth.text) },
+      letter: namer.apply(SCRIPT.truth.letter || ''),
+      letterImg: SCRIPT.truth.letterImg || '',
       murdererName: namer.name(murderer),
       tally,
       accusedName: accused ? accused.name : '无人得票',

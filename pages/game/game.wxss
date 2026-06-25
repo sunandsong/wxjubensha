@@ -108,6 +108,7 @@
 }
 .clue.open { border-style: solid; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); text-align: left; }
 .clue.searched-empty { border-style: solid; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); text-align: left; opacity: 0.6; }
+.clue-img { width: 100%; border-radius: 14rpx; margin-bottom: 12rpx; display: block; }
 .clue-icon { font-size: 48rpx; }
 .clue-name { font-size: 28rpx; font-weight: 600; margin-top: 10rpx; }
 .clue-text { font-size: 24rpx; line-height: 1.5; margin-top: 10rpx; color: #ddd6ee; }

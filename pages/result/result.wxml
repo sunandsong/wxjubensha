@@ -5,6 +5,7 @@
     <view class="verdict-icon">{{caught ? '🎉' : '🕵️'}}</view>
     <view class="verdict-text">{{caught ? '真凶落网！' : '凶手逃脱了…'}}</view>
     <view class="muted">大家指认：{{accusedName}}　·　真凶：{{murdererName}}</view>
+    <view class="muted" wx:if="{{!isHost}}">最后还有一封信，由主持人念给大家</view>
   </view>
 
   <view class="card my-result" wx:if="{{myResult}}">{{myResult}}</view>
@@ -21,12 +22,22 @@
     </view>
   </view>
 
+  <!-- 真相（第一~六章）：所有人都能看到 -->
   <view class="card truth">
     <view class="sec-title">{{truth.title}}</view>
     <view class="pre">{{truth.text}}</view>
   </view>
 
-  <button wx:if="{{isHost}}" class="btn" bindtap="replay">再来一局（换角色）</button>
-  <button wx:if="{{isHost}}" class="btn btn-ghost" bindtap="endGame">结束游戏（解散房间）</button>
+  <!-- 遗书：只有主持人看得到，压轴发到群里 / 念给大家（玩家屏幕上不会出现）-->
+  <view class="card truth letter" wx:if="{{isHost && (letter || letterImg)}}">
+    <view class="row-between">
+      <view class="sec-title">✉️ 张涛留下的那封信（仅主持人）</view>
+      <text class="muted">最后揭晓</text>
+    </view>
+    <image wx:if="{{letterImg}}" class="letter-img" src="{{letterImg}}" mode="widthFix" show-menu-by-longpress></image>
+    <view class="pre" wx:else>{{letter}}</view>
+  </view>
+
+  <button wx:if="{{isHost}}" class="btn" bindtap="endGame">结束游戏（解散房间）</button>
   <button wx:else class="btn btn-ghost" bindtap="backHome">返回首页</button>
 </view>

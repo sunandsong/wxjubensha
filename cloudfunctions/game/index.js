@@ -25,10 +25,9 @@ const SCRIPT_META = {
   test: {
     charIds: ['xiaomei', 'aqiang', 'laoli'],
     murderer: 'xiaomei',
-    actCount: 4,
-    cluesByAct: [['t1'], ['t6', 't2', 't4'], ['t3', 't5'], ['t8']],
-    // 按地点搜证：每幕可搜的地点 id（含搜了一无所获的空地点）
-    spotsByAct: [['p1a', 'p1b'], ['p2a', 'p2b', 'p2c'], ['p3a', 'p3b', 'p3c'], ['p4a', 'p4b']],
+    actCount: 3,
+    // 咖啡馆走 autoClues（随幕自动公开，不搜证），cluesByAct 仅作参照、不参与发牌
+    cluesByAct: [['t1'], ['t2', 't3', 't4', 't5'], ['t6', 't7', 't8', 't9', 't11']],
     searchPerAct: 1,
   },
 };

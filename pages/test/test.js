@@ -7,6 +7,7 @@ Page({
       { uid: 'test-A', nick: '玩家A' },
       { uid: 'test-B', nick: '玩家B' },
       { uid: 'test-C', nick: '玩家C' },
+      { uid: 'test-D', nick: '玩家D' },
     ],
   },
 

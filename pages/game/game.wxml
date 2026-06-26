@@ -17,9 +17,13 @@
       <view class="pre">{{actHostStory || actNarration}}</view>
     </view>
 
-    <!-- 玩家：你这一幕的故事（第一人称）-->
+    <!-- 玩家：你这一幕的故事（第一人称）。第一幕顶部展示你自己的角色照片 -->
     <view wx:if="{{myChar && myActStory}}" class="card mychar">
       <view class="act-title">{{actLabel}}</view>
+      <block wx:if="{{actNum===1 && myPhoto}}">
+        <image class="char-photo" src="{{myPhoto}}" mode="widthFix"></image>
+        <view class="char-caption">你的角色 · {{myChar.title}}</view>
+      </block>
       <view class="pre">{{myActStory}}</view>
     </view>
 
@@ -48,25 +52,6 @@
         </view>
       </block>
       <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
-    </view>
-
-    <!-- 第一幕·角色亮相：按玩家性别给出角色照片，主持人下载发群让大家认人 -->
-    <view class="card" wx:if="{{isHost && actNum===1 && cast.length}}">
-      <view class="row-between">
-        <view class="sec-title">🎭 角色亮相（仅主持人）</view>
-        <text class="muted">下载发群认人</text>
-      </view>
-      <view class="muted tip">按每位玩家选的性别生成的角色照片，逐张「下载图片」发到群里，让大家对上号。</view>
-      <view class="clue-list">
-        <view class="clue-card" wx:for="{{cast}}" wx:key="id">
-          <image wx:if="{{item.photo}}" class="clue-img" src="{{item.photo}}" mode="widthFix" show-menu-by-longpress></image>
-          <view class="clue-name">{{item.name}}<text class="cast-title"> · {{item.title}}</text></view>
-          <view class="clue-actions">
-            <text wx:if="{{item.photo}}" class="mini-btn" data-src="{{item.photo}}" bindtap="saveImg">下载图片</text>
-            <text class="mini-btn" data-text="{{item.name}} · {{item.title}}" bindtap="copyText">复制名字</text>
-          </view>
-        </view>
-      </view>
     </view>
 
     <!-- 第一幕·现场平面图：主持人生成并下载发群，供大家讨论位置 -->

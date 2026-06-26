@@ -150,22 +150,21 @@ Page({
     ctx.strokeRect(40, 120, 640, 660);           // 40..680 / 120..780
     ctx.fillStyle = '#f5efe2'; ctx.fillRect(672, 490, 16, 56);  // 右墙门口开口
     // 顶部：后厨 / 厕所
-    room(60, 150, 280, 140, '后　厨', '小美在此放水洗杯');
-    room(380, 150, 280, 140, '厕　所', '老李去过这');
-    // 吧台（含阿强位置）
+    room(60, 150, 280, 140, '后　厨', '');
+    room(380, 150, 280, 140, '厕　所', '');
+    // 吧台（案发现场客观事实，不标人物）
     ctx.fillStyle = '#fbe4c8'; ctx.strokeStyle = '#b89a6a'; ctx.lineWidth = 3;
     ctx.fillRect(60, 320, 580, 140); ctx.strokeRect(60, 320, 580, 140);
     ctx.textAlign = 'center'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 30px sans-serif';
-    ctx.fillText('吧　台', 350, 360);
+    ctx.fillText('吧　台', 350, 376);
     ctx.font = '21px sans-serif'; ctx.fillStyle = '#9a5a28';
-    ctx.fillText('☕ 杯子在台上　☠ 老板倒在台后', 350, 396);
-    ctx.fillText('阿强案发前在吧台边自冲过一杯', 350, 428);
+    ctx.fillText('☕ 杯子在台上　☠ 老板倒在台后', 350, 414);
     // 过道：座位区标题（左）+ 入口（右·吧台与座位区之间）
     ctx.textAlign = 'left'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 26px sans-serif';
     ctx.fillText('座位区（你坐哪？）', 60, 515);
     room(450, 488, 190, 64, '入　口', '（右侧进门）', '#e9e0cf');
-    // 座位区：桌1~4（老李坐桌1）
-    room(60, 565, 130, 110, '桌 1', '老李案发在此', '#e8f0ff');
+    // 座位区：桌1~4
+    room(60, 565, 130, 110, '桌 1', '');
     room(210, 565, 130, 110, '桌 2', '');
     room(360, 565, 130, 110, '桌 3', '');
     room(510, 565, 130, 110, '桌 4', '');
@@ -295,18 +294,10 @@ Page({
     }
 
 
-    // 第一幕·角色亮相：按演该角色的玩家性别给出对应照片，主持人下载发群认人
-    const cast = (actIndex === 0 && isHost)
-      ? SCRIPT.characters.map((c) => {
-          const owner = players.find((p) => p.charId === c.id);
-          if (!owner) return null;                 // NPC（无人认领）不发照片
-          const g = owner.gender === 'f' ? 'f' : (owner.gender === 'm' ? 'm' : '');
-          return {
-            id: c.id, name: namer.name(c.id), title: c.title,
-            photo: g ? `/assets/avatars/${c.id}_${g}.jpg` : '',
-          };
-        }).filter(Boolean)
-      : [];
+    // 我的角色照片：按我自己选的性别取（玩家第一幕展示）
+    const myGenderRaw = (me && me.gender) || wx.getStorageSync('gender') || '';
+    const myGender = myGenderRaw === 'f' ? 'f' : (myGenderRaw === 'm' ? 'm' : '');
+    const myPhoto = (srcChar && myGender) ? `/assets/avatars/${srcChar.id}_${myGender}.jpg` : '';
 
     const votes = room.votes || {};
     const myVote = votes[openid] || '';
@@ -330,7 +321,7 @@ Page({
       actHostActivities: apList(actHost ? actHost.activities : []),
       isLastAct,
       isHost,
-      cast,
+      myPhoto,
       script: SCRIPT,
       myChar,
       myActStory,

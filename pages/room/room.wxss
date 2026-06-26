@@ -6,6 +6,9 @@
   padding: 12rpx 28rpx; border-radius: 999rpx; line-height: 1.6;
 }
 .btn-mini::after { border: none; }
+.code-actions { display: flex; gap: 14rpx; align-items: center; }
+.btn-mini.share { background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff; }
+.invite-tip { margin: -6rpx 0 8rpx; }
 
 .row-between { display: flex; align-items: center; justify-content: space-between; }
 .sec-title { font-size: 30rpx; font-weight: 600; }

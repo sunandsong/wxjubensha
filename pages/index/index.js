@@ -18,7 +18,9 @@ Page({
     uploading: false,
   },
 
-  onLoad() {
+  onLoad(options) {
+    // 从分享卡片进入：带 joinCode → 资料就绪后自动加入该房间
+    if (options && options.joinCode) this.pendingJoinCode = options.joinCode;
     const nick = wx.getStorageSync('nick') || '';
     const avatar = wx.getStorageSync('avatar') || '';
     const gender = wx.getStorageSync('gender') || '';
@@ -88,13 +90,24 @@ Page({
     if (!this.data.gender) return wx.showToast({ title: '请选择性别', icon: 'none' });
     wx.setStorageSync('nick', nick);
     this.setData({ nick, needAuth: false, editing: false });
+    this._tryPendingJoin();   // 若来自分享卡片，资料完善后自动进房
   },
 
   onShow() {
+    if (this.data.needAuth) return;           // 先完善资料
+    if (this._tryPendingJoin()) return;        // 分享卡片进入 → 自动加入
     // 已经在某局里（已入房/已是房主）→ 直接进房间，不停留在选择页
-    if (this.data.needAuth) return;
     const s = app.getSession();
     if (s) wx.reLaunch({ url: `/pages/room/room?roomId=${s.roomId}&roomCode=${s.roomCode}` });
+  },
+
+  // 有待加入的房间号（来自分享卡片）→ 加入
+  _tryPendingJoin() {
+    if (!this.pendingJoinCode) return false;
+    const code = this.pendingJoinCode;
+    this.pendingJoinCode = '';
+    this.joinRoom(code);
+    return true;
   },
 
   noop() {},

@@ -45,6 +45,16 @@ Page({
 
   onHide() { this.closeWatch(); },
 
+  // 分享小程序卡片到群：群友点卡片 → 打开小程序 → 自动加入本房间
+  onShareAppMessage() {
+    const code = this.data.roomCode;
+    return {
+      title: `「${this.data.scriptTitle || '剧本杀'}」房间 ${code}，点我直接进房`,
+      path: `/pages/index/index?joinCode=${code}`,
+      imageUrl: '/assets/share.jpg',
+    };
+  },
+
   renderRoom(room) {
     if (!room) {
       app.clearSession();
@@ -127,12 +137,5 @@ Page({
 
   onUnload() {
     this.closeWatch();
-  },
-
-  onShareAppMessage() {
-    return {
-      title: `快来玩剧本杀《同学会之夜》，房间号 ${this.data.roomCode}`,
-      path: `/pages/index/index`,
-    };
   },
 });

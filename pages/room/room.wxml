@@ -7,11 +7,15 @@
 
   <view class="card code-card">
     <view>
-      <view class="muted">房间号（发到群里邀请好友）</view>
+      <view class="muted">房间号</view>
       <view class="code">{{roomCode}}</view>
     </view>
-    <button class="btn-mini" bindtap="copyCode">复制</button>
+    <view class="code-actions">
+      <button class="btn-mini" bindtap="copyCode">复制</button>
+      <button class="btn-mini share" open-type="share">分享到群</button>
+    </view>
   </view>
+  <view class="muted invite-tip">点「分享到群」发卡片，群友点一下直接进房（无需输房间号）。</view>
 
   <view class="card">
     <view class="row-between">

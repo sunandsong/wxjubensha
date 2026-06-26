@@ -3,6 +3,18 @@
 <view class="container">
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">
+    <!-- 主持人·第一幕：巷往咖啡馆效果图，下载发群带氛围 -->
+    <view class="card" wx:if="{{isHost && actNum===1}}">
+      <view class="row-between">
+        <view class="sec-title">🖼️ 巷往咖啡馆（仅主持人）</view>
+        <text class="muted">下载发群</text>
+      </view>
+      <image class="clue-img" src="/assets/scene.jpg" mode="widthFix" show-menu-by-longpress></image>
+      <view class="clue-actions">
+        <text class="mini-btn" data-src="/assets/scene.jpg" bindtap="saveImg">下载效果图</text>
+      </view>
+    </view>
+
     <!-- 主持人：本幕剧情（第一幕已把世界观接在前面），合成一整块故事 -->
     <view wx:if="{{isHost}}" class="card act-card">
       <view class="pre">{{actHostStory || actNarration}}</view>

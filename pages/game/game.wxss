@@ -5,16 +5,6 @@
 }
 .tab.on { color: #fff; background: linear-gradient(90deg, #7b5cff, #c44dff); font-weight: 600; }
 
-/* 第一幕开场大图 */
-.scene-card { position: relative; margin-bottom: 20rpx; border-radius: 20rpx; overflow: hidden; }
-.scene-img { width: 100%; display: block; }
-.scene-title {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  padding: 40rpx 28rpx 22rpx; font-size: 36rpx; font-weight: 700; color: #fff;
-  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
-}
-.scene-card .clue-actions { position: absolute; top: 18rpx; right: 18rpx; margin: 0; }
-
 .sec-title { font-size: 32rpx; font-weight: 700; margin-bottom: 14rpx; }
 .tip { margin-top: 16rpx; display: block; }
 
@@ -31,7 +21,8 @@
 .mychar { border: 1rpx solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
 /* 玩家第一幕：自己的角色照片 */
 .char-photo { width: 70%; max-width: 420rpx; border-radius: 18rpx; display: block; margin: 8rpx auto 12rpx; }
-.char-caption { text-align: center; font-size: 24rpx; color: #b3a6cc; margin-bottom: 18rpx; }
+.char-caption { text-align: center; font-size: 24rpx; color: #b3a6cc; margin-bottom: 14rpx; }
+.char-actions { justify-content: center; margin-bottom: 18rpx; }
 
 /* 主持人流程提示 */
 .guide-foot { margin-top: 12rpx; display: block; font-size: 27rpx; line-height: 1.55; color: #ddd6ee; }

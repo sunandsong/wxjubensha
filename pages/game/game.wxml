@@ -3,15 +3,6 @@
 <view class="container">
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">
-    <!-- 第一幕开场大图：所有人可见，把大家拉进深夜咖啡馆 -->
-    <view wx:if="{{actNum===1}}" class="scene-card">
-      <image class="scene-img" src="/assets/scene.jpg" mode="widthFix" show-menu-by-longpress></image>
-      <view class="scene-title">深夜的 930 咖啡馆</view>
-      <view wx:if="{{isHost}}" class="clue-actions">
-        <text class="mini-btn" data-src="/assets/scene.jpg" bindtap="saveImg">下载发群</text>
-      </view>
-    </view>
-
     <!-- 主持人：本幕剧情（第一幕已把世界观接在前面），合成一整块故事 -->
     <view wx:if="{{isHost}}" class="card act-card">
       <view class="pre">{{actHostStory || actNarration}}</view>
@@ -21,8 +12,11 @@
     <view wx:if="{{myChar && myActStory}}" class="card mychar">
       <view class="act-title">{{actLabel}}</view>
       <block wx:if="{{actNum===1 && myPhoto}}">
-        <image class="char-photo" src="{{myPhoto}}" mode="widthFix"></image>
+        <image class="char-photo" src="{{myPhoto}}" mode="widthFix" show-menu-by-longpress></image>
         <view class="char-caption">你的角色 · {{myChar.title}}</view>
+        <view class="clue-actions char-actions">
+          <text class="mini-btn" data-src="{{myPhoto}}" bindtap="saveImg">下载角色照片</text>
+        </view>
       </block>
       <view class="pre">{{myActStory}}</view>
     </view>

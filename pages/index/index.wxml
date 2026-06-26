@@ -1,6 +1,7 @@
 <!-- 强制授权门：三步向导（头像 → 昵称 → 性别）-->
 <view class="auth-mask" wx:if="{{needAuth}}" catchtouchmove="noop">
   <view class="auth-card">
+    <view wx:if="{{editing}}" class="auth-close" catchtap="cancelEdit">✕</view>
     <view class="auth-steps">{{authStep}} / 3</view>
 
     <!-- 第一步：确认头像 -->
@@ -68,7 +69,9 @@
   <scroll-view class="pick-scroll" scroll-y>
     <view class="pick-card" wx:for="{{scripts}}" wx:key="id" data-id="{{item.id}}" bindtap="pickAndCreate">
       <view class="pick-cover" style="background:{{item.cover.gradient}}">
-        <text class="pick-emoji">{{item.cover.emoji}}</text>
+        <image wx:if="{{item.cover.image}}" class="pick-cover-img" src="{{item.cover.image}}" mode="aspectFill"></image>
+        <view wx:if="{{item.cover.image}}" class="pick-cover-scrim"></view>
+        <text wx:else class="pick-emoji">{{item.cover.emoji}}</text>
         <text class="pick-tag">{{item.tag}}</text>
         <text class="pick-cover-title">{{item.title}}</text>
       </view>

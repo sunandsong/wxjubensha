@@ -1,5 +1,5 @@
 .script-card .sc-title { font-size: 38rpx; font-weight: 700; margin: 8rpx 0; }
-.code-card { display: flex; align-items: center; justify-content: space-between; }
+.code-row { display: flex; align-items: center; justify-content: space-between; }
 .code { font-size: 56rpx; font-weight: 700; letter-spacing: 12rpx; color: #fff; margin-top: 8rpx; }
 .btn-mini {
   background: rgba(123,92,255,0.3); color: #ddd2ff; font-size: 26rpx;
@@ -8,7 +8,7 @@
 .btn-mini::after { border: none; }
 .code-actions { display: flex; gap: 14rpx; align-items: center; }
 .btn-mini.share { background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff; }
-.invite-tip { margin: -6rpx 0 8rpx; }
+.invite-tip { margin-top: 18rpx; }
 
 .row-between { display: flex; align-items: center; justify-content: space-between; }
 .sec-title { font-size: 30rpx; font-weight: 600; }
@@ -22,9 +22,10 @@
   background: linear-gradient(135deg, #7b5cff, #c44dff);
 }
 .avatar .avatar-img { width: 96rpx; height: 96rpx; display: block; }
-.pname { font-size: 24rpx; margin-top: 10rpx; color: #ddd6ee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pname { font-size: 24rpx; margin-top: 10rpx; color: #ddd6ee; line-height: 1.3; word-break: break-all; }
 .host-badge {
-  position: absolute; top: -8rpx; right: 6rpx; font-size: 18rpx;
+  position: absolute; top: -8rpx; left: 50%; transform: translateX(-50%);
+  font-size: 18rpx; white-space: nowrap;
   background: #ffb347; color: #3a2a00; border-radius: 999rpx; padding: 2rpx 10rpx;
 }
 .center { text-align: center; margin-top: 28rpx; }

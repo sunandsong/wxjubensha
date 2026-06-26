@@ -20,9 +20,15 @@
   display: flex; align-items: center; justify-content: center; padding: 48rpx;
 }
 .auth-card {
+  position: relative;
   width: 100%; background: #241c33; border-radius: 28rpx;
   padding: 48rpx 40rpx; text-align: center;
   border: 1rpx solid rgba(255,255,255,0.1);
+}
+.auth-close {
+  position: absolute; top: 20rpx; right: 24rpx;
+  width: 56rpx; height: 56rpx; line-height: 56rpx; text-align: center;
+  font-size: 36rpx; color: #b3a6cc;
 }
 .auth-steps { font-size: 24rpx; color: #8a7da6; margin-bottom: 18rpx; letter-spacing: 2rpx; }
 .auth-btns { display: flex; gap: 20rpx; }
@@ -102,8 +108,13 @@
   margin-bottom: 28rpx; border: 1rpx solid rgba(255,255,255,0.08);
 }
 .pick-cover {
-  position: relative; height: 240rpx;
+  position: relative; height: 240rpx; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
+}
+.pick-cover-img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.pick-cover-scrim {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  background: linear-gradient(180deg, rgba(0,0,0,0.15), transparent 38%, transparent 55%, rgba(0,0,0,0.6));
 }
 .pick-emoji { font-size: 110rpx; opacity: 0.92; }
 .pick-tag {

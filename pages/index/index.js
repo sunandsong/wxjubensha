@@ -33,7 +33,20 @@ Page({
 
   // 编辑资料：重新打开三步向导（带出当前头像/昵称/性别，改完再确认）
   editProfile() {
+    this._orig = { avatar: this.data.avatar, nick: this.data.nick, gender: this.data.gender };
     this.setData({ needAuth: true, authStep: 1, editing: true });
+  },
+
+  // 取消编辑：还原原值与缓存，关闭向导
+  cancelEdit() {
+    const o = this._orig || {};
+    wx.setStorageSync('avatar', o.avatar || '');
+    wx.setStorageSync('nick', o.nick || '');
+    wx.setStorageSync('gender', o.gender || '');
+    this.setData({
+      avatar: o.avatar || '', nick: o.nick || '', gender: o.gender || '',
+      needAuth: false, editing: false,
+    });
   },
 
   // 授权向导：下一步

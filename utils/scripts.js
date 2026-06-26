@@ -508,7 +508,7 @@ const SCRIPT_TEST = {
   title: "巷往咖啡馆",
   subtitle: "反锁的深夜，一杯咖啡要了命",
   tag: "悬疑 · 人性",
-  cover: { emoji: "☕", gradient: "linear-gradient(135deg,#8a5a30,#3a2415)" },
+  cover: { emoji: "☕", gradient: "linear-gradient(135deg,#8a5a30,#3a2415)", image: "/assets/share.jpg" },
   minPlayers: 3,
   maxPlayers: 3,
   duration: "约 15 分钟",

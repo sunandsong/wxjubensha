@@ -6,13 +6,15 @@
   </view>
 
   <view class="card code-card">
-    <view>
-      <view class="muted">房间号</view>
-      <view class="code">{{roomCode}}</view>
+    <view class="code-row">
+      <view>
+        <view class="muted">房间号</view>
+        <view class="code">{{roomCode}}</view>
+      </view>
+      <button class="btn-mini share" open-type="share">分享到群</button>
     </view>
-    <button class="btn-mini share" open-type="share">分享到群</button>
+    <view class="muted invite-tip">点「分享到群」发卡片，群友点一下直接进房（无需输房间号）。</view>
   </view>
-  <view class="muted invite-tip">点「分享到群」发卡片，群友点一下直接进房（无需输房间号）。</view>
 
   <view class="card">
     <view class="row-between">

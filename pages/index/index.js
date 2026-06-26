@@ -24,12 +24,19 @@ Page({
     const nick = wx.getStorageSync('nick') || '';
     const avatar = wx.getStorageSync('avatar') || '';
     const gender = wx.getStorageSync('gender') || '';
-    // 首次进入（缺头像/昵称/性别）才弹授权门，从第一步开始
-    const needAuth = !(nick && avatar && gender);
+    // 测试身份直接放行；真实账号首次进入（缺头像/昵称/性别）才弹授权门
+    const isTest = !!app.getTestUid();
+    const needAuth = isTest ? false : !(nick && avatar && gender);
     // 弹向导时昵称默认置空，让用户用微信昵称组件重新带出（避免残留旧昵称）
-    this.setData({ nick: needAuth ? '' : nick, avatar, gender, needAuth, authStep: 1 });
+    this.setData({
+      nick: needAuth ? '' : nick, avatar, gender, needAuth, authStep: 1,
+      testTag: isTest ? nick : '', isDev: app.testEnabled(),
+    });
     app.ensureLogin().catch(() => {});
   },
+
+  // 测试身份入口（仅开发/体验版显示）
+  gotoTest() { wx.reLaunch({ url: '/pages/test/test' }); },
 
   // 编辑资料：重新打开三步向导（带出当前头像/昵称/性别，改完再确认）
   editProfile() {

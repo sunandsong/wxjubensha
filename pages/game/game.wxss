@@ -175,3 +175,16 @@
 .center { text-align: center; }
 /* 给底部固定条留出空间，避免遮住内容 */
 .container { padding-bottom: 200rpx; }
+
+/* 分幕切换过场层 */
+.act-transition {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(18,14,28,0.97);
+  opacity: 0; pointer-events: none; transition: opacity 0.45s ease;
+}
+.act-transition.show { opacity: 1; }
+.at-inner { text-align: center; transform: translateY(20rpx); opacity: 0; transition: all 0.5s ease 0.1s; }
+.act-transition.show .at-inner { transform: translateY(0); opacity: 1; }
+.at-label { font-size: 64rpx; font-weight: 700; color: #ffd9a8; letter-spacing: 6rpx; }
+.at-title { margin-top: 18rpx; font-size: 34rpx; color: #ddd6ee; letter-spacing: 4rpx; }

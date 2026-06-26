@@ -1,4 +1,12 @@
+<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+
 <view class="container">
+  <!-- 抓对真凶撒花 -->
+  <view class="confetti" wx:if="{{caught}}">
+    <view class="confetti-piece" wx:for="{{confetti}}" wx:key="i"
+          style="left:{{item.left}}%;background:{{item.color}};animation-delay:{{item.delay}}s;animation-duration:{{item.dur}}s;"></view>
+  </view>
+
   <view class="verdict {{caught?'win':'lose'}}">
     <view class="verdict-icon">{{caught ? '🎉' : '🕵️'}}</view>
     <view class="verdict-text">{{caught ? '真凶落网！' : '凶手逃脱了…'}}</view>

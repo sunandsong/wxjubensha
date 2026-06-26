@@ -26,6 +26,7 @@ Page({
 
   // 每次回到前台都确保身份就绪并重连监听（切屏后 watch 会断开）
   async onShow() {
+    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
@@ -44,6 +45,8 @@ Page({
   },
 
   onHide() { this.closeWatch(); },
+
+  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
   // 分享小程序卡片到群：群友点卡片 → 打开小程序 → 自动加入本房间
   onShareAppMessage() {
@@ -96,6 +99,7 @@ Page({
 
   async startGame() {
     if (!this.data.canStart) return wx.showToast({ title: '至少需要 1 名玩家（房主不参与）', icon: 'none' });
+    wx.vibrateShort && wx.vibrateShort({ type: 'medium' });
     this.setData({ starting: true });
     let res;
     try {

@@ -7,6 +7,7 @@ Page({
     roomId: '',
     roomCode: '',
     openid: '',
+    testTag: '',
     status: 'playing',
     actIndex: 0,
     actNum: 1,
@@ -44,6 +45,7 @@ Page({
   },
 
   async onShow() {
+    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
@@ -64,6 +66,8 @@ Page({
   },
 
   onHide() { this.closeWatch(); },
+
+  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
   // 主持人：复制文字（提示/问题/线索）到剪贴板，粘到群里
   copyText(e) {
@@ -333,6 +337,15 @@ Page({
       totalPlayers: players.filter((p) => p.openid !== room.hostOpenid).length,
     });
 
+    // 分幕切换过场：幕号变化时弹一张「第X幕 · 标题」电影感标题卡
+    if (status === 'playing' && this._lastActIndex !== actIndex) {
+      this._lastActIndex = actIndex;
+      const label = '第' + (['一', '二', '三', '四', '五', '六', '七', '八'][actIndex] || (actIndex + 1)) + '幕';
+      this.setData({ transShow: true, transLabel: label, transTitle: act ? act.title : '' });
+      clearTimeout(this._transTimer);
+      this._transTimer = setTimeout(() => this.setData({ transShow: false }), 1600);
+    }
+
     if (room.status === 'finished') {
       this.closeWatch();
       wx.redirectTo({ url: `/pages/result/result?roomId=${this.data.roomId}&roomCode=${this.data.roomCode}` });
@@ -359,6 +372,7 @@ Page({
 
   async vote(e) {
     const charId = e.currentTarget.dataset.id;
+    wx.vibrateShort && wx.vibrateShort({ type: 'light' });
     let res;
     try {
       res = await app.runOnce('vote', () => app.callGame({ action: 'vote', roomId: this.data.roomId, charId }), '');
@@ -367,6 +381,7 @@ Page({
     }
     if (!res) return; // 被防抖忽略
     if (res.result && !res.result.ok) return wx.showToast({ title: res.result.msg || '投票失败', icon: 'none' });
+    this.setData({ myVote: charId });   // 乐观更新：立刻高亮选中，不等云端回推
     wx.showToast({ title: '已投票', icon: 'success' });
   },
 
@@ -376,6 +391,7 @@ Page({
       const ok = await this.confirm('确定公布真相？投票将结束。');
       if (!ok) return;
     }
+    wx.vibrateShort && wx.vibrateShort({ type: 'light' });
     let res;
     try {
       res = await app.runOnce('advance', () => app.callGame({ action: 'advance', roomId: this.data.roomId }), '推进中');

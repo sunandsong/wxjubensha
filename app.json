@@ -3,7 +3,8 @@
     "pages/index/index",
     "pages/room/room",
     "pages/game/game",
-    "pages/result/result"
+    "pages/result/result",
+    "pages/test/test"
   ],
   "window": {
     "navigationBarBackgroundColor": "#1a1626",

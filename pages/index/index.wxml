@@ -1,3 +1,7 @@
+<!-- 测试身份入口：测试中显示「切换身份」，否则开发/体验版显示「测试身份」-->
+<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+<view wx:elif="{{isDev}}" class="test-switch" bindtap="gotoTest">测试身份</view>
+
 <!-- 强制授权门：三步向导（头像 → 昵称 → 性别）-->
 <view class="auth-mask" wx:if="{{needAuth}}" catchtouchmove="noop">
   <view class="auth-card">
@@ -44,7 +48,8 @@
 
 <view class="container">
   <view class="hero">
-    <view class="title">微信群剧本杀</view>
+    <view class="slogan">一局一故事，一人一面具</view>
+    <view class="subtitle muted">拉个群，开一局，揪出真凶</view>
   </view>
 
   <!-- 我的头像昵称（点右侧「编辑」可重新修改头像/昵称/性别）-->

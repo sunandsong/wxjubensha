@@ -71,3 +71,22 @@ page {
   font-size: 28rpx;
   color: #ddd6ee;
 }
+
+/* ── 全局特效 ── */
+/* 页面入场：整页淡入上滑（只在进入页面时触发一次）*/
+@keyframes pageIn { from { opacity: 0; transform: translateY(18rpx); } to { opacity: 1; transform: translateY(0); } }
+.container { animation: pageIn 0.4s ease both; }
+
+/* 按钮点击反馈：按下时轻微缩放 */
+.btn { transition: transform 0.1s ease, opacity 0.1s ease; }
+.btn:active { transform: scale(0.97); opacity: 0.92; }
+.btn-mini, .mini-btn, .gender-opt { transition: transform 0.1s ease; }
+.btn-mini:active, .mini-btn:active, .gender-opt:active { transform: scale(0.94); }
+
+/* 测试身份入口角标（仅开发/体验版）*/
+.test-switch {
+  position: fixed; left: 20rpx; bottom: 120rpx; z-index: 500;
+  background: rgba(196,77,255,0.92); color: #fff;
+  font-size: 24rpx; padding: 12rpx 24rpx; border-radius: 999rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.4);
+}

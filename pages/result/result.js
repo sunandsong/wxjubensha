@@ -27,6 +27,7 @@ Page({
 
   // 每次进入都重新请求最新数据（不依赖缓存）
   async onShow() {
+    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
@@ -257,7 +258,25 @@ Page({
       accusedName: accused ? accused.name : '无人得票',
       caught,
       myResult,
+      confetti: caught ? this._makeConfetti() : [],
     });
+    if (caught) wx.vibrateShort && wx.vibrateShort({ type: 'medium' });
+  },
+
+  // 撒花碎片（抓对真凶时）
+  _makeConfetti() {
+    const colors = ['#ffd9a8', '#7CFFB2', '#c44dff', '#7b5cff', '#ff8a8a', '#ffb347'];
+    const arr = [];
+    for (let i = 0; i < 18; i++) {
+      arr.push({
+        i,
+        left: Math.round(Math.random() * 100),
+        delay: (Math.random() * 0.6).toFixed(2),
+        dur: (1.8 + Math.random() * 1.0).toFixed(2),
+        color: colors[i % colors.length],
+      });
+    }
+    return arr;
   },
 
   watchReset() {
@@ -315,4 +334,6 @@ Page({
 
 
   onUnload() { this.closeWatch(); },
+
+  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 });

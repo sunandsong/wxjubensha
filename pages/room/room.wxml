@@ -1,3 +1,5 @@
+<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+
 <view class="container">
   <view class="card script-card">
     <view class="muted">本局剧本</view>

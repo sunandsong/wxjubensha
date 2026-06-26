@@ -120,7 +120,7 @@ Page({
     });
   },
 
-  // 画 930咖啡馆 现场平面图（中文标签永远清晰）
+  // 画 巷往咖啡馆 现场平面图（中文标签永远清晰）
   _drawMap(canvas) {
     const ctx = canvas.getContext('2d');
     const dpr = (wx.getSystemInfoSync().pixelRatio) || 2;
@@ -132,7 +132,7 @@ Page({
     // 标题
     ctx.textAlign = 'center';
     ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 38px sans-serif';
-    ctx.fillText('930咖啡馆 · 现场平面图', W / 2, 58);
+    ctx.fillText('巷往咖啡馆 · 现场平面图', W / 2, 58);
     ctx.fillStyle = '#7a6a4a'; ctx.font = '22px sans-serif';
     ctx.fillText('讨论用：你坐哪 · 去过哪 · 案发时在哪', W / 2, 92);
     // 画房间小工具

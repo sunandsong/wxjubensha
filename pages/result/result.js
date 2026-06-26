@@ -36,6 +36,90 @@ Page({
   },
   onHide() { this.closeWatch(); },
 
+  // 主持人：把这封信下载成图片（发到群里）
+  // 有现成信图(letterImg)就直接存；否则把信文渲染成一张信纸图片
+  saveLetterImg() {
+    if (this.data.letterImg) return this._saveSrc(this.data.letterImg);
+    const text = this.data.letter;
+    if (!text) return;
+    wx.showLoading({ title: '生成中', mask: true });
+    wx.createSelectorQuery().select('#letterCanvas').fields({ node: true }).exec((res) => {
+      const node = res && res[0] && res[0].node;
+      if (!node) { wx.hideLoading(); return wx.showToast({ title: '生成失败', icon: 'none' }); }
+      try {
+        this._drawLetter(node, text);
+        wx.canvasToTempFilePath({
+          canvas: node,
+          success: (r) => { wx.hideLoading(); this._saveFile(r.tempFilePath); },
+          fail: () => { wx.hideLoading(); wx.showToast({ title: '生成失败', icon: 'none' }); },
+        });
+      } catch (e) { wx.hideLoading(); wx.showToast({ title: '生成失败', icon: 'none' }); }
+    });
+  },
+
+  // 把信文画到 canvas 信纸上
+  _drawLetter(canvas, text) {
+    const ctx = canvas.getContext('2d');
+    const dpr = (wx.getSystemInfoSync().pixelRatio) || 2;
+    const W = 720, padX = 56, padTop = 72, padBottom = 90;
+    const fontSize = 30, lineH = 56;
+    const maxW = W - padX * 2;
+    const font = `${fontSize}px "Kaiti SC","STKaiti","KaiTi",serif`;
+    ctx.font = font;
+    // 按段落折行（中文逐字测宽）
+    const lines = [];
+    text.split('\n').forEach((para) => {
+      if (para === '') { lines.push(''); return; }   // 段落间空行
+      let cur = '';
+      for (const ch of para) {
+        if (ctx.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; }
+        else cur += ch;
+      }
+      lines.push(cur);
+    });
+    const H = padTop + lines.length * lineH + padBottom;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    // 背景：暖黄做旧信纸
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#f7eedc'); g.addColorStop(0.55, '#f1e4ca'); g.addColorStop(1, '#ecdcbe');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // 左侧装订暗边
+    ctx.fillStyle = 'rgba(150,110,55,0.18)'; ctx.fillRect(0, 0, 8, H);
+    // 文字
+    ctx.fillStyle = '#3b2c16';
+    ctx.font = font; ctx.textBaseline = 'top';
+    let y = padTop;
+    lines.forEach((ln) => { if (ln) ctx.fillText(ln, padX, y); y += lineH; });
+  },
+
+  // 通过 src（已有图片）取本地路径后保存
+  _saveSrc(src) {
+    wx.showLoading({ title: '保存中', mask: true });
+    wx.getImageInfo({
+      src,
+      success: (res) => this._saveFile(res.path),
+      fail: () => { wx.hideLoading(); wx.showToast({ title: '图片加载失败', icon: 'none' }); },
+    });
+  },
+
+  // 保存到相册（含权限引导）
+  _saveFile(filePath) {
+    wx.saveImageToPhotosAlbum({
+      filePath,
+      success: () => { wx.hideLoading(); wx.showToast({ title: '已存到相册', icon: 'success' }); },
+      fail: (err) => {
+        wx.hideLoading();
+        const m = String((err && err.errMsg) || '');
+        if (m.indexOf('auth') >= 0 || m.indexOf('deny') >= 0) {
+          wx.showModal({ title: '需要相册权限', content: '请在设置里允许保存到相册', confirmText: '去设置', success: (r) => { if (r.confirm) wx.openSetting(); } });
+        } else if (m.indexOf('cancel') < 0) {
+          wx.showToast({ title: '保存失败', icon: 'none' });
+        }
+      },
+    });
+  },
+
   async load() {
     wx.showLoading({ title: '加载中', mask: true });
     let room;

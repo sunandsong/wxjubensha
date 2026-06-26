@@ -113,6 +113,28 @@
 .clue-name { font-size: 28rpx; font-weight: 600; margin-top: 10rpx; }
 .clue-text { font-size: 24rpx; line-height: 1.5; margin-top: 10rpx; color: #ddd6ee; }
 
+/* 主持人：复制行（提示/问题）+ 小按钮 */
+.copy-row {
+  display: flex; align-items: flex-start; gap: 12rpx;
+  margin-top: 14rpx; font-size: 27rpx; line-height: 1.55; color: #ddd6ee;
+}
+.copy-text { flex: 1; }
+.mini-btn {
+  flex: none; align-self: flex-start; line-height: 1.7;
+  background: rgba(123,92,255,0.3); color: #ddd2ff;
+  font-size: 22rpx; padding: 6rpx 20rpx; border-radius: 999rpx;
+}
+
+/* 主持人线索：整宽列表（图 + 文字 + 复制/下载）*/
+.clue-list { display: flex; flex-direction: column; gap: 22rpx; margin-top: 16rpx; }
+.clue-card {
+  background: rgba(255,255,255,0.05); border: 1rpx solid rgba(255,255,255,0.12);
+  border-radius: 18rpx; padding: 22rpx 24rpx;
+}
+.clue-card .clue-name { font-size: 29rpx; font-weight: 600; margin-top: 0; }
+.clue-card .clue-text { font-size: 25rpx; line-height: 1.55; margin-top: 8rpx; color: #ddd6ee; }
+.clue-actions { display: flex; gap: 16rpx; margin-top: 18rpx; }
+
 /* 搜证 */
 .search-btn {
   margin-top: 16rpx; padding: 12rpx 0;

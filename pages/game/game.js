@@ -67,6 +67,39 @@ Page({
 
   onHide() { this.closeWatch(); },
 
+  // 主持人：复制文字（提示/问题/线索）到剪贴板，粘到群里
+  copyText(e) {
+    const text = e.currentTarget.dataset.text || '';
+    if (!text) return;
+    wx.setClipboardData({ data: text, success: () => wx.showToast({ title: '已复制', icon: 'success' }) });
+  },
+
+  // 主持人：把线索图片保存到相册，再发到群里
+  saveImg(e) {
+    const src = e.currentTarget.dataset.src;
+    if (!src) return;
+    wx.showLoading({ title: '保存中', mask: true });
+    wx.getImageInfo({
+      src,
+      success: (res) => {
+        wx.saveImageToPhotosAlbum({
+          filePath: res.path,
+          success: () => { wx.hideLoading(); wx.showToast({ title: '已存到相册', icon: 'success' }); },
+          fail: (err) => {
+            wx.hideLoading();
+            const m = String((err && err.errMsg) || '');
+            if (m.indexOf('auth') >= 0 || m.indexOf('deny') >= 0) {
+              wx.showModal({ title: '需要相册权限', content: '请在设置里允许保存到相册', confirmText: '去设置', success: (r) => { if (r.confirm) wx.openSetting(); } });
+            } else {
+              wx.showToast({ title: '保存失败', icon: 'none' });
+            }
+          },
+        });
+      },
+      fail: () => { wx.hideLoading(); wx.showToast({ title: '图片加载失败', icon: 'none' }); },
+    });
+  },
+
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
 

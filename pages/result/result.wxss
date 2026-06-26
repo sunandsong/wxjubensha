@@ -52,3 +52,17 @@
   color: #3b2c16;
   text-align: justify;
 }
+
+/* 下载按钮 */
+.clue-actions { display: flex; gap: 16rpx; margin-top: 20rpx; }
+.mini-btn {
+  align-self: flex-start; line-height: 1.7;
+  background: rgba(123,92,255,0.3); color: #ddd2ff;
+  font-size: 24rpx; padding: 8rpx 24rpx; border-radius: 999rpx;
+}
+
+/* 离屏 canvas：渲染信件用，移出屏幕不显示 */
+.offscreen-canvas {
+  position: fixed; left: -9999rpx; top: 0;
+  width: 720px; height: 1600px;
+}

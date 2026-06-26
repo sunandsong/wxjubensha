@@ -17,10 +17,13 @@
     <!-- 主持人流程提示 -->
     <view class="card mychar host-guide" wx:if="{{isHost}}">
       <view class="muted">你是主持人 · 不参与角色</view>
-      <!-- 本子自带群活动清单（咖啡馆）：逐条带流程 -->
+      <!-- 本子自带群活动清单（咖啡馆）：逐条带流程，可一键复制 -->
       <block wx:if="{{actHostActivities.length}}">
         <view class="field-label">🎬 本幕群活动</view>
-        <view class="guide-foot" wx:for="{{actHostActivities}}" wx:key="*this">{{item}}</view>
+        <view class="copy-row" wx:for="{{actHostActivities}}" wx:key="*this">
+          <text class="copy-text">{{item}}</text>
+          <text class="mini-btn" data-text="{{item}}" bindtap="copyText">复制</text>
+        </view>
       </block>
       <!-- 通用流程提示（其它本子） -->
       <block wx:else>
@@ -29,25 +32,31 @@
         <view class="guide-foot" wx:else>每人读本幕私密剧情 → 念出本幕新线索 → 每人做最后陈述 → 点底部进入投票。</view>
         <view wx:if="{{actHostPrompts.length}}" class="host-prompts">
           <view class="field-label">💬 冷场时，挑一句直接问</view>
-          <view class="ask-item" wx:for="{{actHostPrompts}}" wx:key="*this">{{item}}</view>
+          <view class="copy-row" wx:for="{{actHostPrompts}}" wx:key="*this">
+            <text class="copy-text">{{item}}</text>
+            <text class="mini-btn" data-text="{{item}}" bindtap="copyText">复制</text>
+          </view>
         </view>
       </block>
       <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
     </view>
 
-    <!-- 本幕线索：随幕自动公开，但只发给主持人；主持人保存/截图后发到微信群（autoClues 本子）-->
+    <!-- 本幕线索：随幕自动公开，只发给主持人；复制文字 / 下载图片，发到微信群（autoClues 本子）-->
     <view class="card" wx:if="{{autoClues && clues.length && isHost}}">
       <view class="row-between">
         <view class="sec-title">🔎 本幕线索（仅主持人可见）</view>
-        <text class="muted">截图发到群里</text>
+        <text class="muted">复制/下载后发群</text>
       </view>
-      <view class="muted tip">玩家端只有自己的剧情，看不到线索。有图的长按「保存 / 发送到群」；暂无图的先截图整张卡片发群。</view>
-      <view class="clue-grid">
-        <view class="clue open" wx:for="{{clues}}" wx:key="id">
+      <view class="muted tip">玩家端只有自己的剧情、看不到线索。每条可「复制文字」粘到群里，有图的可「下载图片」发群。</view>
+      <view class="clue-list">
+        <view class="clue-card" wx:for="{{clues}}" wx:key="id">
           <image wx:if="{{item.img}}" class="clue-img" src="{{item.img}}" mode="widthFix" show-menu-by-longpress></image>
-          <view class="clue-icon">{{item.icon}}</view>
-          <view class="clue-name">{{item.name}}</view>
+          <view class="clue-name">{{item.icon}} {{item.name}}</view>
           <view class="clue-text">{{item.text}}</view>
+          <view class="clue-actions">
+            <text class="mini-btn" data-text="【{{item.name}}】{{item.text}}" bindtap="copyText">复制文字</text>
+            <text wx:if="{{item.img}}" class="mini-btn" data-src="{{item.img}}" bindtap="saveImg">下载图片</text>
+          </view>
         </view>
       </view>
     </view>

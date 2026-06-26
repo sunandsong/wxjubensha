@@ -3,6 +3,15 @@
 <view class="container">
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">
+    <!-- 第一幕开场大图：所有人可见，把大家拉进深夜咖啡馆 -->
+    <view wx:if="{{actNum===1}}" class="scene-card">
+      <image class="scene-img" src="/assets/scene.jpg" mode="widthFix" show-menu-by-longpress></image>
+      <view class="scene-title">深夜的 930 咖啡馆</view>
+      <view wx:if="{{isHost}}" class="clue-actions">
+        <text class="mini-btn" data-src="/assets/scene.jpg" bindtap="saveImg">下载发群</text>
+      </view>
+    </view>
+
     <!-- 主持人：本幕剧情（第一幕已把世界观接在前面），合成一整块故事 -->
     <view wx:if="{{isHost}}" class="card act-card">
       <view class="pre">{{actHostStory || actNarration}}</view>
@@ -39,6 +48,38 @@
         </view>
       </block>
       <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
+    </view>
+
+    <!-- 第一幕·角色亮相：按玩家性别给出角色照片，主持人下载发群让大家认人 -->
+    <view class="card" wx:if="{{isHost && actNum===1 && cast.length}}">
+      <view class="row-between">
+        <view class="sec-title">🎭 角色亮相（仅主持人）</view>
+        <text class="muted">下载发群认人</text>
+      </view>
+      <view class="muted tip">按每位玩家选的性别生成的角色照片，逐张「下载图片」发到群里，让大家对上号。</view>
+      <view class="clue-list">
+        <view class="clue-card" wx:for="{{cast}}" wx:key="id">
+          <image wx:if="{{item.photo}}" class="clue-img" src="{{item.photo}}" mode="widthFix" show-menu-by-longpress></image>
+          <view class="clue-name">{{item.name}}<text class="cast-title"> · {{item.title}}</text></view>
+          <view class="clue-actions">
+            <text wx:if="{{item.photo}}" class="mini-btn" data-src="{{item.photo}}" bindtap="saveImg">下载图片</text>
+            <text class="mini-btn" data-text="{{item.name}} · {{item.title}}" bindtap="copyText">复制名字</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 第一幕·现场平面图：主持人生成并下载发群，供大家讨论位置 -->
+    <view class="card" wx:if="{{isHost && actNum===1}}">
+      <view class="row-between">
+        <view class="sec-title">🗺️ 现场平面图（仅主持人）</view>
+        <text class="muted">下载发群讨论</text>
+      </view>
+      <view class="muted tip">带中文标签的咖啡馆户型图：门口 / 座位区 / 吧台（杯子·老板倒下处）/ 后厨 / 厕所，发到群里让大家说自己坐哪、去过哪。</view>
+      <view class="clue-actions">
+        <text class="mini-btn" bindtap="saveMap">下载平面图</text>
+      </view>
+      <canvas type="2d" id="mapCanvas" class="offscreen-canvas"></canvas>
     </view>
 
     <!-- 本幕线索：随幕自动公开，只发给主持人；复制文字 / 下载图片，发到微信群（autoClues 本子）-->

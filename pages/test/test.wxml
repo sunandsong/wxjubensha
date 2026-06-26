@@ -6,7 +6,7 @@
 
   <view class="t-list">
     <view class="t-item {{current===item.uid?'on':''}}" wx:for="{{options}}" wx:key="uid"
-          data-uid="{{item.uid}}" data-nick="{{item.nick}}" bindtap="pick">
+          data-uid="{{item.uid}}" data-nick="{{item.nick}}" data-gender="{{item.gender}}" bindtap="pick">
       <view class="t-avatar">{{item.nick[2]}}</view>
       <view class="t-name">{{item.nick}}</view>
       <view class="t-cur" wx:if="{{current===item.uid}}">当前</view>

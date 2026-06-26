@@ -5,6 +5,7 @@ Page({
   data: {
     nick: '',
     avatar: '',     // 头像 fileID（云存储），记住后下次自动带上
+    gender: '',     // 'm' / 'f'，决定角色照片；记住后下次自动带上
     loading: false,
     scripts: SCRIPTS.list.map((s) => ({
       id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
@@ -18,14 +19,22 @@ Page({
   onLoad() {
     const nick = wx.getStorageSync('nick') || '';
     const avatar = wx.getStorageSync('avatar') || '';
-    // 测试身份直接放行；真实账号首次进入（缺头像/昵称）才弹授权门
-    const needAuth = app.getTestUid() ? false : !(nick && avatar);
-    this.setData({ nick, avatar, needAuth, testTag: app.getTestUid() ? nick : '' });
+    const gender = wx.getStorageSync('gender') || '';
+    // 测试身份直接放行；真实账号首次进入（缺头像/昵称/性别）才弹授权门
+    const needAuth = app.getTestUid() ? false : !(nick && avatar && gender);
+    this.setData({ nick, avatar, gender, needAuth, testTag: app.getTestUid() ? nick : '' });
     app.ensureLogin().catch(() => {});
   },
 
   // 回到测试身份选择页
   gotoTest() { wx.reLaunch({ url: '/pages/test/test' }); },
+
+  // 选择性别（决定角色照片）
+  pickGender(e) {
+    const gender = e.currentTarget.dataset.g;
+    this.setData({ gender });
+    wx.setStorageSync('gender', gender);
+  },
 
   // 选择微信头像 → 上传云存储，得到可被他人加载的 fileID 并记住
   async onChooseAvatar(e) {
@@ -52,6 +61,7 @@ Page({
     if (!this.data.avatar) return wx.showToast({ title: '请先选择头像', icon: 'none' });
     const nick = (this.data.nick || '').trim().slice(0, 8);
     if (!nick) return wx.showToast({ title: '请填写昵称', icon: 'none' });
+    if (!this.data.gender) return wx.showToast({ title: '请选择性别', icon: 'none' });
     wx.setStorageSync('nick', nick);
     this.setData({ nick, needAuth: false });
   },
@@ -104,10 +114,11 @@ Page({
   async createRoom(scriptId) {
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
+    const gender = this.data.gender;
     this.setData({ loading: true });
     let res;
     try {
-      res = await app.runOnce('create', () => app.callGame({ action: 'create', nick, avatar, scriptId }), '创建中');
+      res = await app.runOnce('create', () => app.callGame({ action: 'create', nick, avatar, gender, scriptId }), '创建中');
     } catch (e) {
       this.setData({ loading: false });
       return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
@@ -124,10 +135,11 @@ Page({
   async joinRoom(code) {
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
+    const gender = this.data.gender;
     this.setData({ loading: true });
     let res;
     try {
-      res = await app.runOnce('join', () => app.callGame({ action: 'join', roomCode: code, nick, avatar }), '加入中');
+      res = await app.runOnce('join', () => app.callGame({ action: 'join', roomCode: code, nick, avatar, gender }), '加入中');
     } catch (e) {
       this.setData({ loading: false });
       return wx.showToast({ title: '网络异常，请重试', icon: 'none' });

@@ -74,30 +74,94 @@ Page({
     wx.setClipboardData({ data: text, success: () => wx.showToast({ title: '已复制', icon: 'success' }) });
   },
 
-  // 主持人：把线索图片保存到相册，再发到群里
+  // 主持人：把线索/角色图片保存到相册，再发到群里
   saveImg(e) {
     const src = e.currentTarget.dataset.src;
     if (!src) return;
     wx.showLoading({ title: '保存中', mask: true });
     wx.getImageInfo({
       src,
-      success: (res) => {
-        wx.saveImageToPhotosAlbum({
-          filePath: res.path,
-          success: () => { wx.hideLoading(); wx.showToast({ title: '已存到相册', icon: 'success' }); },
-          fail: (err) => {
-            wx.hideLoading();
-            const m = String((err && err.errMsg) || '');
-            if (m.indexOf('auth') >= 0 || m.indexOf('deny') >= 0) {
-              wx.showModal({ title: '需要相册权限', content: '请在设置里允许保存到相册', confirmText: '去设置', success: (r) => { if (r.confirm) wx.openSetting(); } });
-            } else {
-              wx.showToast({ title: '保存失败', icon: 'none' });
-            }
-          },
-        });
-      },
+      success: (res) => this._saveToAlbum(res.path),
       fail: () => { wx.hideLoading(); wx.showToast({ title: '图片加载失败', icon: 'none' }); },
     });
+  },
+
+  // 保存到相册（含权限引导），各处复用
+  _saveToAlbum(filePath) {
+    wx.saveImageToPhotosAlbum({
+      filePath,
+      success: () => { wx.hideLoading(); wx.showToast({ title: '已存到相册', icon: 'success' }); },
+      fail: (err) => {
+        wx.hideLoading();
+        const m = String((err && err.errMsg) || '');
+        if (m.indexOf('auth') >= 0 || m.indexOf('deny') >= 0) {
+          wx.showModal({ title: '需要相册权限', content: '请在设置里允许保存到相册', confirmText: '去设置', success: (r) => { if (r.confirm) wx.openSetting(); } });
+        } else if (m.indexOf('cancel') < 0) {
+          wx.showToast({ title: '保存失败', icon: 'none' });
+        }
+      },
+    });
+  },
+
+  // 主持人：生成「现场平面图」并保存到相册，发群讨论
+  saveMap() {
+    wx.showLoading({ title: '生成中', mask: true });
+    wx.createSelectorQuery().select('#mapCanvas').fields({ node: true }).exec((res) => {
+      const node = res && res[0] && res[0].node;
+      if (!node) { wx.hideLoading(); return wx.showToast({ title: '生成失败', icon: 'none' }); }
+      try {
+        this._drawMap(node);
+        wx.canvasToTempFilePath({
+          canvas: node,
+          success: (r) => this._saveToAlbum(r.tempFilePath),
+          fail: () => { wx.hideLoading(); wx.showToast({ title: '生成失败', icon: 'none' }); },
+        });
+      } catch (e) { wx.hideLoading(); wx.showToast({ title: '生成失败', icon: 'none' }); }
+    });
+  },
+
+  // 画 930咖啡馆 现场平面图（中文标签永远清晰）
+  _drawMap(canvas) {
+    const ctx = canvas.getContext('2d');
+    const dpr = (wx.getSystemInfoSync().pixelRatio) || 2;
+    const W = 720, H = 900;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    // 纸底
+    ctx.fillStyle = '#f5efe2'; ctx.fillRect(0, 0, W, H);
+    // 标题
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 38px sans-serif';
+    ctx.fillText('930咖啡馆 · 现场平面图', W / 2, 58);
+    ctx.fillStyle = '#7a6a4a'; ctx.font = '22px sans-serif';
+    ctx.fillText('讨论用：你坐哪 · 去过哪 · 案发时在哪', W / 2, 92);
+    // 画房间小工具
+    const room = (x, y, w, h, label, sub, fill) => {
+      ctx.fillStyle = fill || '#fff8ec';
+      ctx.strokeStyle = '#b89a6a'; ctx.lineWidth = 3;
+      ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+      ctx.textAlign = 'center'; ctx.fillStyle = '#3b2c16';
+      ctx.font = 'bold 30px sans-serif';
+      ctx.fillText(label, x + w / 2, y + h / 2 + (sub ? -8 : 10));
+      if (sub) { ctx.font = '21px sans-serif'; ctx.fillStyle = '#9a5a28'; ctx.fillText(sub, x + w / 2, y + h / 2 + 26); }
+    };
+    const M = 40, innerW = W - 2 * M;            // 外框 40..680
+    ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 5;
+    ctx.strokeRect(M, 120, innerW, H - 160);     // 店外框
+    // 顶部：后厨 / 厕所
+    room(60, 150, 280, 150, '后　厨', '小美在此放水洗杯');
+    room(380, 150, 280, 150, '厕　所', '老李去过这');
+    // 吧台
+    room(60, 330, 580, 150, '吧　台', '☕ 杯子在台上　☠ 老板倒在台后', '#fbe4c8');
+    // 座位区标题
+    ctx.textAlign = 'left'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('座位区（你坐哪？）', 60, 535);
+    room(60, 555, 160, 120, '窗　边', '老李案发在此', '#e8f0ff');
+    room(240, 555, 120, 120, '桌 1', '');
+    room(380, 555, 120, 120, '桌 2', '');
+    room(520, 555, 120, 120, '桌 3', '');
+    // 门口
+    room(270, 730, 180, 90, '门　口', '入口');
   },
 
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
@@ -219,6 +283,19 @@ Page({
     }
 
 
+    // 第一幕·角色亮相：按演该角色的玩家性别给出对应照片，主持人下载发群认人
+    const cast = (actIndex === 0 && isHost)
+      ? SCRIPT.characters.map((c) => {
+          const owner = players.find((p) => p.charId === c.id);
+          if (!owner) return null;                 // NPC（无人认领）不发照片
+          const g = owner.gender === 'f' ? 'f' : (owner.gender === 'm' ? 'm' : '');
+          return {
+            id: c.id, name: namer.name(c.id), title: c.title,
+            photo: g ? `/assets/avatars/${c.id}_${g}.jpg` : '',
+          };
+        }).filter(Boolean)
+      : [];
+
     const votes = room.votes || {};
     const myVote = votes[openid] || '';
 
@@ -241,6 +318,7 @@ Page({
       actHostActivities: apList(actHost ? actHost.activities : []),
       isLastAct,
       isHost,
+      cast,
       script: SCRIPT,
       myChar,
       myActStory,

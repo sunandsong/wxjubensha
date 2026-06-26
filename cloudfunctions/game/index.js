@@ -69,7 +69,7 @@ exports.main = async (event) => {
         code = genCode();
         exists = await getRoomByCode(code);
       } while (exists);
-      const player = { openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', charId: '' };
+      const player = { openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '' };
       const scriptId = SCRIPT_META[event.scriptId] ? event.scriptId : DEFAULT_SCRIPT;
       const add = await rooms.add({
         data: {
@@ -95,7 +95,7 @@ exports.main = async (event) => {
       if (already) return { ok: true, roomId: room._id, roomCode: room.roomCode };
       if (room.players.length >= 6) return { ok: false, msg: '房间已满（最多 6 人）' };
       await rooms.doc(room._id).update({
-        data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', charId: '' }) },
+        data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '' }) },
       });
       return { ok: true, roomId: room._id, roomCode: room.roomCode, openid: OPENID };
     }

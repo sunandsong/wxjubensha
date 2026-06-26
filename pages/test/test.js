@@ -4,10 +4,10 @@ Page({
   data: {
     current: '',
     options: [
-      { uid: 'test-A', nick: '玩家A' },
-      { uid: 'test-B', nick: '玩家B' },
-      { uid: 'test-C', nick: '玩家C' },
-      { uid: 'test-D', nick: '玩家D' },
+      { uid: 'test-A', nick: '玩家A', gender: 'm' },
+      { uid: 'test-B', nick: '玩家B', gender: 'f' },
+      { uid: 'test-C', nick: '玩家C', gender: 'm' },
+      { uid: 'test-D', nick: '玩家D', gender: 'f' },
     ],
   },
 
@@ -19,10 +19,12 @@ Page({
   pick(e) {
     const uid = e.currentTarget.dataset.uid;
     const nick = e.currentTarget.dataset.nick;
+    const gender = e.currentTarget.dataset.gender;
     app.runOnce('switchIdentity', () => {
       app.setTestUid(uid);
       wx.setStorageSync('nick', nick);
       wx.setStorageSync('avatar', ''); // 测试身份用字母头像
+      wx.setStorageSync('gender', gender || 'm'); // 测试身份预设性别
       wx.reLaunch({ url: '/pages/index/index' });
     }, '');
   },

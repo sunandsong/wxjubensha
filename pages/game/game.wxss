@@ -5,6 +5,16 @@
 }
 .tab.on { color: #fff; background: linear-gradient(90deg, #7b5cff, #c44dff); font-weight: 600; }
 
+/* 第一幕开场大图 */
+.scene-card { position: relative; margin-bottom: 20rpx; border-radius: 20rpx; overflow: hidden; }
+.scene-img { width: 100%; display: block; }
+.scene-title {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 40rpx 28rpx 22rpx; font-size: 36rpx; font-weight: 700; color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
+}
+.scene-card .clue-actions { position: absolute; top: 18rpx; right: 18rpx; margin: 0; }
+
 .sec-title { font-size: 32rpx; font-weight: 700; margin-bottom: 14rpx; }
 .tip { margin-top: 16rpx; display: block; }
 
@@ -134,6 +144,9 @@
 .clue-card .clue-name { font-size: 29rpx; font-weight: 600; margin-top: 0; }
 .clue-card .clue-text { font-size: 25rpx; line-height: 1.55; margin-top: 8rpx; color: #ddd6ee; }
 .clue-actions { display: flex; gap: 16rpx; margin-top: 18rpx; }
+.cast-title { font-size: 24rpx; color: #b3a6cc; font-weight: 400; }
+/* 离屏 canvas：渲染平面图用，移出屏幕不显示 */
+.offscreen-canvas { position: fixed; left: -9999rpx; top: 0; width: 720px; height: 900px; }
 
 /* 搜证 */
 .search-btn {

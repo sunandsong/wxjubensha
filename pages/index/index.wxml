@@ -8,8 +8,13 @@
       <view wx:else class="avatar-ph">＋ 头像</view>
     </button>
     <input class="input auth-input" type="nickname" placeholder="点这里填写微信昵称" value="{{nick}}" bindinput="onNick" bindblur="onNick" maxlength="8" />
+    <view class="auth-gender-label">选择性别（决定你的角色照片）</view>
+    <view class="auth-gender">
+      <view class="gender-opt {{gender==='m'?'on':''}}" data-g="m" bindtap="pickGender">♂ 男</view>
+      <view class="gender-opt {{gender==='f'?'on':''}}" data-g="f" bindtap="pickGender">♀ 女</view>
+    </view>
     <button class="btn" bindtap="confirmAuth" disabled="{{uploading}}">{{uploading ? '头像上传中…' : '授权并进入'}}</button>
-    <view class="auth-tip">不提供头像和昵称将无法进入</view>
+    <view class="auth-tip">不提供头像、昵称、性别将无法进入</view>
   </view>
 </view>
 

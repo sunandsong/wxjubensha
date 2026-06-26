@@ -27,7 +27,6 @@ Page({
 
   // 每次进入都重新请求最新数据（不依赖缓存）
   async onShow() {
-    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
@@ -314,7 +313,6 @@ Page({
     }, '');
   },
 
-  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
   onUnload() { this.closeWatch(); },
 });

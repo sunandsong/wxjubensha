@@ -12,6 +12,8 @@ Page({
       players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
     })),
     needAuth: false, // 未完善头像昵称 → 强制授权门
+    authStep: 1,     // 授权向导步骤：1 头像 / 2 昵称 / 3 性别
+    editing: false,  // true=从首页「编辑」进入（按钮显示「确定」）
     picking: false,  // 是否展开剧本封面选择层
     uploading: false,
   },
@@ -20,14 +22,37 @@ Page({
     const nick = wx.getStorageSync('nick') || '';
     const avatar = wx.getStorageSync('avatar') || '';
     const gender = wx.getStorageSync('gender') || '';
-    // 测试身份直接放行；真实账号首次进入（缺头像/昵称/性别）才弹授权门
-    const needAuth = app.getTestUid() ? false : !(nick && avatar && gender);
-    this.setData({ nick, avatar, gender, needAuth, testTag: app.getTestUid() ? nick : '' });
+    // 首次进入（缺头像/昵称/性别）才弹授权门，从第一步开始
+    const needAuth = !(nick && avatar && gender);
+    // 弹向导时昵称默认置空，让用户用微信昵称组件重新带出（避免残留旧昵称）
+    this.setData({ nick: needAuth ? '' : nick, avatar, gender, needAuth, authStep: 1 });
     app.ensureLogin().catch(() => {});
   },
 
-  // 回到测试身份选择页
-  gotoTest() { wx.reLaunch({ url: '/pages/test/test' }); },
+  // 编辑资料：重新打开三步向导（带出当前头像/昵称/性别，改完再确认）
+  editProfile() {
+    this.setData({ needAuth: true, authStep: 1, editing: true });
+  },
+
+  // 授权向导：下一步
+  stepNext() {
+    const step = this.data.authStep;
+    if (step === 1) {
+      if (this.data.uploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
+      if (!this.data.avatar) return wx.showToast({ title: '请先选择头像', icon: 'none' });
+      this.setData({ authStep: 2 });
+    } else if (step === 2) {
+      const nick = (this.data.nick || '').trim().slice(0, 8);
+      if (!nick) return wx.showToast({ title: '请填写昵称', icon: 'none' });
+      wx.setStorageSync('nick', nick);
+      this.setData({ nick, authStep: 3 });
+    }
+  },
+
+  // 授权向导：上一步
+  stepBack() {
+    if (this.data.authStep > 1) this.setData({ authStep: this.data.authStep - 1 });
+  },
 
   // 选择性别（决定角色照片）
   pickGender(e) {
@@ -55,15 +80,14 @@ Page({
     }
   },
 
-  // 授权门：必须头像+昵称齐全才能进入
+  // 第三步完成：三项齐全才能进入（缺哪步回哪步）
   confirmAuth() {
-    if (this.data.uploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
-    if (!this.data.avatar) return wx.showToast({ title: '请先选择头像', icon: 'none' });
+    if (!this.data.avatar) return this.setData({ authStep: 1 });
     const nick = (this.data.nick || '').trim().slice(0, 8);
-    if (!nick) return wx.showToast({ title: '请填写昵称', icon: 'none' });
+    if (!nick) return this.setData({ authStep: 2 });
     if (!this.data.gender) return wx.showToast({ title: '请选择性别', icon: 'none' });
     wx.setStorageSync('nick', nick);
-    this.setData({ nick, needAuth: false });
+    this.setData({ nick, needAuth: false, editing: false });
   },
 
   onShow() {

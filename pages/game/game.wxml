@@ -1,5 +1,3 @@
-<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
-
 <view class="container">
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">

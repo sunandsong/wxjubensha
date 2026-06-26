@@ -7,7 +7,6 @@ Page({
     roomId: '',
     roomCode: '',
     openid: '',
-    testTag: '',
     status: 'playing',
     actIndex: 0,
     actNum: 1,
@@ -45,7 +44,6 @@ Page({
   },
 
   async onShow() {
-    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
@@ -174,8 +172,6 @@ Page({
     ctx.textAlign = 'center'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 26px sans-serif';
     ctx.fillText('窗（座位区临窗）', 350, 726);
   },
-
-  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
 
   // 玩家搜查某个地点（地点不一定有线索）

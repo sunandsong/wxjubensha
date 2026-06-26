@@ -1,35 +1,57 @@
-<!-- 强制授权门：未完善头像昵称不能进入 -->
+<!-- 强制授权门：三步向导（头像 → 昵称 → 性别）-->
 <view class="auth-mask" wx:if="{{needAuth}}" catchtouchmove="noop">
   <view class="auth-card">
-    <view class="auth-title">完善头像和昵称</view>
-    <view class="auth-sub">进入游戏需要你的头像和昵称，方便群友辨认身份</view>
-    <button class="avatar-btn auth-avatar" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
-      <image wx:if="{{avatar}}" class="avatar-img" src="{{avatar}}" mode="aspectFill" />
-      <view wx:else class="avatar-ph">＋ 头像</view>
-    </button>
-    <input class="input auth-input" type="nickname" placeholder="点这里填写微信昵称" value="{{nick}}" bindinput="onNick" bindblur="onNick" maxlength="8" />
-    <view class="auth-gender-label">选择性别（决定你的角色照片）</view>
-    <view class="auth-gender">
-      <view class="gender-opt {{gender==='m'?'on':''}}" data-g="m" bindtap="pickGender">♂ 男</view>
-      <view class="gender-opt {{gender==='f'?'on':''}}" data-g="f" bindtap="pickGender">♀ 女</view>
-    </view>
-    <button class="btn" bindtap="confirmAuth" disabled="{{uploading}}">{{uploading ? '头像上传中…' : '授权并进入'}}</button>
-    <view class="auth-tip">不提供头像、昵称、性别将无法进入</view>
+    <view class="auth-steps">{{authStep}} / 3</view>
+
+    <!-- 第一步：确认头像 -->
+    <block wx:if="{{authStep===1}}">
+      <view class="auth-title">第一步 · 确认头像</view>
+      <view class="auth-sub">点下方选择你的微信头像</view>
+      <button class="avatar-btn auth-avatar" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+        <image wx:if="{{avatar}}" class="avatar-img" src="{{avatar}}" mode="aspectFill" />
+        <view wx:else class="avatar-ph">＋ 头像</view>
+      </button>
+      <button class="btn" bindtap="stepNext" disabled="{{uploading || !avatar}}">{{uploading ? '头像上传中…' : '下一步'}}</button>
+    </block>
+
+    <!-- 第二步：确认昵称 -->
+    <block wx:elif="{{authStep===2}}">
+      <view class="auth-title">第二步 · 确认昵称</view>
+      <view class="auth-sub">点输入框，微信会带出你的昵称</view>
+      <input class="input auth-input" type="nickname" placeholder="点这里填写微信昵称" value="{{nick}}" bindinput="onNick" bindblur="onNick" maxlength="8" />
+      <view class="auth-btns">
+        <button class="btn btn-ghost" bindtap="stepBack">上一步</button>
+        <button class="btn" bindtap="stepNext" disabled="{{!nick}}">下一步</button>
+      </view>
+    </block>
+
+    <!-- 第三步：选择性别 -->
+    <block wx:else>
+      <view class="auth-title">第三步 · 选择性别</view>
+      <view class="auth-sub">决定你在剧中的角色照片</view>
+      <view class="auth-gender">
+        <view class="gender-opt {{gender==='m'?'on':''}}" data-g="m" bindtap="pickGender">♂ 男</view>
+        <view class="gender-opt {{gender==='f'?'on':''}}" data-g="f" bindtap="pickGender">♀ 女</view>
+      </view>
+      <view class="auth-btns">
+        <button class="btn btn-ghost" bindtap="stepBack">上一步</button>
+        <button class="btn" bindtap="confirmAuth" disabled="{{!gender}}">{{editing ? '确定' : '完成进入'}}</button>
+      </view>
+    </block>
   </view>
 </view>
-
-<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
 
 <view class="container">
   <view class="hero">
     <view class="title">微信群剧本杀</view>
   </view>
 
-  <!-- 我的头像昵称（只读展示） -->
-  <view class="profile">
+  <!-- 我的头像昵称（点右侧「编辑」可重新修改头像/昵称/性别）-->
+  <view class="profile" bindtap="editProfile">
     <image wx:if="{{avatar}}" class="profile-avatar" src="{{avatar}}" mode="aspectFill" />
     <view wx:else class="profile-avatar profile-ph">头像</view>
-    <view class="profile-nick">{{nick}}</view>
+    <view class="profile-nick">{{nick}}<text class="profile-gender" wx:if="{{gender}}">{{gender==='m' ? ' ♂' : ' ♀'}}</text></view>
+    <view class="profile-edit">编辑 ›</view>
   </view>
 
   <!-- 两个入口：全宽大按钮 -->

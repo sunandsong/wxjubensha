@@ -24,6 +24,9 @@
   padding: 48rpx 40rpx; text-align: center;
   border: 1rpx solid rgba(255,255,255,0.1);
 }
+.auth-steps { font-size: 24rpx; color: #8a7da6; margin-bottom: 18rpx; letter-spacing: 2rpx; }
+.auth-btns { display: flex; gap: 20rpx; }
+.auth-btns .btn { flex: 1; margin: 0; }
 .auth-title { font-size: 38rpx; font-weight: 600; color: #fff; }
 .auth-sub { font-size: 26rpx; color: #b3a6cc; margin: 16rpx 0 36rpx; line-height: 1.5; }
 .auth-avatar { width: 160rpx !important; height: 160rpx !important; margin: 0 auto 28rpx; }
@@ -70,6 +73,8 @@
   font-size: 24rpx; color: #b3a6cc;
 }
 .profile-nick { margin-top: 20rpx; font-size: 34rpx; font-weight: 600; color: #fff; }
+.profile-gender { font-size: 28rpx; color: #c4a8ff; font-weight: 400; }
+.profile-edit { margin-top: 12rpx; font-size: 24rpx; color: #c4a8ff; }
 
 /* 通栏大按钮：横向充满屏幕（抵消 .container 的左右 28rpx 内边距） */
 .big-btn {

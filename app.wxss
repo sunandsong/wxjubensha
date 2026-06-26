@@ -55,13 +55,6 @@ page {
   color: #6a6385;
 }
 
-/* 测试用：切换身份角标 */
-.test-switch {
-  position: fixed; right: 20rpx; top: 20rpx; z-index: 200;
-  background: rgba(196,77,255,0.85); color: #fff;
-  font-size: 24rpx; padding: 10rpx 20rpx; border-radius: 999rpx;
-}
-
 .muted { color: #9a8fb5; font-size: 26rpx; }
 .tag {
   display: inline-block;

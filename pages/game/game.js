@@ -124,7 +124,7 @@ Page({
   _drawMap(canvas) {
     const ctx = canvas.getContext('2d');
     const dpr = (wx.getSystemInfoSync().pixelRatio) || 2;
-    const W = 720, H = 900;
+    const W = 720, H = 800;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.scale(dpr, dpr);
     // 纸底
@@ -145,23 +145,35 @@ Page({
       ctx.fillText(label, x + w / 2, y + h / 2 + (sub ? -8 : 10));
       if (sub) { ctx.font = '21px sans-serif'; ctx.fillStyle = '#9a5a28'; ctx.fillText(sub, x + w / 2, y + h / 2 + 26); }
     };
-    const M = 40, innerW = W - 2 * M;            // 外框 40..680
+    // 外框，右墙开一个口当入口
     ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 5;
-    ctx.strokeRect(M, 120, innerW, H - 160);     // 店外框
+    ctx.strokeRect(40, 120, 640, 660);           // 40..680 / 120..780
+    ctx.fillStyle = '#f5efe2'; ctx.fillRect(672, 490, 16, 56);  // 右墙门口开口
     // 顶部：后厨 / 厕所
-    room(60, 150, 280, 150, '后　厨', '小美在此放水洗杯');
-    room(380, 150, 280, 150, '厕　所', '老李去过这');
-    // 吧台
-    room(60, 330, 580, 150, '吧　台', '☕ 杯子在台上　☠ 老板倒在台后', '#fbe4c8');
-    // 座位区标题
+    room(60, 150, 280, 140, '后　厨', '小美在此放水洗杯');
+    room(380, 150, 280, 140, '厕　所', '老李去过这');
+    // 吧台（含阿强位置）
+    ctx.fillStyle = '#fbe4c8'; ctx.strokeStyle = '#b89a6a'; ctx.lineWidth = 3;
+    ctx.fillRect(60, 320, 580, 140); ctx.strokeRect(60, 320, 580, 140);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 30px sans-serif';
+    ctx.fillText('吧　台', 350, 360);
+    ctx.font = '21px sans-serif'; ctx.fillStyle = '#9a5a28';
+    ctx.fillText('☕ 杯子在台上　☠ 老板倒在台后', 350, 396);
+    ctx.fillText('阿强案发前在吧台边自冲过一杯', 350, 428);
+    // 过道：座位区标题（左）+ 入口（右·吧台与座位区之间）
     ctx.textAlign = 'left'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 26px sans-serif';
-    ctx.fillText('座位区（你坐哪？）', 60, 535);
-    room(60, 555, 160, 120, '窗　边', '老李案发在此', '#e8f0ff');
-    room(240, 555, 120, 120, '桌 1', '');
-    room(380, 555, 120, 120, '桌 2', '');
-    room(520, 555, 120, 120, '桌 3', '');
-    // 门口
-    room(270, 730, 180, 90, '门　口', '入口');
+    ctx.fillText('座位区（你坐哪？）', 60, 515);
+    room(450, 488, 190, 64, '入　口', '（右侧进门）', '#e9e0cf');
+    // 座位区：桌1~4（老李坐桌1）
+    room(60, 565, 130, 110, '桌 1', '老李案发在此', '#e8f0ff');
+    room(210, 565, 130, 110, '桌 2', '');
+    room(360, 565, 130, 110, '桌 3', '');
+    room(510, 565, 130, 110, '桌 4', '');
+    // 座位区下方：临窗一长条
+    ctx.fillStyle = '#e8f0ff'; ctx.strokeStyle = '#b89a6a'; ctx.lineWidth = 3;
+    ctx.fillRect(60, 690, 580, 56); ctx.strokeRect(60, 690, 580, 56);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#3b2c16'; ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('窗（座位区临窗）', 350, 726);
   },
 
   gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },

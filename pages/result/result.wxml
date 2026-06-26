@@ -35,7 +35,9 @@
       <text class="muted">最后揭晓</text>
     </view>
     <image wx:if="{{letterImg}}" class="letter-img" src="{{letterImg}}" mode="widthFix" show-menu-by-longpress></image>
-    <view class="pre" wx:else>{{letter}}</view>
+    <view wx:else class="letter-paper">
+      <view class="letter-body">{{letter}}</view>
+    </view>
   </view>
 
   <button wx:if="{{isHost}}" class="btn" bindtap="endGame">结束游戏（解散房间）</button>

@@ -34,17 +34,33 @@
       <view class="sec-title">✉️ 张涛留下的那封信（仅主持人）</view>
       <text class="muted">最后揭晓</text>
     </view>
-    <image wx:if="{{letterImg}}" class="letter-img" src="{{letterImg}}" mode="widthFix" show-menu-by-longpress></image>
-    <view wx:else class="letter-paper">
-      <view class="letter-body">{{letter}}</view>
+    <view class="letter-stub">
+      <view class="letter-icon">✉️</view>
+      <view class="muted">信的内容不在这里显示。点下方按钮下载成图片，最后念给大家 / 发到群里。</view>
     </view>
     <view class="clue-actions">
       <text class="mini-btn" bindtap="saveLetterImg">下载这封信（图片）</text>
     </view>
   </view>
 
-  <!-- 离屏 canvas：把信渲染成图片用，不显示 -->
+  <!-- 张涛的诊断报告：只有主持人，配合遗书揭晓「他早知道自己要走了」-->
+  <view class="card truth letter" wx:if="{{isHost}}">
+    <view class="row-between">
+      <view class="sec-title">🏥 张涛的诊断报告（仅主持人）</view>
+      <text class="muted">配合遗书揭晓</text>
+    </view>
+    <view class="letter-stub">
+      <view class="letter-icon">🏥</view>
+      <view class="muted">证明老板早已查出晚期癌症。最后跟信一起揭晓，下载发群。</view>
+    </view>
+    <view class="clue-actions">
+      <text class="mini-btn" bindtap="saveReportImg">下载诊断报告（图片）</text>
+    </view>
+  </view>
+
+  <!-- 离屏 canvas：渲染信 / 报告单用，不显示 -->
   <canvas type="2d" id="letterCanvas" class="offscreen-canvas"></canvas>
+  <canvas type="2d" id="reportCanvas" class="offscreen-canvas"></canvas>
 
   <button wx:if="{{isHost}}" class="btn" bindtap="endGame">结束游戏（解散房间）</button>
   <button wx:else class="btn btn-ghost" bindtap="backHome">返回首页</button>

@@ -25,33 +25,9 @@
 .tip { margin: 12rpx 0; }
 .letter-img { width: 100%; border-radius: 14rpx; margin-top: 12rpx; display: block; }
 
-/* CSS 信纸：暖黄做旧纸面 + 楷体手写感（信文走昵称替换，永远干净清晰）*/
-.letter-paper {
-  position: relative;
-  margin-top: 16rpx;
-  padding: 44rpx 38rpx 52rpx;
-  border-radius: 10rpx;
-  overflow: hidden;
-  background:
-    radial-gradient(120% 80% at 80% 0%, rgba(255,245,220,0.7), transparent 60%),
-    linear-gradient(180deg, #f7eedc 0%, #f1e4ca 55%, #ecdcbe 100%);
-  box-shadow: inset 0 0 70rpx rgba(170,135,75,0.18), 0 6rpx 22rpx rgba(0,0,0,0.28);
-}
-/* 左侧一道淡淡的装订/折痕暗边 */
-.letter-paper::before {
-  content: '';
-  position: absolute; left: 0; top: 0; bottom: 0; width: 10rpx;
-  background: linear-gradient(90deg, rgba(150,110,55,0.22), transparent);
-}
-.letter-body {
-  white-space: pre-wrap;
-  font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
-  font-size: 31rpx;
-  line-height: 1.95;
-  letter-spacing: 1rpx;
-  color: #3b2c16;
-  text-align: justify;
-}
+/* 遗书：不展示内容，只放图标 + 下载按钮 */
+.letter-stub { display: flex; align-items: center; gap: 18rpx; margin-top: 12rpx; }
+.letter-icon { font-size: 64rpx; flex: none; }
 
 /* 下载按钮 */
 .clue-actions { display: flex; gap: 16rpx; margin-top: 20rpx; }

@@ -51,9 +51,9 @@ Page({
         wx.canvasToTempFilePath({
           canvas: node,
           success: (r) => { wx.hideLoading(); this._saveFile(r.tempFilePath); },
-          fail: () => { wx.hideLoading(); wx.showToast({ title: '生成失败', icon: 'none' }); },
+          fail: (e) => { wx.hideLoading(); wx.showToast({ title: '生成失败:' + ((e && e.errMsg) || ''), icon: 'none' }); },
         });
-      } catch (e) { wx.hideLoading(); wx.showToast({ title: '生成失败', icon: 'none' }); }
+      } catch (e) { wx.hideLoading(); wx.showToast({ title: '生成失败:' + ((e && e.message) || ''), icon: 'none' }); }
     });
   },
 
@@ -78,8 +78,12 @@ Page({
       lines.push(cur);
     });
     const H = padTop + lines.length * lineH + padBottom;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
+    // 钳制缩放：避免长信在高分屏上超过 ~4096px 画布上限导致生成失败
+    let scale = dpr;
+    scale = Math.min(scale, 4000 / W, 4000 / H);
+    if (scale < 1) scale = 1;
+    canvas.width = Math.round(W * scale); canvas.height = Math.round(H * scale);
+    ctx.scale(scale, scale);
     // 背景：暖黄做旧信纸
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#f7eedc'); g.addColorStop(0.55, '#f1e4ca'); g.addColorStop(1, '#ecdcbe');
@@ -91,6 +95,75 @@ Page({
     ctx.font = font; ctx.textBaseline = 'top';
     let y = padTop;
     lines.forEach((ln) => { if (ln) ctx.fillText(ln, padX, y); y += lineH; });
+  },
+
+  // 主持人：下载张涛的诊断报告单（图片）
+  saveReportImg() {
+    wx.showLoading({ title: '生成中', mask: true });
+    wx.createSelectorQuery().select('#reportCanvas').fields({ node: true }).exec((res) => {
+      const node = res && res[0] && res[0].node;
+      if (!node) { wx.hideLoading(); return wx.showToast({ title: '生成失败', icon: 'none' }); }
+      try {
+        this._drawReport(node);
+        wx.canvasToTempFilePath({
+          canvas: node,
+          success: (r) => { wx.hideLoading(); this._saveFile(r.tempFilePath); },
+          fail: (e) => { wx.hideLoading(); wx.showToast({ title: '生成失败:' + ((e && e.errMsg) || ''), icon: 'none' }); },
+        });
+      } catch (e) { wx.hideLoading(); wx.showToast({ title: '生成失败:' + ((e && e.message) || ''), icon: 'none' }); }
+    });
+  },
+
+  // 中文逐字折行，返回下一行 y
+  _wrapText(ctx, text, x, y, maxW, lineH) {
+    let cur = '';
+    for (const ch of text) {
+      if (ctx.measureText(cur + ch).width > maxW && cur) { ctx.fillText(cur, x, y); y += lineH; cur = ch; }
+      else cur += ch;
+    }
+    if (cur) { ctx.fillText(cur, x, y); y += lineH; }
+    return y;
+  },
+
+  // 画一张做旧的诊断证明书（关键字永远清晰）
+  _drawReport(canvas) {
+    const ctx = canvas.getContext('2d');
+    const dpr = (wx.getSystemInfoSync().pixelRatio) || 2;
+    const W = 720, H = 880;
+    let scale = Math.min(dpr, 4000 / W, 4000 / H); if (scale < 1) scale = 1;
+    canvas.width = Math.round(W * scale); canvas.height = Math.round(H * scale);
+    ctx.scale(scale, scale);
+    // 纸白 + 边框
+    ctx.fillStyle = '#fbfaf6'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#c9c2b2'; ctx.lineWidth = 2; ctx.strokeRect(30, 30, W - 60, H - 60);
+    // 医院名 + 标题
+    ctx.textAlign = 'center'; ctx.fillStyle = '#2b3a4a'; ctx.font = 'bold 30px sans-serif';
+    ctx.fillText('仁济市第一人民医院', W / 2, 92);
+    ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 44px sans-serif';
+    ctx.fillText('诊 断 证 明 书', W / 2, 156);
+    ctx.strokeStyle = '#2b3a4a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(60, 178); ctx.lineTo(W - 60, 178); ctx.stroke();
+    // 基本信息
+    ctx.textAlign = 'left'; ctx.fillStyle = '#222'; ctx.font = '26px sans-serif';
+    ctx.fillText('姓名：张涛', 70, 236); ctx.fillText('性别：男', 360, 236); ctx.fillText('年龄：54', 540, 236);
+    ctx.fillText('门诊号：2024-0631', 70, 288); ctx.fillText('科别：肿瘤科', 380, 288);
+    // 临床诊断（加重红字）
+    ctx.font = 'bold 32px sans-serif'; ctx.fillStyle = '#a11';
+    ctx.fillText('临床诊断：胃癌（晚期）', 70, 352);
+    // 检查所见 / 诊断意见（折行）
+    ctx.font = '25px sans-serif'; ctx.fillStyle = '#222';
+    let y = this._wrapText(ctx, '检查所见：胃窦部见溃疡型肿物，病理活检为低分化腺癌，伴周围淋巴结肿大及肝内多发转移灶。', 70, 408, W - 140, 42);
+    y = this._wrapText(ctx, '诊断意见：胃低分化腺癌 IV 期，已发生远处转移，预后差，建议姑息支持治疗、定期复查。', 70, y + 14, W - 140, 42);
+    // 日期 / 医师
+    ctx.fillText('报告日期：二〇二四年（案发前不久）', 70, y + 40);
+    ctx.fillText('主治医师：（签名）', 70, y + 84);
+    // 红章
+    ctx.save();
+    ctx.strokeStyle = 'rgba(190,30,30,0.7)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(560, y + 110, 72, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(190,30,30,0.7)'; ctx.textAlign = 'center'; ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('仁济市第一', 560, y + 102); ctx.fillText('人民医院', 560, y + 130);
+    ctx.restore();
   },
 
   // 通过 src（已有图片）取本地路径后保存

@@ -44,6 +44,27 @@ const SCRIPT_META = {
     cluesByAct: [['z1', 'z2', 'z3']],
     searchPerAct: 1,
   },
+  binansuo: {
+    charIds: ['azhe', 'qiangzi', 'laolin'],
+    murderer: 'azhe',
+    actCount: 1, // 避难所·第47夜：单幕，autoClues 自动公开
+    cluesByAct: [['n1', 'n2', 'n3']],
+    searchPerAct: 1,
+  },
+  langlangshan: {
+    charIds: ['xiaohuan', 'huangpi', 'hama'],
+    murderer: 'xiaohuan',
+    actCount: 1, // 浪浪山·巡山日志：单幕，autoClues 自动公开
+    cluesByAct: [['l1', 'l2', 'l3']],
+    searchPerAct: 1,
+  },
+  yidaimi: {
+    charIds: ['miaoshi', 'laoyang', 'zhaohuolang'],
+    murderer: 'miaoshi',
+    actCount: 1, // 1942·一袋米：单幕，autoClues 自动公开（凶手=告密者）
+    cluesByAct: [['y1', 'y2', 'y3']],
+    searchPerAct: 1,
+  },
 };
 const DEFAULT_SCRIPT = 'tongxuehui';
 

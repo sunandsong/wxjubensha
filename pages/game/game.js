@@ -310,10 +310,6 @@ Page({
 
 
     // 我的角色照片：按我自己选的性别取（玩家第一幕展示）
-    const myGenderRaw = (me && me.gender) || wx.getStorageSync('gender') || '';
-    const myGender = myGenderRaw === 'f' ? 'f' : (myGenderRaw === 'm' ? 'm' : '');
-    const myPhoto = (srcChar && myGender) ? `/assets/avatars/${srcChar.id}_${myGender}.jpg` : '';
-
     const votes = room.votes || {};
     const myVote = votes[openid] || '';
 
@@ -337,7 +333,6 @@ Page({
       actHostCast: apList(actHost ? actHost.cast : []),
       isLastAct,
       isHost,
-      myPhoto,
       script: SCRIPT,
       myChar,
       myActStory,

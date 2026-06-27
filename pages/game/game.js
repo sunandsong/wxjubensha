@@ -241,6 +241,8 @@ Page({
     const actHost = act && act.host ? act.host : null;  // 主持人专属：小说式剧情 + 群活动
     const isLastAct = actIndex >= acts.length - 1;
     const myActStory = ap(srcChar && srcChar.actStories ? (srcChar.actStories[actIndex] || '') : '');
+    // 用 **重点** 标记切分：奇数段为高亮（偶数普通），newline 保留由 pre-wrap 渲染
+    const myActStorySegs = myActStory.split('**').map((t, i) => ({ text: t, hl: i % 2 === 1 }));
 
     // 我的角色卡：名字用昵称，正文里的角色名也一并替换
     const myChar = srcChar ? {
@@ -339,6 +341,7 @@ Page({
       script: SCRIPT,
       myChar,
       myActStory,
+      myActStorySegs,
       roster,
       autoClues,
       clues,

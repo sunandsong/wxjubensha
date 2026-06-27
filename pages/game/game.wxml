@@ -24,7 +24,7 @@
     <!-- 玩家：你这一幕的故事（第一人称）。第一幕顶部展示你自己的角色照片 -->
     <view wx:if="{{myChar && myActStory}}" class="card mychar">
       <view class="act-title">{{actLabel}} · {{myChar.title}}</view>
-      <view class="pre">{{myActStory}}</view>
+      <view class="pre"><text wx:for="{{myActStorySegs}}" wx:key="index" class="{{item.hl ? 'hl' : ''}}">{{item.text}}</text></view>
     </view>
 
     <!-- 主持人流程提示 -->

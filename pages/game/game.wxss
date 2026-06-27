@@ -1,3 +1,6 @@
+/* 剧情重点句高亮 */
+.pre .hl { color: #ffd9a8; font-weight: 600; background: rgba(255,217,168,0.12); border-radius: 4rpx; padding: 0 4rpx; }
+
 .tab-bar { display: flex; gap: 12rpx; margin-bottom: 8rpx; }
 .tab {
   flex: 1; text-align: center; font-size: 26rpx; color: #8a809e;

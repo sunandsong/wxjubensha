@@ -1,3 +1,17 @@
+/* 按钮宽度与卡片(投票结果框)对齐：整宽 */
+.btn { width: 100% !important; box-sizing: border-box; margin-left: 0; margin-right: 0; }
+
+/* 主持人提示框 */
+.host-note { border-color: rgba(255,196,77,0.45); background: rgba(255,196,77,0.06); }
+.note-line { font-size: 31rpx; line-height: 1.65; color: #e6dffb; }
+.note-line + .note-line { margin-top: 12rpx; }
+.note-warn { color: #ff5a5a; font-weight: 700; }
+
+/* 玩家等待页 */
+.wait-screen { text-align: center; padding: 200rpx 40rpx 80rpx; }
+.wait-icon { font-size: 120rpx; opacity: 0.9; }
+.wait-text { font-size: 38rpx; font-weight: 600; color: #e6dffb; margin-top: 32rpx; }
+
 .verdict { text-align: center; padding: 40rpx 0 10rpx; }
 .verdict-icon { font-size: 96rpx; }
 .verdict-text { font-size: 44rpx; font-weight: 700; margin: 12rpx 0 8rpx; }

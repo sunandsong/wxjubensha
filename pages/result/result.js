@@ -127,7 +127,7 @@ Page({
     const me = players.find((p) => p.openid === this.data.openid);
     let myResult = '';
     if (room.hostOpenid === this.data.openid) {
-      myResult = caught ? '主持人视角 · 玩家成功揪出真凶' : '主持人视角 · 凶手逃脱了';
+      myResult = '';  // 主持人不显示胜负卡
     } else if (me && me.charId) {
       const iAmMurderer = me.charId === murderer;
       if (iAmMurderer) myResult = caught ? '你（凶手）被抓住了，平民阵营获胜' : '你（凶手）成功逃脱，凶手获胜！';
@@ -201,6 +201,17 @@ Page({
 
   // 房主：结束本局、解散房间，让所有玩家一起退出
   async endGame() {
+    const ok = await new Promise((resolve) => {
+      wx.showModal({
+        title: '结束游戏',
+        content: '真相公布了吗？结束后房间解散，所有人退出，无法再查看。',
+        confirmText: '确认结束',
+        cancelText: '再等等',
+        success: (r) => resolve(r.confirm),
+        fail: () => resolve(false),
+      });
+    });
+    if (!ok) return;
     await app.runOnce('dissolve', async () => {
       this.closeWatch();
       app.clearSession();

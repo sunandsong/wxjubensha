@@ -47,12 +47,16 @@ page {
   border: 1rpx solid rgba(255,255,255,0.25);
   color: #d9d2ec;
 }
-/* 统一禁用态：实心、置灰、无边框 */
-.btn[disabled],
-.btn-ghost[disabled] {
-  background: #2c2740;
+/* 禁用态：淡化的紫色渐变（同一个按钮，只是暂时不可点）*/
+.btn[disabled] {
+  background: linear-gradient(90deg, #7b5cff, #c44dff) !important;
+  color: #fff !important;
   border: none;
-  color: #6a6385;
+  opacity: 0.4;
+}
+.btn-ghost[disabled] {
+  background: transparent !important;
+  opacity: 0.4;
 }
 
 .muted { color: #9a8fb5; font-size: 26rpx; }

@@ -14,15 +14,15 @@
         <view class="muted">房间号</view>
         <view class="code">{{roomCode}}</view>
       </view>
-      <button class="btn-mini share" open-type="share">分享到群</button>
+      <button class="btn-mini share" bindtap="copyCode">复制</button>
     </view>
-    <view class="muted invite-tip">点「分享到群」发卡片，群友点一下直接进房（无需输房间号）。</view>
+    <view class="muted invite-tip">点「复制」把房间号复制，发到群里，群友输入房间号进房。</view>
   </view>
 
   <view class="card">
     <view class="row-between">
       <view class="sec-title">玩家 {{realCount}} 人</view>
-      <view class="muted {{canStart ? '' : 'warn'}}">{{canStart ? '房主为主持人，不参与' : '至少需要 1 名玩家加入'}}</view>
+      <view class="muted {{canStart ? '' : 'warn'}}">{{canStart ? '房主为主持人，不参与' : '需 '+needPlayers+' 名玩家，已 '+realCount+' 人'}}</view>
     </view>
     <view class="players">
       <view class="player" wx:for="{{players}}" wx:key="openid">
@@ -41,5 +41,8 @@
     <button class="btn start-btn" bindtap="startGame" disabled="{{!canStart || starting}}">开始游戏</button>
     <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
   </block>
-  <view wx:else class="muted center">等待主持人开始游戏…</view>
+  <block wx:else>
+    <view class="muted center wait-hint">等待主持人开始游戏…</view>
+    <button class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
+  </block>
 </view>

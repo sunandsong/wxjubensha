@@ -70,11 +70,13 @@ Page({
     // 标注主持人（房主），统计真实玩家数（房主不参与）
     const players = raw.map((p) => ({ ...p, isModerator: p.openid === room.hostOpenid }));
     const realCount = raw.filter((p) => p.openid !== room.hostOpenid).length;
+    const needPlayers = (script.characters || []).length;
     this.setData({
       players,
       realCount,
+      needPlayers,
       isHost: room.hostOpenid === this.data.openid,
-      canStart: realCount >= 1,
+      canStart: realCount >= needPlayers,
       scriptTitle: script.title,
       scriptSub: script.subtitle,
     });
@@ -98,7 +100,7 @@ Page({
   },
 
   async startGame() {
-    if (!this.data.canStart) return wx.showToast({ title: '至少需要 1 名玩家（房主不参与）', icon: 'none' });
+    if (!this.data.canStart) return wx.showToast({ title: `需要 ${this.data.needPlayers} 名玩家才能开始（房主不参与）`, icon: 'none' });
     wx.vibrateShort && wx.vibrateShort({ type: 'medium' });
     this.setData({ starting: true });
     let res;
@@ -131,6 +133,10 @@ Page({
   },
 
   async leaveRoom() {
+    const ok = await new Promise((res) => {
+      wx.showModal({ title: '退出房间', content: '确定退出当前房间吗？', success: (r) => res(r.confirm) });
+    });
+    if (!ok) return;
     await app.runOnce('leave', async () => {
       this.closeWatch();
       app.clearSession();   // 主动离开 → 不再续局

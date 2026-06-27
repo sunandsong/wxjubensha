@@ -50,7 +50,6 @@
           <view class="guide-foot" wx:for="{{actHostPrompts}}" wx:key="*this">{{item}}</view>
         </view>
       </block>
-      <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
     </view>
 
     <!-- 本幕线索：随幕自动公开，只发给主持人（纯文字，无图无按钮；用上面「一键复制全部」发群）-->
@@ -111,7 +110,10 @@
   <!-- ============ 投票阶段 ============ -->
   <block wx:if="{{status==='voting'}}">
     <view class="card">
-      <view class="sec-title">指认凶手</view>
+      <view class="row-between">
+        <view class="sec-title">指认凶手</view>
+        <text wx:if="{{isHost}}" class="mini-btn" bindtap="rewind">← 返回剧情</text>
+      </view>
       <view wx:if="{{isHost}}" class="guide-foot">让每人说出怀疑对象和理由 → 各自点选真凶 → 已投 {{votedCount}}/{{totalPlayers}}，投满后点底部公布真相。主持人不投票。</view>
       <view wx:else class="muted">回群里讨论后再投。已投票 {{votedCount}}/{{totalPlayers}}，选定你认为的真凶，可改票。</view>
     </view>
@@ -123,10 +125,18 @@
     </view>
   </block>
 
-  <!-- 主持人控制（固定底部）-->
+  <!-- 主持人控制（固定底部）：推进 + 结束游戏 同一行 -->
   <view class="host-ctrl" wx:if="{{isHost}}">
-    <button wx:if="{{status==='playing' && !isLastAct}}" class="btn" bindtap="advance">进入下一幕（第{{actNum+1}}幕）</button>
-    <button wx:if="{{status==='playing' && isLastAct}}" class="btn" bindtap="advance">本幕结束，进入投票</button>
-    <button wx:if="{{status==='voting'}}" class="btn" bindtap="advance">公布真相</button>
+    <view class="ctrl-row">
+      <button wx:if="{{status==='playing' && !isLastAct}}" class="btn" bindtap="advance">进入下一幕（第{{actNum+1}}幕）</button>
+      <button wx:if="{{status==='playing' && isLastAct}}" class="btn" bindtap="advance">进入投票</button>
+      <button wx:if="{{status==='voting'}}" class="btn" bindtap="advance" disabled="{{votedCount < totalPlayers}}">{{votedCount < totalPlayers ? '等待投票（'+votedCount+'/'+totalPlayers+'）' : '公布真相'}}</button>
+      <button class="btn btn-ghost end-btn" bindtap="endGame">结束游戏</button>
+    </view>
+  </view>
+
+  <!-- 玩家：全程可退出（游戏中退出即本局结束）-->
+  <view class="host-ctrl" wx:if="{{!isHost}}">
+    <button class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
   </view>
 </view>

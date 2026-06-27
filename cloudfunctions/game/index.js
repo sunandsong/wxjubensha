@@ -104,6 +104,11 @@ exports.main = async (event) => {
     if (action === 'leave') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room) return { ok: true };
+      // 游戏已开始（非等待）：任一玩家退出 → 直接解散，本局结束
+      if (room.status && room.status !== 'waiting') {
+        await rooms.doc(event.roomId).remove();
+        return { ok: true, dissolved: true };
+      }
       const players = room.players.filter((p) => p.openid !== OPENID);
       if (players.length === 0) {
         await rooms.doc(event.roomId).remove();
@@ -123,7 +128,7 @@ exports.main = async (event) => {
       const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
       // 房主只主持、不参与，只给其余玩家发牌
       const realPlayers = room.players.filter((p) => p.openid !== room.hostOpenid);
-      if (realPlayers.length < 1) return { ok: false, msg: '至少需要 1 名玩家（房主不参与）' };
+      if (realPlayers.length < meta.charIds.length) return { ok: false, msg: `需要 ${meta.charIds.length} 名玩家才能开始（房主不参与）` };
       if (realPlayers.length > meta.charIds.length) return { ok: false, msg: `该剧本最多 ${meta.charIds.length} 名玩家（房主除外）` };
 
       const n = realPlayers.length;
@@ -175,6 +180,10 @@ exports.main = async (event) => {
       const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
       const data = {};
       if (room.status === 'voting') {
+        // 必须全部玩家投完才能公布真相（房主不参与）
+        const voted = Object.keys(room.votes || {}).length;
+        const total = (room.players || []).filter((p) => p.openid !== room.hostOpenid).length;
+        if (voted < total) return { ok: false, msg: `还有 ${total - voted} 人没投票` };
         data.status = 'finished';                              // 公布真相
       } else if (room.status !== 'finished') {
         // playing 及旧状态(reading/searching)都按逐幕推进
@@ -190,6 +199,17 @@ exports.main = async (event) => {
         actIndex: data.actIndex !== undefined ? data.actIndex : (room.actIndex || 0),
         status: data.status !== undefined ? data.status : room.status,
       };
+    }
+
+    // ── 主持人回退：voting → playing（退回剧情，作废本轮投票）──
+    if (action === 'rewind') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data);
+      if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有主持人可以操作' };
+      if (room.status !== 'voting') return { ok: false, msg: '当前不在投票阶段' };
+      const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
+      const actIndex = Math.max(0, meta.actCount - 1);
+      await rooms.doc(event.roomId).update({ data: { status: 'playing', actIndex, votes: {} } });
+      return { ok: true, status: 'playing', actIndex };
     }
 
     // ── 投票（房主不参与）──

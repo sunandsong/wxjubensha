@@ -351,11 +351,15 @@ Page({
       totalPlayers: players.filter((p) => p.openid !== room.hostOpenid).length,
     });
 
-    // 分幕切换过场：幕号变化时弹一张「第X幕 · 标题」电影感标题卡
+    // 切换过场电影感标题卡：开场（第一幕）显示剧本名，其余幕显示「第X幕 · 标题」
     if (status === 'playing' && this._lastActIndex !== actIndex) {
       this._lastActIndex = actIndex;
-      const label = '第' + (['一', '二', '三', '四', '五', '六', '七', '八'][actIndex] || (actIndex + 1)) + '幕';
-      this.setData({ transShow: true, transLabel: label, transTitle: act ? act.title : '' });
+      if (actIndex === 0) {
+        this.setData({ transShow: true, transLabel: '', transTitle: SCRIPT.title || '' });
+      } else {
+        const label = '第' + (['一', '二', '三', '四', '五', '六', '七', '八'][actIndex] || (actIndex + 1)) + '幕';
+        this.setData({ transShow: true, transLabel: label, transTitle: act ? act.title : '' });
+      }
       clearTimeout(this._transTimer);
       this._transTimer = setTimeout(() => this.setData({ transShow: false }), 1600);
     }
@@ -369,7 +373,19 @@ Page({
   onDissolved() {
     this.closeWatch();
     app.clearSession();
-    wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+    wx.showModal({ title: '提示', content: '本局游戏已结束', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+  },
+
+  // 玩家：退出房间（游戏中退出 → 本局结束、房间解散）
+  async leaveRoom() {
+    const ok = await this.confirm('退出后本局游戏将结束（房间解散），确定退出吗？');
+    if (!ok) return;
+    await app.runOnce('leave', async () => {
+      this.closeWatch();
+      app.clearSession();
+      await app.callGame({ action: 'leave', roomId: this.data.roomId }).catch(() => {});
+      wx.reLaunch({ url: '/pages/index/index' });
+    }, '退出中');
   },
 
   // 主持人结束游戏：解散房间，所有人退出
@@ -399,10 +415,34 @@ Page({
     wx.showToast({ title: '已投票', icon: 'success' });
   },
 
+  // 主持人回退：投票阶段 → 退回剧情（作废本轮投票）
+  async rewind() {
+    const ok = await this.confirm('返回剧情阶段？本轮投票将作废，可重新讨论后再投。');
+    if (!ok) return;
+    let res;
+    try {
+      res = await app.runOnce('rewind', () => app.callGame({ action: 'rewind', roomId: this.data.roomId }), '返回中');
+    } catch (err) {
+      return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    if (!res || !res.result) return;
+    const r = res.result;
+    if (!r.ok) return wx.showToast({ title: r.msg || '返回失败', icon: 'none' });
+    if (this.lastRoom && typeof r.actIndex !== 'undefined') {
+      this.render({ ...this.lastRoom, actIndex: r.actIndex, status: r.status, votes: {} });
+    }
+  },
+
   // 主持人推进：下一幕 / 进入投票 / 公布真相
   async advance() {
     if (this.data.status === 'voting') {
+      if (this.data.votedCount < this.data.totalPlayers) {
+        return wx.showToast({ title: `还有 ${this.data.totalPlayers - this.data.votedCount} 人没投票`, icon: 'none' });
+      }
       const ok = await this.confirm('确定公布真相？投票将结束。');
+      if (!ok) return;
+    } else if (this.data.status === 'playing' && this.data.isLastAct) {
+      const ok = await this.confirm('确定进入投票？进入后大家开始指认凶手。');
       if (!ok) return;
     }
     wx.vibrateShort && wx.vibrateShort({ type: 'light' });

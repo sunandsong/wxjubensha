@@ -31,10 +31,6 @@
 .center { text-align: center; margin-top: 28rpx; }
 .warn { color: #ffb347; }
 
-/* 开始游戏：通栏大按钮，横向充满（抵消 .container 左右 28rpx 内边距）*/
-.start-btn {
-  width: calc(100% + 56rpx);
-  margin-left: -28rpx; margin-right: -28rpx;
-  margin-top: 32rpx; padding: 44rpx 0; font-size: 40rpx;
-  border-radius: 0;
-}
+/* 开始 / 结束游戏：整宽，和上方卡片对齐 */
+.btn { width: 100% !important; box-sizing: border-box; margin-left: 0; margin-right: 0; }
+.start-btn { margin-top: 32rpx; }

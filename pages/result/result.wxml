@@ -1,51 +1,46 @@
 <view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
 
 <view class="container">
-  <!-- 抓对真凶撒花 -->
-  <view class="confetti" wx:if="{{caught}}">
-    <view class="confetti-piece" wx:for="{{confetti}}" wx:key="i"
-          style="left:{{item.left}}%;background:{{item.color}};animation-delay:{{item.delay}}s;animation-duration:{{item.dur}}s;"></view>
-  </view>
+  <!-- ====== 玩家：只显示一句「等待主持人公布真相」 ====== -->
+  <block wx:if="{{!isHost}}">
+    <view class="wait-screen">
+      <view class="wait-icon">🕵️</view>
+      <view class="wait-text">去群里等待主持人公布真相</view>
+    </view>
+  </block>
 
-  <view class="verdict {{caught?'win':'lose'}}">
-    <view class="verdict-icon">{{caught ? '🎉' : '🕵️'}}</view>
-    <view class="verdict-text">{{caught ? '真凶落网！' : '凶手逃脱了…'}}</view>
-    <view class="muted">大家指认：{{accusedName}}<text wx:if="{{isHost}}">　·　真凶：{{murdererName}}</text></view>
-    <view class="muted" wx:if="{{!isHost}}">去群里等待主持人公布真相</view>
-  </view>
+  <!-- ====== 主持人：完整结算 ====== -->
+  <block wx:else>
+    <!-- 抓对真凶撒花 -->
+    <view class="confetti" wx:if="{{caught}}">
+      <view class="confetti-piece" wx:for="{{confetti}}" wx:key="i"
+            style="left:{{item.left}}%;background:{{item.color}};animation-delay:{{item.delay}}s;animation-duration:{{item.dur}}s;"></view>
+    </view>
 
-  <view class="card my-result" wx:if="{{myResult}}">{{myResult}}</view>
+    <view class="verdict {{caught?'win':'lose'}}">
+      <view class="verdict-icon">{{caught ? '🎉' : '🕵️'}}</view>
+      <view class="verdict-text">{{caught ? '真凶落网！' : '凶手逃脱了…'}}</view>
+    </view>
 
-  <view class="card">
-    <view class="sec-title">投票结果</view>
-    <view class="tally-item" wx:for="{{tally}}" wx:key="name">
-      <view class="t-name">
-        {{item.name}}<text class="t-title">{{item.title}}</text>
-        <text class="t-player" wx:if="{{item.playerNick}}">· {{item.playerNick}}</text>
-        <text class="t-killer" wx:if="{{item.isMurderer && isHost}}">真凶</text>
+    <view class="card">
+      <view class="sec-title">投票结果</view>
+      <view class="tally-item" wx:for="{{tally}}" wx:key="name">
+        <view class="t-name">
+          {{item.name}}<text class="t-title">{{item.title}}</text>
+          <text class="t-player" wx:if="{{item.playerNick}}">· {{item.playerNick}}</text>
+          <text class="t-killer" wx:if="{{item.isMurderer}}">真凶</text>
+        </view>
+        <view class="t-count">{{item.count}} 票</view>
       </view>
-      <view class="t-count">{{item.count}} 票</view>
     </view>
-  </view>
 
-  <!-- 真相：仅主持人可见，由主持人在群里公布（玩家看不到）-->
-  <view class="card truth" wx:if="{{isHost}}">
-    <view class="row-between">
-      <view class="sec-title">{{truth.title}}（仅主持人）</view>
-      <text class="mini-btn" bindtap="copyTruthLetter">一键复制（结果+真相+信）</text>
+    <!-- 主持人提示 -->
+    <view class="card host-note">
+      <view class="note-line"><text class="note-warn">其他玩家看不到真相、也看不到投票结果</text>——点击「一键复制」，发到群里进行公布。</view>
     </view>
-    <view class="pre">{{truth.text}}</view>
-  </view>
 
-  <!-- 那封信：压轴，仅主持人，直接显示文字 -->
-  <view class="card truth letter" wx:if="{{isHost && letter}}">
-    <view class="row-between">
-      <view class="sec-title">✉️ 张涛留下的那封信（仅主持人）</view>
-      <text class="muted">最后揭晓</text>
-    </view>
-    <view class="pre">{{letter}}</view>
-  </view>
-
-  <button wx:if="{{isHost}}" class="btn" bindtap="endGame">结束游戏（解散房间）</button>
-  <button wx:else class="btn btn-ghost" bindtap="backHome">返回首页</button>
+    <!-- 一键复制（结果+真相+信）发群 -->
+    <button class="btn" bindtap="copyTruthLetter">一键复制</button>
+    <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
+  </block>
 </view>

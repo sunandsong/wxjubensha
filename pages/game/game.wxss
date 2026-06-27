@@ -168,10 +168,14 @@
 .host-ctrl, .center {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
   padding: 18rpx 28rpx calc(18rpx + env(safe-area-inset-bottom));
-  background: rgba(26,22,38,0.97);
-  border-top: 1rpx solid rgba(255,255,255,0.08);
+  background: #1e1830;
 }
 .host-ctrl .btn { margin-top: 0; }
+/* 玩家「退出房间」（host-ctrl 直接子按钮）整宽 */
+.host-ctrl > .btn { width: 100% !important; box-sizing: border-box; }
+.ctrl-row { display: flex; gap: 18rpx; }
+.ctrl-row .btn { flex: 1; }
+.ctrl-row .end-btn { flex: 0 0 200rpx; }
 .center { text-align: center; }
 /* 给底部固定条留出空间，避免遮住内容 */
 .container { padding-bottom: 200rpx; }

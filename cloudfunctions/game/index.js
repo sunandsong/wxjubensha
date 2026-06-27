@@ -37,6 +37,13 @@ const SCRIPT_META = {
     cluesByAct: [['s1', 's2', 's3']],
     searchPerAct: 1,
   },
+  zhongchang: {
+    charIds: ['wanglei', 'suting', 'luojie'],
+    murderer: 'luojie',
+    actCount: 1, // 终场哨之后：单幕，autoClues 自动公开
+    cluesByAct: [['z1', 'z2', 'z3']],
+    searchPerAct: 1,
+  },
 };
 const DEFAULT_SCRIPT = 'tongxuehui';
 

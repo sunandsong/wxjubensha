@@ -46,7 +46,7 @@ Page({
       parts.push('【投票结果】' + head + '\n' + lines.join('\n'));
     }
     if (this.data.truth && this.data.truth.text) parts.push('【真相】\n' + this.data.truth.text);
-    if (this.data.letter) parts.push('【张涛留下的那封信】\n' + this.data.letter);
+    if (this.data.letter) parts.push('【' + (this.data.victimName || '被害人') + '留下的那封信】\n' + this.data.letter);
     const text = parts.join('\n\n');
     if (!text) return wx.showToast({ title: '暂无内容', icon: 'none' });
     wx.setClipboardData({ data: text, success: () => wx.showToast({ title: '已复制，去群里粘贴', icon: 'none' }) });
@@ -140,6 +140,7 @@ Page({
       letter: namer.apply(SCRIPT.truth.letter || ''),
       letterImg: SCRIPT.truth.letterImg || '',
       murdererName: namer.name(murderer),
+      victimName: (SCRIPT.victim && SCRIPT.victim.name) || '',
       tally,
       accusedName: accused ? accused.name : '无人得票',
       caught,

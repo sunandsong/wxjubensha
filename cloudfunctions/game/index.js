@@ -30,6 +30,13 @@ const SCRIPT_META = {
     cluesByAct: [['t1', 't6', 't7']],
     searchPerAct: 1,
   },
+  shiguang: {
+    charIds: ['amay', 'dapeng', 'xiaoyu'],
+    murderer: 'dapeng',
+    actCount: 1, // 拾光·打烊之后：单幕，autoClues 自动公开
+    cluesByAct: [['s1', 's2', 's3']],
+    searchPerAct: 1,
+  },
 };
 const DEFAULT_SCRIPT = 'tongxuehui';
 

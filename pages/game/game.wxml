@@ -44,6 +44,14 @@
     <!-- 主持人流程提示 -->
     <view class="card mychar host-guide" wx:if="{{isHost}}">
       <view class="muted">你是主持人 · 不参与角色</view>
+      <!-- 一句话介绍每个人（开场介绍用，可一键复制）-->
+      <block wx:if="{{actHostCast.length}}">
+        <view class="field-label">🎭 出场人物（介绍给大家）</view>
+        <view class="copy-row" wx:for="{{actHostCast}}" wx:key="*this">
+          <text class="copy-text">{{item}}</text>
+          <text class="mini-btn" data-text="{{item}}" bindtap="copyText">复制</text>
+        </view>
+      </block>
       <!-- 本子自带群活动清单（咖啡馆）：逐条带流程，可一键复制 -->
       <block wx:if="{{actHostActivities.length}}">
         <view class="field-label">🎬 本幕群活动</view>

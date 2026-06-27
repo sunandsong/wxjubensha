@@ -25,9 +25,9 @@ const SCRIPT_META = {
   test: {
     charIds: ['xiaomei', 'aqiang', 'laoli'],
     murderer: 'xiaomei',
-    actCount: 3,
+    actCount: 1, // 巷往咖啡馆已合成 1 幕：读卡+公开线索+讨论 → 投票
     // 咖啡馆走 autoClues（随幕自动公开，不搜证），cluesByAct 仅作参照、不参与发牌
-    cluesByAct: [['t1'], ['t2', 't3', 't4', 't5'], ['t6', 't7', 't8', 't9', 't11']],
+    cluesByAct: [['t1', 't6', 't7']],
     searchPerAct: 1,
   },
 };

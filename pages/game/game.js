@@ -20,6 +20,7 @@ Page({
     actHostPrompts: [],
     actHostStory: '',
     actHostActivities: [],
+    actHostCast: [],
     isLastAct: false,
     isHost: false,
     script: null,
@@ -319,6 +320,7 @@ Page({
       // 主持人剧情：每幕一整块故事（第一幕的故事本身已含世界观背景，不再拼接）
       actHostStory: ap(actHost ? actHost.story : ''),
       actHostActivities: apList(actHost ? actHost.activities : []),
+      actHostCast: apList(actHost ? actHost.cast : []),
       isLastAct,
       isHost,
       myPhoto,

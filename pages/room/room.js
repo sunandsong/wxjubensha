@@ -26,7 +26,7 @@ Page({
 
   // 每次回到前台都确保身份就绪并重连监听（切屏后 watch 会断开）
   async onShow() {
-    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
+    this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '', isDev: app.testEnabled() });
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}

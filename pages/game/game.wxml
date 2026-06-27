@@ -11,54 +11,34 @@
 <view class="container">
   <!-- ============ 剧情阶段（逐幕推进）============ -->
   <block wx:if="{{status==='playing'}}">
-    <!-- 主持人·第一幕：巷往咖啡馆效果图，下载发群带氛围 -->
-    <view class="card" wx:if="{{isHost && actNum===1}}">
-      <view class="row-between">
-        <view class="sec-title">🖼️ 巷往咖啡馆（仅主持人）</view>
-        <text class="muted">下载发群</text>
-      </view>
-      <image class="clue-img" src="/assets/scene.jpg" mode="widthFix" show-menu-by-longpress></image>
-      <view class="clue-actions">
-        <text class="mini-btn" data-src="/assets/scene.jpg" bindtap="saveImg">下载效果图</text>
-      </view>
-    </view>
-
-    <!-- 主持人：本幕剧情（第一幕已把世界观接在前面），合成一整块故事 -->
+    <!-- 主持人：开场念白 + 一键复制全部发群（已去掉所有图片/下载）-->
     <view wx:if="{{isHost}}" class="card act-card">
+      <view class="row-between">
+        <view class="sec-title">📋 发群内容</view>
+        <text class="mini-btn" bindtap="copyAll">一键复制全部</text>
+      </view>
+      <view class="muted tip">点「一键复制全部」，把开场白 + 群活动 + 线索一起复制，粘到微信群发出去。</view>
       <view class="pre">{{actHostStory || actNarration}}</view>
     </view>
 
     <!-- 玩家：你这一幕的故事（第一人称）。第一幕顶部展示你自己的角色照片 -->
     <view wx:if="{{myChar && myActStory}}" class="card mychar">
-      <view class="act-title">{{actLabel}}</view>
-      <block wx:if="{{actNum===1 && myPhoto}}">
-        <image class="char-photo" src="{{myPhoto}}" mode="widthFix" show-menu-by-longpress></image>
-        <view class="char-caption">你的角色 · {{myChar.title}}</view>
-        <view class="clue-actions char-actions">
-          <text class="mini-btn" data-src="{{myPhoto}}" bindtap="saveImg">下载角色照片</text>
-        </view>
-      </block>
+      <view class="act-title">{{actLabel}} · {{myChar.title}}</view>
       <view class="pre">{{myActStory}}</view>
     </view>
 
     <!-- 主持人流程提示 -->
     <view class="card mychar host-guide" wx:if="{{isHost}}">
       <view class="muted">你是主持人 · 不参与角色</view>
-      <!-- 一句话介绍每个人（开场介绍用，可一键复制）-->
+      <!-- 出场人物（介绍给大家，纯文字）-->
       <block wx:if="{{actHostCast.length}}">
         <view class="field-label">🎭 出场人物（介绍给大家）</view>
-        <view class="copy-row" wx:for="{{actHostCast}}" wx:key="*this">
-          <text class="copy-text">{{item}}</text>
-          <text class="mini-btn" data-text="{{item}}" bindtap="copyText">复制</text>
-        </view>
+        <view class="guide-foot" wx:for="{{actHostCast}}" wx:key="*this">{{item}}</view>
       </block>
-      <!-- 本子自带群活动清单（咖啡馆）：逐条带流程，可一键复制 -->
+      <!-- 本幕群活动（纯文字，按这个带流程）-->
       <block wx:if="{{actHostActivities.length}}">
         <view class="field-label">🎬 本幕群活动</view>
-        <view class="copy-row" wx:for="{{actHostActivities}}" wx:key="*this">
-          <text class="copy-text">{{item}}</text>
-          <text class="mini-btn" data-text="{{item}}" bindtap="copyText">复制</text>
-        </view>
+        <view class="guide-foot" wx:for="{{actHostActivities}}" wx:key="*this">{{item}}</view>
       </block>
       <!-- 通用流程提示（其它本子） -->
       <block wx:else>
@@ -67,44 +47,20 @@
         <view class="guide-foot" wx:else>每人读本幕私密剧情 → 念出本幕新线索 → 每人做最后陈述 → 点底部进入投票。</view>
         <view wx:if="{{actHostPrompts.length}}" class="host-prompts">
           <view class="field-label">💬 冷场时，挑一句直接问</view>
-          <view class="copy-row" wx:for="{{actHostPrompts}}" wx:key="*this">
-            <text class="copy-text">{{item}}</text>
-            <text class="mini-btn" data-text="{{item}}" bindtap="copyText">复制</text>
-          </view>
+          <view class="guide-foot" wx:for="{{actHostPrompts}}" wx:key="*this">{{item}}</view>
         </view>
       </block>
       <button class="btn btn-ghost end-inline" bindtap="endGame">结束游戏</button>
     </view>
 
-    <!-- 第一幕·现场平面图：主持人生成并下载发群，供大家讨论位置 -->
-    <view class="card" wx:if="{{isHost && actNum===1}}">
-      <view class="row-between">
-        <view class="sec-title">🗺️ 现场平面图（仅主持人）</view>
-        <text class="muted">下载发群讨论</text>
-      </view>
-      <view class="muted tip">带中文标签的咖啡馆户型图：门口 / 座位区 / 吧台（杯子·老板倒下处）/ 后厨 / 厕所，发到群里让大家说自己坐哪、去过哪。</view>
-      <view class="clue-actions">
-        <text class="mini-btn" bindtap="saveMap">下载平面图</text>
-      </view>
-      <canvas type="2d" id="mapCanvas" class="offscreen-canvas"></canvas>
-    </view>
-
-    <!-- 本幕线索：随幕自动公开，只发给主持人；复制文字 / 下载图片，发到微信群（autoClues 本子）-->
+    <!-- 本幕线索：随幕自动公开，只发给主持人（纯文字，无图无按钮；用上面「一键复制全部」发群）-->
     <view class="card" wx:if="{{autoClues && clues.length && isHost}}">
-      <view class="row-between">
-        <view class="sec-title">🔎 本幕线索（仅主持人可见）</view>
-        <text class="muted">复制/下载后发群</text>
-      </view>
-      <view class="muted tip">玩家端只有自己的剧情、看不到线索。每条可「复制文字」粘到群里，有图的可「下载图片」发群。</view>
+      <view class="sec-title">🔎 本幕线索</view>
+      <view class="muted tip">玩家端看不到线索。点上面的「一键复制全部」，把开场白+群活动+线索一起发到群里。</view>
       <view class="clue-list">
         <view class="clue-card" wx:for="{{clues}}" wx:key="id">
-          <image wx:if="{{item.img}}" class="clue-img" src="{{item.img}}" mode="widthFix" show-menu-by-longpress></image>
           <view class="clue-name">{{item.icon}} {{item.name}}</view>
           <view class="clue-text">{{item.text}}</view>
-          <view class="clue-actions">
-            <text class="mini-btn" data-text="【{{item.name}}】{{item.text}}" bindtap="copyText">复制文字</text>
-            <text wx:if="{{item.img}}" class="mini-btn" data-src="{{item.img}}" bindtap="saveImg">下载图片</text>
-          </view>
         </view>
       </view>
     </view>

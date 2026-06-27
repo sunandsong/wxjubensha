@@ -10,8 +10,8 @@
   <view class="verdict {{caught?'win':'lose'}}">
     <view class="verdict-icon">{{caught ? '🎉' : '🕵️'}}</view>
     <view class="verdict-text">{{caught ? '真凶落网！' : '凶手逃脱了…'}}</view>
-    <view class="muted">大家指认：{{accusedName}}　·　真凶：{{murdererName}}</view>
-    <view class="muted" wx:if="{{!isHost}}">最后还有一封信，由主持人念给大家</view>
+    <view class="muted">大家指认：{{accusedName}}<text wx:if="{{isHost}}">　·　真凶：{{murdererName}}</text></view>
+    <view class="muted" wx:if="{{!isHost}}">去群里等待主持人公布真相</view>
   </view>
 
   <view class="card my-result" wx:if="{{myResult}}">{{myResult}}</view>
@@ -22,51 +22,29 @@
       <view class="t-name">
         {{item.name}}<text class="t-title">{{item.title}}</text>
         <text class="t-player" wx:if="{{item.playerNick}}">· {{item.playerNick}}</text>
-        <text class="t-killer" wx:if="{{item.isMurderer}}">真凶</text>
+        <text class="t-killer" wx:if="{{item.isMurderer && isHost}}">真凶</text>
       </view>
       <view class="t-count">{{item.count}} 票</view>
     </view>
   </view>
 
-  <!-- 真相（第一~六章）：所有人都能看到 -->
-  <view class="card truth">
-    <view class="sec-title">{{truth.title}}</view>
+  <!-- 真相：仅主持人可见，由主持人在群里公布（玩家看不到）-->
+  <view class="card truth" wx:if="{{isHost}}">
+    <view class="row-between">
+      <view class="sec-title">{{truth.title}}（仅主持人）</view>
+      <text class="mini-btn" bindtap="copyTruthLetter">一键复制（结果+真相+信）</text>
+    </view>
     <view class="pre">{{truth.text}}</view>
   </view>
 
-  <!-- 张涛的诊断报告：先揭晓「他早已查出晚期癌症」-->
-  <view class="card truth letter" wx:if="{{isHost}}">
-    <view class="row-between">
-      <view class="sec-title">🏥 张涛的诊断报告（仅主持人）</view>
-      <text class="muted">先揭晓</text>
-    </view>
-    <view class="letter-stub">
-      <view class="letter-icon">🏥</view>
-      <view class="muted">证明老板早已查出晚期癌症。先下载这张发群，再放下面那封信。</view>
-    </view>
-    <view class="clue-actions">
-      <text class="mini-btn" bindtap="saveReportImg">下载诊断报告（图片）</text>
-    </view>
-  </view>
-
-  <!-- 遗书：压轴，放在诊断报告之后揭晓 -->
-  <view class="card truth letter" wx:if="{{isHost && (letter || letterImg)}}">
+  <!-- 那封信：压轴，仅主持人，直接显示文字 -->
+  <view class="card truth letter" wx:if="{{isHost && letter}}">
     <view class="row-between">
       <view class="sec-title">✉️ 张涛留下的那封信（仅主持人）</view>
       <text class="muted">最后揭晓</text>
     </view>
-    <view class="letter-stub">
-      <view class="letter-icon">✉️</view>
-      <view class="muted">信的内容不在这里显示。点下方按钮下载成图片，最后念给大家 / 发到群里。</view>
-    </view>
-    <view class="clue-actions">
-      <text class="mini-btn" bindtap="saveLetterImg">下载这封信（图片）</text>
-    </view>
+    <view class="pre">{{letter}}</view>
   </view>
-
-  <!-- 离屏 canvas：渲染信 / 报告单用，不显示 -->
-  <canvas type="2d" id="letterCanvas" class="offscreen-canvas"></canvas>
-  <canvas type="2d" id="reportCanvas" class="offscreen-canvas"></canvas>
 
   <button wx:if="{{isHost}}" class="btn" bindtap="endGame">结束游戏（解散房间）</button>
   <button wx:else class="btn btn-ghost" bindtap="backHome">返回首页</button>

@@ -77,6 +77,18 @@ Page({
     wx.setClipboardData({ data: text, success: () => wx.showToast({ title: '已复制', icon: 'success' }) });
   },
 
+  // 主持人：一键复制本幕「发群内容」= 开场白 + 在场的人 + 线索
+  copyAll() {
+    const d = this.data;
+    const parts = [];
+    if (d.actHostStory || d.actNarration) parts.push(d.actHostStory || d.actNarration);
+    if (d.actHostActivities && d.actHostActivities.length) parts.push('【怎么玩】\n' + d.actHostActivities.join('\n'));
+    if (d.clues && d.clues.length) parts.push('【线索】\n' + d.clues.map((c) => `${c.icon} ${c.name}：${c.text}`).join('\n'));
+    const text = parts.join('\n\n');
+    if (!text) return wx.showToast({ title: '暂无可复制内容', icon: 'none' });
+    wx.setClipboardData({ data: text, success: () => wx.showToast({ title: '已复制，去群里粘贴', icon: 'none' }) });
+  },
+
   // 主持人：把线索/角色图片保存到相册，再发到群里
   saveImg(e) {
     const src = e.currentTarget.dataset.src;

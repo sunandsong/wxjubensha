@@ -51,13 +51,6 @@ const SCRIPT_META = {
     cluesByAct: [['y1', 'y2', 'y3']],
     searchPerAct: 1,
   },
-  wangchuan: {
-    charIds: ['aqi', 'laowu', 'aqing'],
-    murderer: 'aqi',
-    actCount: 1, // 忘川·一盏孟婆汤：单幕，autoClues 自动公开（凶手=守桥鬼差）
-    cluesByAct: [['w1', 'w2', 'w3']],
-    searchPerAct: 1,
-  },
   wangsicheng: {
     charIds: ['zhengshi', 'liuniang', 'laohei'],
     murderer: 'zhengshi',

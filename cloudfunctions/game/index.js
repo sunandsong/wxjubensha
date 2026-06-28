@@ -4,8 +4,10 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 const rooms = db.collection('rooms');
+const scriptsCol = db.collection('scripts');   // 剧本内容集合（后台可配；首次以种子兜底）
+const SEED = require('./scriptsSeed.json');     // 打包种子：灌库 + 兜底
 
-// 各剧本的角色 id 与凶手（需与小程序端 utils/scripts.js 保持一致）
+// 各剧本的角色 id 与凶手（旧硬编码，作为 getMeta 的最终兜底，逐步由数据库取代）
 // cluesByAct / searchPerAct 用于「限次搜证」：每幕可搜的线索点，及每人每幕的搜证次数上限
 const SCRIPT_META = {
   tongxuehui: {
@@ -85,6 +87,32 @@ async function getRoomByCode(code) {
   return res.data[0];
 }
 
+// 从一份完整剧本对象派生发牌所需的元数据
+function deriveMeta(s) {
+  if (!s) return null;
+  const acts = s.acts || [];
+  return {
+    charIds: (s.characters || []).map((c) => c.id),
+    murderer: s.truth ? s.truth.murderer : undefined,
+    actCount: acts.length || 1,
+    cluesByAct: acts.map((a) => a.clueIds || []),
+    spotsByAct: acts.map((a) => a.spots || null),
+    searchPerAct: s.searchPerAct || 1,
+  };
+}
+
+// 取某剧本的发牌元数据：云数据库 → 种子 JSON → 旧硬编码 三重兜底
+async function getMeta(scriptId) {
+  if (!scriptId) return null;
+  try {
+    const doc = await scriptsCol.doc(scriptId).get().then((r) => r.data).catch(() => null);
+    if (doc) return deriveMeta(doc);
+  } catch (e) {}
+  const seed = SEED.find((s) => s.id === scriptId || s._id === scriptId);
+  if (seed) return deriveMeta(seed);
+  return SCRIPT_META[scriptId] || null;
+}
+
 exports.main = async (event) => {
   const { OPENID: realOpenid } = cloud.getWXContext();
   // 测试用：客户端传 uid 可模拟不同玩家身份；不传则用真实 openid
@@ -97,6 +125,35 @@ exports.main = async (event) => {
       return { ok: true, openid: OPENID };
     }
 
+    // ── 拉取剧本列表（客户端用）：云数据库优先，空则回退种子 ──
+    if (action === 'getScripts') {
+      let docs = [];
+      try {
+        const r = await scriptsCol.where({ shown: true }).limit(100).get();
+        docs = r.data || [];
+      } catch (e) {}
+      if (!docs.length) docs = SEED.filter((s) => s.shown !== false);
+      return { ok: true, list: docs };
+    }
+
+    // ── 写封面：把云存储 fileID 写进某剧本的 cover.image（配合 dev 页一键上传）──
+    if (action === 'setCover') {
+      if (!event.scriptId || !event.fileID) return { ok: false, msg: '缺少参数' };
+      await scriptsCol.doc(event.scriptId).update({ data: { 'cover.image': event.fileID } }).catch(() => {});
+      return { ok: true };
+    }
+
+    // ── 灌库：把打包种子写入 scripts 集合（首次配库时手动调一次；幂等）──
+    if (action === 'seedScripts') {
+      let seeded = 0;
+      for (const s of SEED) {
+        const id = s._id || s.id;
+        const { _id, ...rest } = s;
+        await scriptsCol.doc(id).set({ data: rest }).then(() => { seeded++; }).catch(() => {});
+      }
+      return { ok: true, seeded };
+    }
+
     // ── 创建房间 ──
     if (action === 'create') {
       let code, exists;
@@ -105,7 +162,7 @@ exports.main = async (event) => {
         exists = await getRoomByCode(code);
       } while (exists);
       const player = { openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '' };
-      const scriptId = SCRIPT_META[event.scriptId] ? event.scriptId : DEFAULT_SCRIPT;
+      const scriptId = (await getMeta(event.scriptId)) ? event.scriptId : DEFAULT_SCRIPT;
       const add = await rooms.add({
         data: {
           roomCode: code,
@@ -168,7 +225,7 @@ exports.main = async (event) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以开始游戏' };
 
-      const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
+      const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       // 房主只主持、不参与；吃瓜群众也不发牌，只给真实玩家发牌
       const realPlayers = room.players.filter((p) => p.openid !== room.hostOpenid && !p.spectator);
       if (realPlayers.length < meta.charIds.length) return { ok: false, msg: `需要 ${meta.charIds.length} 名玩家才能开始（房主不参与）` };
@@ -196,7 +253,7 @@ exports.main = async (event) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid === OPENID) return { ok: false, msg: '主持人不参与搜证' };
       if (room.status !== 'playing') return { ok: false, msg: '当前不在剧情阶段' };
-      const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
+      const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       const idx = room.actIndex || 0;
       // 优先用按地点的 spotsByAct；没有则退回老的 cluesByAct（地点 id = 线索 id）
       const actSpots = (meta.spotsByAct && meta.spotsByAct[idx]) || (meta.cluesByAct && meta.cluesByAct[idx]) || [];
@@ -220,7 +277,7 @@ exports.main = async (event) => {
     if (action === 'advance') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有主持人可以推进流程' };
-      const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
+      const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       const data = {};
       if (room.status === 'voting') {
         // 必须全部玩家投完才能公布真相（房主不参与）
@@ -249,7 +306,7 @@ exports.main = async (event) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有主持人可以操作' };
       if (room.status !== 'voting') return { ok: false, msg: '当前不在投票阶段' };
-      const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
+      const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       const actIndex = Math.max(0, meta.actCount - 1);
       await rooms.doc(event.roomId).update({ data: { status: 'playing', actIndex, votes: {} } });
       return { ok: true, status: 'playing', actIndex };

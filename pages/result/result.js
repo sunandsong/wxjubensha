@@ -1,6 +1,6 @@
 const app = getApp();
 const db = wx.cloud.database();
-const SCRIPTS = require('../../utils/scripts.js');
+const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
   data: {
@@ -31,6 +31,7 @@ Page({
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
+    await SCRIPTS.ensureLoaded();   // 确保剧本数据（云端/缓存/兜底）就绪
     await this.load();
     this.watchReset();
   },

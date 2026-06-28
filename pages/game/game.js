@@ -1,6 +1,6 @@
 const app = getApp();
 const db = wx.cloud.database();
-const SCRIPTS = require('../../utils/scripts.js');
+const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
   data: {
@@ -51,6 +51,7 @@ Page({
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
+    await SCRIPTS.ensureLoaded();   // 确保剧本数据（云端/缓存/兜底）就绪
     // 每次进入都重新请求最新数据（不依赖缓存），带 Loading
     wx.showLoading({ title: '加载中', mask: true });
     try {
@@ -409,16 +410,22 @@ Page({
 
   async vote(e) {
     const charId = e.currentTarget.dataset.id;
+    if (this.data.myVote === charId) return;   // 已选同一个，不重复请求
+    const prev = this.data.myVote;
     wx.vibrateShort && wx.vibrateShort({ type: 'light' });
+    this.setData({ myVote: charId });          // 点击即高亮，不等云端（消除卡顿感）
     let res;
     try {
       res = await app.runOnce('vote', () => app.callGame({ action: 'vote', roomId: this.data.roomId, charId }), '');
     } catch (err) {
+      this.setData({ myVote: prev });          // 网络失败：回滚高亮
       return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
-    if (!res) return; // 被防抖忽略
-    if (res.result && !res.result.ok) return wx.showToast({ title: res.result.msg || '投票失败', icon: 'none' });
-    this.setData({ myVote: charId });   // 乐观更新：立刻高亮选中，不等云端回推
+    if (!res) return;                          // 被防抖忽略：保留已高亮
+    if (res.result && !res.result.ok) {
+      this.setData({ myVote: prev });          // 服务端拒绝：回滚高亮
+      return wx.showToast({ title: res.result.msg || '投票失败', icon: 'none' });
+    }
     wx.showToast({ title: '已投票', icon: 'success' });
   },
 

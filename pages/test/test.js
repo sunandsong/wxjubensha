@@ -1,4 +1,5 @@
 const app = getApp();
+const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
   data: {
@@ -35,5 +36,38 @@ Page({
       app.setTestUid(null);
       wx.reLaunch({ url: '/pages/index/index' });
     }, '');
+  },
+
+  // 一次性：把 /assets 里的本地封面传到云存储，并把 fileID 写进 scripts 集合的 cover.image。
+  // 前提：已先在云函数调过一次 seedScripts（scripts 集合里已有对应文档）。跑完即可删掉本地图。
+  async uploadCovers() {
+    await SCRIPTS.ensureLoaded();
+    const items = SCRIPTS.list().filter((s) => (((s.cover && s.cover.image) || '').indexOf('/assets/') === 0));
+    if (!items.length) {
+      return wx.showModal({ title: '无可上传封面', content: '没有以 /assets/ 开头的封面（可能已挪到云存储）。', showCancel: false });
+    }
+    const ok = await new Promise((r) => wx.showModal({
+      title: '上传封面到云存储',
+      content: `将把 ${items.length} 张本地封面传到云存储 covers/，并写入数据库。\n（需先在云函数调过一次 seedScripts）`,
+      success: (m) => r(m.confirm), fail: () => r(false),
+    }));
+    if (!ok) return;
+    wx.showLoading({ title: '上传中…', mask: true });
+    const done = [];
+    for (const s of items) {
+      try {
+        const info = await new Promise((res, rej) => wx.getImageInfo({ src: s.cover.image, success: res, fail: rej }));
+        const up = await wx.cloud.uploadFile({ cloudPath: `covers/${s.id}.jpg`, filePath: info.path });
+        await app.callGame({ action: 'setCover', scriptId: s.id, fileID: up.fileID });
+        console.log('[cover]', s.id, '→', up.fileID);
+        done.push(`${s.id} ✓`);
+      } catch (e) {
+        console.error('[cover-fail]', s.id, e);
+        done.push(`${s.id} ✗`);
+      }
+    }
+    wx.hideLoading();
+    try { wx.removeStorageSync('scriptsCacheV1'); } catch (e) {}  // 清缓存，下次拉到云端新封面
+    wx.showModal({ title: '上传完成', content: done.join('   ') + '\n\nfileID 已打印在 Console（可复制填进 scripts.js）。', showCancel: false });
   },
 });

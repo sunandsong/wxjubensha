@@ -1,5 +1,5 @@
 const app = getApp();
-const SCRIPTS = require('../../utils/scripts.js');
+const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
   data: {
@@ -7,7 +7,7 @@ Page({
     avatar: '',     // 头像 fileID（云存储），记住后下次自动带上
     gender: '',     // 'm' / 'f'，决定角色照片；记住后下次自动带上
     loading: false,
-    scripts: SCRIPTS.list.map((s) => ({
+    scripts: SCRIPTS.list().map((s) => ({
       id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
       players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
       cat: (s.tag || '').split('·')[0].trim() || '其他',   // 主分类：取标签第一段（悬疑/奇幻/欢乐…）
@@ -41,6 +41,18 @@ Page({
     });
     app.ensureLogin().catch(() => {});
     this.initCategories();
+    // 云端剧本就绪后重建卡片（首屏先用兜底/缓存，秒开不白屏）
+    SCRIPTS.ensureLoaded().then(() => this._reloadScripts());
+  },
+
+  // 用最新剧本数据重建首页卡片 + 分类
+  _reloadScripts() {
+    const scripts = SCRIPTS.list().map((s) => ({
+      id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
+      players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
+      cat: (s.tag || '').split('·')[0].trim() || '其他',
+    }));
+    this.setData({ scripts }, () => { this.initCategories(); this.applyFilter(); });
   },
 
   // 初始化分类标签 + 默认展示全部剧本
@@ -201,7 +213,8 @@ Page({
         intro: s.intro || '',
         worldview: s.worldview || '',
         victim: s.victim && s.victim.name ? s.victim.name : '',
-        roster: (s.characters || []).map((c) => ({ name: c.name, title: c.title })),
+        // 角色顺序随机打乱：避免「列表第一个永远是凶手」的规律泄底
+        roster: (s.characters || []).map((c) => ({ name: c.name, title: c.title })).sort(() => Math.random() - 0.5),
         relations: s.relations || [],
       },
     });

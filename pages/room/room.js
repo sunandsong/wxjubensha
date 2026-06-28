@@ -1,6 +1,6 @@
 const app = getApp();
 const db = wx.cloud.database();
-const SCRIPTS = require('../../utils/scripts.js');
+const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
   data: {
@@ -30,6 +30,7 @@ Page({
     try {
       this.setData({ openid: await app.ensureLogin() });
     } catch (e) {}
+    await SCRIPTS.ensureLoaded();   // 确保剧本数据（云端/缓存/兜底）就绪
     // 每次进入都重新请求最新数据（不依赖缓存），带 Loading
     wx.showLoading({ title: '加载中', mask: true });
     try {

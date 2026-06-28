@@ -51,13 +51,6 @@ const SCRIPT_META = {
     cluesByAct: [['y1', 'y2', 'y3']],
     searchPerAct: 1,
   },
-  wangsicheng: {
-    charIds: ['zhengshi', 'liuniang', 'laohei'],
-    murderer: 'zhengshi',
-    actCount: 1, // 枉死城·一纸申冤：单幕，autoClues 自动公开（凶手=含冤二十年的货郎）
-    cluesByAct: [['v1', 'v2', 'v3']],
-    searchPerAct: 1,
-  },
   bieshu: {
     charIds: ['meixiaobao', 'nieyuanzhang', 'acheng', 'qianbanxian', 'changyi', 'daniu'],
     murderer: 'qianbanxian',

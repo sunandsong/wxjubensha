@@ -51,13 +51,6 @@ const SCRIPT_META = {
     cluesByAct: [['y1', 'y2', 'y3']],
     searchPerAct: 1,
   },
-  nianhui: {
-    charIds: ['laozhang', 'xiaoli', 'aqiang'],
-    murderer: 'laozhang',
-    actCount: 1, // 年会迷案·谁喝了老板的茅台：3 人欢乐本，单幕，autoClues（「凶手」=偷喝贼老张）
-    cluesByAct: [['j1', 'j2', 'j3']],
-    searchPerAct: 1,
-  },
   nanji: {
     charIds: ['pangdun', 'afei', 'erleng'],
     murderer: 'pangdun',

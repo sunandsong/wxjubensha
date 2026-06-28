@@ -51,13 +51,6 @@ const SCRIPT_META = {
     cluesByAct: [['y1', 'y2', 'y3']],
     searchPerAct: 1,
   },
-  bieshu: {
-    charIds: ['meixiaobao', 'nieyuanzhang', 'acheng', 'qianbanxian', 'changyi', 'daniu'],
-    murderer: 'qianbanxian',
-    actCount: 1, // 薄荷小镇·别墅惊魂夜：6 人欢乐本，单幕，autoClues（「凶手」=偷珠贼钱半仙）
-    cluesByAct: [['p1', 'p2', 'p3', 'p4', 'p5', 'p6']],
-    searchPerAct: 1,
-  },
   nianhui: {
     charIds: ['laozhang', 'xiaoli', 'aqiang'],
     murderer: 'laozhang',

@@ -258,6 +258,9 @@ Page({
     } : null;
 
     // 公开名册：所有角色，名字用昵称，标注是否为「公开嫌疑人」(NPC)
+    // 展示顺序按房间号确定性打乱——避免「列表第一个永远是凶手」的规律被看穿（同房间内稳定）
+    const seed = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; } return h; };
+    const rkey = room.roomCode || this.data.roomCode || this.data.roomId || '';
     const roster = SCRIPT.characters.map((c) => {
       const owner = players.find((p) => p.charId === c.id);
       return {
@@ -266,7 +269,7 @@ Page({
         avatar: owner ? owner.avatar : '',
         isMe: owner && owner.openid === openid,
       };
-    });
+    }).sort((a, b) => seed(rkey + a.id) - seed(rkey + b.id));
 
     const isHost = room.hostOpenid === openid;
     const findClue = (id) => SCRIPT.clues.find((c) => c.id === id);

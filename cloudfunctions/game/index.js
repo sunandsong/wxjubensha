@@ -58,13 +58,6 @@ const SCRIPT_META = {
     cluesByAct: [['q1', 'q2', 'q3']],
     searchPerAct: 1,
   },
-  qiguan: {
-    charIds: ['laoxin', 'laogan', 'weizai'],
-    murderer: 'weizai',
-    actCount: 1, // 器官联合会议：3 人脑洞欢乐本，单幕，autoClues（「凶手」=直接罪魁胃仔）
-    cluesByAct: [['o1', 'o2', 'o3']],
-    searchPerAct: 1,
-  },
   shiqian: {
     charIds: ['dacan', 'ahuo', 'yaya'],
     murderer: 'ahuo',

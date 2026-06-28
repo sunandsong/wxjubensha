@@ -14,6 +14,7 @@ Page({
     starting: false,
     scriptTitle: '',
     scriptSub: '',
+    shareImg: '',     // 分享卡片缩略图：当前本封面的 https 临时链接（cloud:// 不能直接当分享图）
   },
 
   watcher: null,
@@ -55,8 +56,25 @@ Page({
     return {
       title: `「${this.data.scriptTitle || '剧本杀'}」房间 ${code}，点我直接进房`,
       path: `/pages/index/index?joinCode=${code}`,
-      imageUrl: '/assets/share.jpg',
+      imageUrl: this.data.shareImg || '/assets/share.jpg',   // 本封面优先，没拿到回退通用图
     };
+  },
+
+  // 解析当前本封面为分享缩略图：cloud:// → https 临时链接；本地路径直接用
+  _resolveShareImg(script) {
+    if (this.data.shareImg) return;                    // 一局内剧本固定，取一次即可
+    const img = (script && script.cover && script.cover.image) || '';
+    if (!img) return;
+    if (img.indexOf('cloud://') === 0) {
+      wx.cloud.getTempFileURL({ fileList: [img] })
+        .then((r) => {
+          const url = r.fileList && r.fileList[0] && r.fileList[0].tempFileURL;
+          if (url) this.setData({ shareImg: url });
+        })
+        .catch(() => {});
+    } else {
+      this.setData({ shareImg: img });
+    }
   },
 
   renderRoom(room) {
@@ -81,6 +99,7 @@ Page({
       scriptTitle: script.title,
       scriptSub: script.subtitle,
     });
+    this._resolveShareImg(script);   // 备好分享缩略图（本封面）
     // 游戏已开始 → 进入游戏页
     if (room.status && room.status !== 'waiting') {
       this.closeWatch();

@@ -9,7 +9,7 @@
     "cover": {
       "emoji": "☕",
       "gradient": "linear-gradient(135deg,#8a5a30,#3a2415)",
-      "image": "/assets/share.jpg"
+      "image": "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/test.jpg"
     },
     "minPlayers": 3,
     "maxPlayers": 3,
@@ -240,7 +240,7 @@
     "cover": {
       "emoji": "🍽",
       "gradient": "linear-gradient(135deg,#3a3f55,#15171f)",
-      "image": "/assets/shiguang.jpg"
+      "image": "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/shiguang.jpg"
     },
     "minPlayers": 3,
     "maxPlayers": 3,
@@ -405,7 +405,7 @@
     "cover": {
       "emoji": "🐗",
       "gradient": "linear-gradient(135deg,#3a2f1a,#13100a)",
-      "image": "/assets/langlangshan.jpg"
+      "image": "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/langlangshan.jpg"
     },
     "minPlayers": 3,
     "maxPlayers": 3,
@@ -570,7 +570,7 @@
     "cover": {
       "emoji": "🌾",
       "gradient": "linear-gradient(135deg,#3a352c,#100e0a)",
-      "image": "/assets/yidaimi.jpg"
+      "image": "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/yidaimi.jpg"
     },
     "minPlayers": 3,
     "maxPlayers": 3,
@@ -735,7 +735,7 @@
     "cover": {
       "emoji": "🐧",
       "gradient": "linear-gradient(135deg,#2a5a7a,#0c1822)",
-      "image": "/assets/nanji.jpg"
+      "image": "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/nanji.jpg"
     },
     "minPlayers": 3,
     "maxPlayers": 3,
@@ -900,7 +900,7 @@
     "cover": {
       "emoji": "🔥",
       "gradient": "linear-gradient(135deg,#6a3a1a,#2a1208)",
-      "image": "/assets/shiqian.jpg"
+      "image": "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/shiqian.jpg"
     },
     "minPlayers": 3,
     "maxPlayers": 3,

@@ -53,11 +53,24 @@ Page({
     }));
     if (!ok) return;
     wx.showLoading({ title: '上传中…', mask: true });
+    const fs = wx.getFileSystemManager();
     const done = [];
     for (const s of items) {
       try {
-        const info = await new Promise((res, rej) => wx.getImageInfo({ src: s.cover.image, success: res, fail: rej }));
-        const up = await wx.cloud.uploadFile({ cloudPath: `covers/${s.id}.jpg`, filePath: info.path });
+        // 代码包里的图 getImageInfo 在工具里拿不到可上传路径，优先用 FS 拷到用户目录再传
+        const src = s.cover.image;                                  // 如 /assets/shiguang.jpg
+        const dest = `${wx.env.USER_DATA_PATH}/cover_${s.id}.jpg`;
+        let filePath = '';
+        try { fs.copyFileSync(src, dest); filePath = dest; }
+        catch (e1) {
+          try { fs.copyFileSync(src.replace(/^\//, ''), dest); filePath = dest; }
+          catch (e2) {
+            // 工具里 FS 读不到包内文件时，退回 getImageInfo（真机有效）
+            const info = await new Promise((res, rej) => wx.getImageInfo({ src, success: res, fail: rej }));
+            filePath = info.path;
+          }
+        }
+        const up = await wx.cloud.uploadFile({ cloudPath: `covers/${s.id}.jpg`, filePath });
         await app.callGame({ action: 'setCover', scriptId: s.id, fileID: up.fileID });
         console.log('[cover]', s.id, '→', up.fileID);
         done.push(`${s.id} ✓`);

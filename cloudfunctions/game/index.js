@@ -37,13 +37,6 @@ const SCRIPT_META = {
     cluesByAct: [['s1', 's2', 's3']],
     searchPerAct: 1,
   },
-  binansuo: {
-    charIds: ['azhe', 'qiangzi', 'laolin'],
-    murderer: 'azhe',
-    actCount: 1, // 避难所·第47夜：单幕，autoClues 自动公开
-    cluesByAct: [['n1', 'n2', 'n3']],
-    searchPerAct: 1,
-  },
   langlangshan: {
     charIds: ['xiaohuan', 'huangpi', 'hama'],
     murderer: 'xiaohuan',

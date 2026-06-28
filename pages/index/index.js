@@ -10,11 +10,18 @@ Page({
     scripts: SCRIPTS.list.map((s) => ({
       id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
       players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
+      cat: (s.tag || '').split('·')[0].trim() || '其他',   // 主分类：取标签第一段（悬疑/奇幻/欢乐…）
     })),
+    filteredScripts: [],   // 当前分类 + 关键词过滤后的剧本（onLoad 初始化）
+    categories: [],        // 分类标签：全部 + 各主分类（onLoad 初始化）
+    activeCat: '全部',     // 当前选中的分类
+    keyword: '',           // 搜索关键词
     needAuth: false, // 未完善头像昵称 → 强制授权门
     authStep: 1,     // 授权向导步骤：1 头像 / 2 昵称 / 3 性别
     editing: false,  // true=从首页「编辑」进入（按钮显示「确定」）
     picking: false,  // 是否展开剧本封面选择层
+    showDetail: false, // 是否展开剧本详情页（确认后才建房）
+    detail: null,      // 当前查看的剧本详情
     uploading: false,
   },
 
@@ -33,6 +40,41 @@ Page({
       testTag: isTest ? nick : '', isDev: app.testEnabled(),
     });
     app.ensureLogin().catch(() => {});
+    this.initCategories();
+  },
+
+  // 初始化分类标签 + 默认展示全部剧本
+  initCategories() {
+    const cats = [];
+    this.data.scripts.forEach((s) => { if (cats.indexOf(s.cat) < 0) cats.push(s.cat); });
+    this.setData({ categories: ['全部'].concat(cats), filteredScripts: this.data.scripts });
+  },
+
+  // 按分类 + 关键词过滤剧本
+  applyFilter() {
+    const { scripts, activeCat, keyword } = this.data;
+    const kw = (keyword || '').trim().toLowerCase();
+    const filteredScripts = scripts.filter((s) => {
+      const okCat = activeCat === '全部' || s.cat === activeCat;
+      const okKw = !kw || `${s.title} ${s.subtitle} ${s.tag} ${s.players}`.toLowerCase().indexOf(kw) >= 0;
+      return okCat && okKw;
+    });
+    this.setData({ filteredScripts });
+  },
+
+  // 点选分类标签
+  selectCat(e) {
+    this.setData({ activeCat: e.currentTarget.dataset.cat }, () => this.applyFilter());
+  },
+
+  // 搜索框输入
+  onSearchInput(e) {
+    this.setData({ keyword: e.detail.value }, () => this.applyFilter());
+  },
+
+  // 清空搜索框
+  clearSearch() {
+    this.setData({ keyword: '' }, () => this.applyFilter());
   },
 
   // 测试身份入口（仅开发/体验版显示）
@@ -145,11 +187,33 @@ Page({
     this.setData({ picking: true });
   },
   closePicker() { this.setData({ picking: false }); },
-  // 选中某个剧本封面 → 创建房间
-  pickAndCreate(e) {
+
+  // 点剧本封面 → 先看详情，不直接建房
+  openDetail(e) {
     if (this.data.loading) return;
-    this.setData({ picking: false });
-    this.createRoom(e.currentTarget.dataset.id);
+    const s = SCRIPTS.byId(e.currentTarget.dataset.id);
+    if (!s) return;
+    this.setData({
+      showDetail: true,
+      detail: {
+        id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
+        players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
+        intro: s.intro || '',
+        worldview: s.worldview || '',
+        victim: s.victim && s.victim.name ? s.victim.name : '',
+        roster: (s.characters || []).map((c) => ({ name: c.name, title: c.title })),
+        relations: s.relations || [],
+      },
+    });
+  },
+  closeDetail() { this.setData({ showDetail: false }); },
+
+  // 详情页确认 → 用这个本创建房间
+  confirmCreate() {
+    if (this.data.loading || !this.data.detail) return;
+    const id = this.data.detail.id;
+    this.setData({ showDetail: false, picking: false });
+    this.createRoom(id);
   },
 
   // 「进入房间」→ 弹窗输入房间号再加入

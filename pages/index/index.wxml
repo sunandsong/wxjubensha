@@ -66,13 +66,29 @@
 </view>
 
 <!-- 剧本封面卡片选择层 -->
-<view class="pick-mask" wx:if="{{picking}}" catchtouchmove="noop">
+<view class="pick-mask" wx:if="{{picking}}">
   <view class="pick-head">
     <view class="pick-h-title">选择剧本</view>
     <view class="pick-close" catchtap="closePicker">✕</view>
   </view>
+
+  <!-- 搜索框 -->
+  <view class="pick-search">
+    <text class="pick-search-ico">🔍</text>
+    <input class="pick-search-input" placeholder="搜剧本名 / 题材 / 人数" placeholder-class="pick-search-ph"
+      value="{{keyword}}" bindinput="onSearchInput" confirm-type="search" />
+    <text wx:if="{{keyword}}" class="pick-search-clear" catchtap="clearSearch">✕</text>
+  </view>
+
+  <!-- 分类标签 -->
+  <scroll-view class="pick-cats" scroll-x>
+    <view class="pick-cat {{activeCat===item ? 'on' : ''}}" wx:for="{{categories}}" wx:key="*this"
+      data-cat="{{item}}" catchtap="selectCat">{{item}}</view>
+  </scroll-view>
+
   <scroll-view class="pick-scroll" scroll-y>
-    <view class="pick-card" wx:for="{{scripts}}" wx:key="id" data-id="{{item.id}}" bindtap="pickAndCreate">
+    <view wx:if="{{!filteredScripts.length}}" class="pick-empty">没有匹配的剧本，换个分类或关键词试试</view>
+    <view class="pick-card" wx:for="{{filteredScripts}}" wx:key="id" data-id="{{item.id}}" bindtap="openDetail">
       <view class="pick-cover" style="background:{{item.cover.gradient}}">
         <image wx:if="{{item.cover.image}}" class="pick-cover-img" src="{{item.cover.image}}" mode="aspectFill"></image>
         <view wx:if="{{item.cover.image}}" class="pick-cover-scrim"></view>
@@ -85,6 +101,66 @@
         <view class="pick-meta">{{item.players}} · {{item.duration}}</view>
       </view>
     </view>
-    <view class="pick-bottom-tip">点封面即创建房间，你将成为房主</view>
+    <view class="pick-bottom-tip">点封面查看剧本详情，再决定是否开局</view>
   </scroll-view>
+</view>
+
+<!-- 剧本详情层：看完再决定是否创建房间 -->
+<view class="detail-mask" wx:if="{{showDetail}}">
+  <view class="pick-head">
+    <view class="detail-back" catchtap="closeDetail">‹ 返回</view>
+    <view class="pick-h-title">剧本详情</view>
+    <view class="pick-close" catchtap="closeDetail">✕</view>
+  </view>
+  <scroll-view class="detail-scroll" scroll-y wx:if="{{detail}}">
+    <!-- 封面 -->
+    <view class="detail-cover" style="background:{{detail.cover.gradient}}">
+      <image wx:if="{{detail.cover.image}}" class="pick-cover-img" src="{{detail.cover.image}}" mode="aspectFill"></image>
+      <view wx:if="{{detail.cover.image}}" class="pick-cover-scrim"></view>
+      <text wx:else class="detail-emoji">{{detail.cover.emoji}}</text>
+      <text class="pick-tag">{{detail.tag}}</text>
+      <text class="detail-cover-title">{{detail.title}}</text>
+    </view>
+    <view class="detail-sub">{{detail.subtitle}}</view>
+    <view class="detail-meta">{{detail.players}} · {{detail.duration}}</view>
+
+    <!-- 剧情简介 -->
+    <view class="detail-sec-title">📖 剧情简介</view>
+    <view class="detail-pre">{{detail.intro}}</view>
+
+    <!-- 世界观背景 -->
+    <block wx:if="{{detail.worldview}}">
+      <view class="detail-sec-title">🌍 故事背景</view>
+      <view class="detail-pre">{{detail.worldview}}</view>
+    </block>
+
+    <!-- 被害人 -->
+    <block wx:if="{{detail.victim}}">
+      <view class="detail-sec-title">💀 「被害人」</view>
+      <view class="detail-pre">{{detail.victim}}</view>
+    </block>
+
+    <!-- 角色 -->
+    <view class="detail-sec-title">🎭 出场角色（{{detail.roster.length}}）</view>
+    <view class="detail-roles">
+      <view class="detail-role" wx:for="{{detail.roster}}" wx:key="name">
+        <text class="detail-role-name">{{item.name}}</text>
+        <text class="detail-role-title">{{item.title}}</text>
+      </view>
+    </view>
+
+    <!-- 人物关系 -->
+    <block wx:if="{{detail.relations.length}}">
+      <view class="detail-sec-title">🔗 人物关系</view>
+      <view class="detail-rel" wx:for="{{detail.relations}}" wx:key="*this">{{item}}</view>
+    </block>
+
+    <view class="detail-tip">读完简介，确认开局 → 你将成为房主（主持人）</view>
+  </scroll-view>
+
+  <!-- 底部确认 -->
+  <view class="detail-foot">
+    <button class="btn btn-ghost detail-btn-back" bindtap="closeDetail">换一个</button>
+    <button class="btn detail-btn-go" bindtap="confirmCreate" disabled="{{loading}}">用这个本创建房间</button>
+  </view>
 </view>

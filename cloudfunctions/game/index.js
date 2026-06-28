@@ -37,13 +37,6 @@ const SCRIPT_META = {
     cluesByAct: [['s1', 's2', 's3']],
     searchPerAct: 1,
   },
-  zhongchang: {
-    charIds: ['wanglei', 'suting', 'luojie'],
-    murderer: 'luojie',
-    actCount: 1, // 终场哨之后：单幕，autoClues 自动公开
-    cluesByAct: [['z1', 'z2', 'z3']],
-    searchPerAct: 1,
-  },
   binansuo: {
     charIds: ['azhe', 'qiangzi', 'laolin'],
     murderer: 'azhe',
@@ -63,6 +56,55 @@ const SCRIPT_META = {
     murderer: 'miaoshi',
     actCount: 1, // 1942·一袋米：单幕，autoClues 自动公开（凶手=告密者）
     cluesByAct: [['y1', 'y2', 'y3']],
+    searchPerAct: 1,
+  },
+  wangchuan: {
+    charIds: ['aqi', 'laowu', 'aqing'],
+    murderer: 'aqi',
+    actCount: 1, // 忘川·一盏孟婆汤：单幕，autoClues 自动公开（凶手=守桥鬼差）
+    cluesByAct: [['w1', 'w2', 'w3']],
+    searchPerAct: 1,
+  },
+  wangsicheng: {
+    charIds: ['zhengshi', 'liuniang', 'laohei'],
+    murderer: 'zhengshi',
+    actCount: 1, // 枉死城·一纸申冤：单幕，autoClues 自动公开（凶手=含冤二十年的货郎）
+    cluesByAct: [['v1', 'v2', 'v3']],
+    searchPerAct: 1,
+  },
+  bieshu: {
+    charIds: ['meixiaobao', 'nieyuanzhang', 'acheng', 'qianbanxian', 'changyi', 'daniu'],
+    murderer: 'qianbanxian',
+    actCount: 1, // 薄荷小镇·别墅惊魂夜：6 人欢乐本，单幕，autoClues（「凶手」=偷珠贼钱半仙）
+    cluesByAct: [['p1', 'p2', 'p3', 'p4', 'p5', 'p6']],
+    searchPerAct: 1,
+  },
+  nianhui: {
+    charIds: ['laozhang', 'xiaoli', 'aqiang'],
+    murderer: 'laozhang',
+    actCount: 1, // 年会迷案·谁喝了老板的茅台：3 人欢乐本，单幕，autoClues（「凶手」=偷喝贼老张）
+    cluesByAct: [['j1', 'j2', 'j3']],
+    searchPerAct: 1,
+  },
+  nanji: {
+    charIds: ['pangdun', 'afei', 'erleng'],
+    murderer: 'pangdun',
+    actCount: 1, // 南极悬案·企鹅送错了石头：3 人动物欢乐本，单幕，autoClues（「凶手」=偷石贼胖墩）
+    cluesByAct: [['q1', 'q2', 'q3']],
+    searchPerAct: 1,
+  },
+  qiguan: {
+    charIds: ['laoxin', 'laogan', 'weizai'],
+    murderer: 'weizai',
+    actCount: 1, // 器官联合会议：3 人脑洞欢乐本，单幕，autoClues（「凶手」=直接罪魁胃仔）
+    cluesByAct: [['o1', 'o2', 'o3']],
+    searchPerAct: 1,
+  },
+  shiqian: {
+    charIds: ['dacan', 'ahuo', 'yaya'],
+    murderer: 'ahuo',
+    actCount: 1, // 史前悬案·圣火偷烤案：3 人史前欢乐本，单幕，autoClues（「凶手」=偷烤贼阿火）
+    cluesByAct: [['h1', 'h2', 'h3']],
     searchPerAct: 1,
   },
 };
@@ -125,21 +167,29 @@ exports.main = async (event) => {
     if (action === 'join') {
       const room = await getRoomByCode(event.roomCode);
       if (!room) return { ok: false, msg: '房间不存在' };
-      if (room.status !== 'waiting') return { ok: false, msg: '游戏已开始，无法加入' };
       const already = room.players.find((p) => p.openid === OPENID);
-      if (already) return { ok: true, roomId: room._id, roomCode: room.roomCode };
-      if (room.players.length >= 6) return { ok: false, msg: '房间已满（最多 6 人）' };
+      if (already) return { ok: true, roomId: room._id, roomCode: room.roomCode, spectator: !!already.spectator };
+      // 游戏开始后进来的，一律作为「吃瓜群众」：只能看第一幕、不参与搜证/投票
+      const asSpectator = !!(room.status && room.status !== 'waiting');
+      if (!asSpectator && room.players.length >= 6) return { ok: false, msg: '房间已满（最多 6 人）' };
+      if (asSpectator && room.players.length >= 30) return { ok: false, msg: '围观人数已满' };
       await rooms.doc(room._id).update({
-        data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '' }) },
+        data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '', spectator: asSpectator }) },
       });
-      return { ok: true, roomId: room._id, roomCode: room.roomCode, openid: OPENID };
+      return { ok: true, roomId: room._id, roomCode: room.roomCode, openid: OPENID, spectator: asSpectator };
     }
 
     // ── 离开房间 ──
     if (action === 'leave') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room) return { ok: true };
-      // 游戏已开始（非等待）：任一玩家退出 → 直接解散，本局结束
+      const meLeaving = (room.players || []).find((p) => p.openid === OPENID);
+      // 吃瓜群众退出：只移除自己，不影响本局（不解散）
+      if (meLeaving && meLeaving.spectator) {
+        await rooms.doc(event.roomId).update({ data: { players: room.players.filter((p) => p.openid !== OPENID) } });
+        return { ok: true };
+      }
+      // 游戏已开始（非等待）：真实玩家退出 → 直接解散，本局结束
       if (room.status && room.status !== 'waiting') {
         await rooms.doc(event.roomId).remove();
         return { ok: true, dissolved: true };
@@ -161,8 +211,8 @@ exports.main = async (event) => {
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以开始游戏' };
 
       const meta = SCRIPT_META[room.scriptId] || SCRIPT_META[DEFAULT_SCRIPT];
-      // 房主只主持、不参与，只给其余玩家发牌
-      const realPlayers = room.players.filter((p) => p.openid !== room.hostOpenid);
+      // 房主只主持、不参与；吃瓜群众也不发牌，只给真实玩家发牌
+      const realPlayers = room.players.filter((p) => p.openid !== room.hostOpenid && !p.spectator);
       if (realPlayers.length < meta.charIds.length) return { ok: false, msg: `需要 ${meta.charIds.length} 名玩家才能开始（房主不参与）` };
       if (realPlayers.length > meta.charIds.length) return { ok: false, msg: `该剧本最多 ${meta.charIds.length} 名玩家（房主除外）` };
 
@@ -172,7 +222,7 @@ exports.main = async (event) => {
       const dealt = shuffle([meta.murderer, ...others]);
       let i = 0;
       const players = room.players.map((p) =>
-        p.openid === room.hostOpenid ? { ...p, charId: '' } : { ...p, charId: dealt[i++] }
+        (p.openid === room.hostOpenid || p.spectator) ? { ...p, charId: '' } : { ...p, charId: dealt[i++] }
       );
       // 未分配出去的角色 → 公开嫌疑人
       const npc = meta.charIds.filter((id) => !dealt.includes(id));
@@ -217,7 +267,7 @@ exports.main = async (event) => {
       if (room.status === 'voting') {
         // 必须全部玩家投完才能公布真相（房主不参与）
         const voted = Object.keys(room.votes || {}).length;
-        const total = (room.players || []).filter((p) => p.openid !== room.hostOpenid).length;
+        const total = (room.players || []).filter((p) => p.openid !== room.hostOpenid && !p.spectator).length;
         if (voted < total) return { ok: false, msg: `还有 ${total - voted} 人没投票` };
         data.status = 'finished';                              // 公布真相
       } else if (room.status !== 'finished') {
@@ -251,6 +301,8 @@ exports.main = async (event) => {
     if (action === 'vote') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid === OPENID) return { ok: false, msg: '主持人不参与投票' };
+      const voter = (room.players || []).find((p) => p.openid === OPENID);
+      if (voter && voter.spectator) return { ok: false, msg: '吃瓜群众不能投票' };
       const key = 'votes.' + OPENID;
       await rooms.doc(event.roomId).update({ data: { [key]: event.charId } });
       return { ok: true };
@@ -269,7 +321,8 @@ exports.main = async (event) => {
     if (action === 'reset') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以重开' };
-      const players = room.players.map((p) => ({ ...p, charId: '' }));
+      // 再来一局：清空发牌，并把吃瓜群众转为正常等待玩家
+      const players = room.players.map((p) => ({ ...p, charId: '', spectator: false }));
       await rooms.doc(event.roomId).update({
         data: { players, status: 'waiting', actIndex: 0, votes: {}, npcChars: [], searches: {} },
       });

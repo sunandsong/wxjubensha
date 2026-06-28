@@ -9,8 +9,17 @@
 </view>
 
 <view class="container">
+  <!-- ============ 吃瓜群众：游戏开始后进来的，只围观第一幕、无任何操作 ============ -->
+  <block wx:if="{{isSpectator}}">
+    <view class="card mychar">
+      <view class="act-title">{{script.title}}</view>
+      <view class="muted tip">👀 你是吃瓜群众 · 游戏已经开始，你只能围观第一幕的剧情，不参与搜证和投票。</view>
+      <view class="pre">{{actNarration}}</view>
+    </view>
+  </block>
+
   <!-- ============ 剧情阶段（逐幕推进）============ -->
-  <block wx:if="{{status==='playing'}}">
+  <block wx:if="{{status==='playing' && !isSpectator}}">
     <!-- 主持人：开场念白 + 一键复制全部发群（已去掉所有图片/下载）-->
     <view wx:if="{{isHost}}" class="card act-card">
       <view class="row-between">
@@ -23,7 +32,7 @@
 
     <!-- 玩家：你这一幕的故事（第一人称）。第一幕顶部展示你自己的角色照片 -->
     <view wx:if="{{myChar && myActStory}}" class="card mychar">
-      <view class="act-title">{{actLabel}} · {{myChar.title}}</view>
+      <view class="act-title">{{actTotal === 1 ? script.title : actLabel + ' · ' + myChar.title}}</view>
       <view class="pre"><text wx:for="{{myActStorySegs}}" wx:key="index" class="{{item.hl ? 'hl' : ''}}">{{item.text}}</text></view>
     </view>
 
@@ -135,8 +144,8 @@
     </view>
   </view>
 
-  <!-- 玩家：全程可退出（游戏中退出即本局结束）-->
+  <!-- 玩家：全程可退出（游戏中退出即本局结束）；吃瓜群众退出只是离场、不解散 -->
   <view class="host-ctrl" wx:if="{{!isHost}}">
-    <button class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
+    <button class="btn btn-ghost" bindtap="leaveRoom">{{isSpectator ? '退出观战' : '退出房间'}}</button>
   </view>
 </view>

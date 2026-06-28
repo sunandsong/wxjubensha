@@ -23,6 +23,7 @@ Page({
     actHostCast: [],
     isLastAct: false,
     isHost: false,
+    isSpectator: false,
     script: null,
     myChar: null,       // 我的角色对象
     myActStory: '',     // 我这一幕的私密剧情
@@ -228,6 +229,7 @@ Page({
     const openid = this.data.openid;
     const players = room.players || [];
     const me = players.find((p) => p.openid === openid);
+    const isSpectator = !!(me && me.spectator);   // 游戏开始后进来的吃瓜群众
     const srcChar = me && me.charId ? SCRIPT.characters.find((c) => c.id === me.charId) : null;
 
     // 名字替换：剧本里的角色名统一换成玩家昵称（NPC 保留原名）
@@ -236,7 +238,8 @@ Page({
     const apList = (arr) => (arr || []).map(ap);
 
     const acts = SCRIPT.acts || [];
-    const actIndex = Math.min(room.actIndex || 0, Math.max(0, acts.length - 1));
+    // 吃瓜群众永远停在第一幕
+    const actIndex = isSpectator ? 0 : Math.min(room.actIndex || 0, Math.max(0, acts.length - 1));
     const act = acts[actIndex] || null;
     const actHost = act && act.host ? act.host : null;  // 主持人专属：小说式剧情 + 群活动
     const isLastAct = actIndex >= acts.length - 1;
@@ -314,7 +317,8 @@ Page({
     const myVote = votes[openid] || '';
 
     // 兼容旧房间：除 voting/finished 外的状态都按「逐幕剧情」渲染
-    const status = (room.status === 'voting' || room.status === 'finished') ? room.status : 'playing';
+    // 吃瓜群众：始终冻结在第一幕剧情，不进投票/结算
+    const status = isSpectator ? 'playing' : ((room.status === 'voting' || room.status === 'finished') ? room.status : 'playing');
 
     this.setData({
       status,
@@ -333,6 +337,7 @@ Page({
       actHostCast: apList(actHost ? actHost.cast : []),
       isLastAct,
       isHost,
+      isSpectator,
       script: SCRIPT,
       myChar,
       myActStory,
@@ -346,7 +351,7 @@ Page({
       searchLeft,
       myVote,
       votedCount: Object.keys(votes).length,
-      totalPlayers: players.filter((p) => p.openid !== room.hostOpenid).length,
+      totalPlayers: players.filter((p) => p.openid !== room.hostOpenid && !p.spectator).length,
     });
 
     // 切换过场电影感标题卡：开场（第一幕）显示剧本名，其余幕显示「第X幕 · 标题」
@@ -362,7 +367,8 @@ Page({
       this._transTimer = setTimeout(() => this.setData({ transShow: false }), 1600);
     }
 
-    if (room.status === 'finished') {
+    // 吃瓜群众不进结算页（看不到真相），停留在第一幕围观视图
+    if (room.status === 'finished' && !isSpectator) {
       this.closeWatch();
       wx.redirectTo({ url: `/pages/result/result?roomId=${this.data.roomId}&roomCode=${this.data.roomCode}` });
     }
@@ -376,7 +382,7 @@ Page({
 
   // 玩家：退出房间（游戏中退出 → 本局结束、房间解散）
   async leaveRoom() {
-    const ok = await this.confirm('退出后本局游戏将结束（房间解散），确定退出吗？');
+    const ok = await this.confirm(this.data.isSpectator ? '退出观战吗？' : '退出后本局游戏将结束（房间解散），确定退出吗？');
     if (!ok) return;
     await app.runOnce('leave', async () => {
       this.closeWatch();

@@ -12,17 +12,22 @@ const HOME_SHARE_TITLES = [
 ];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// 剧本 → 首页卡片数据；coverFid 留住原始 cloud:// 以便转 https 直链
+const toCard = (s) => ({
+  id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag,
+  cover: { ...(s.cover || {}) },
+  coverFid: (s.cover && s.cover.image) || '',
+  players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
+  cat: (s.tag || '').split('·')[0].trim() || '其他',
+});
+
 Page({
   data: {
     nick: '',
     avatar: '',     // 头像 fileID（云存储），记住后下次自动带上
     gender: '',     // 'm' / 'f'，决定角色照片；记住后下次自动带上
     loading: false,
-    scripts: SCRIPTS.list().map((s) => ({
-      id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
-      players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
-      cat: (s.tag || '').split('·')[0].trim() || '其他',   // 主分类：取标签第一段（悬疑/奇幻/欢乐…）
-    })),
+    scripts: SCRIPTS.list().map(toCard),
     filteredScripts: [],   // 当前分类 + 关键词过滤后的剧本（onLoad 初始化）
     categories: [],        // 分类标签：全部 + 各主分类（onLoad 初始化）
     activeCat: '全部',     // 当前选中的分类
@@ -74,6 +79,7 @@ Page({
     });
     app.ensureLogin().catch(() => {});
     this.initCategories();
+    this._resolveCovers();   // 首屏先用缓存的封面直链秒显
     // 云端剧本就绪后重建卡片（首屏先用兜底/缓存，秒开不白屏）
     SCRIPTS.ensureLoaded().then(() => { this._reloadScripts(); this._tryOpenPendingDetail(); });
   },
@@ -87,12 +93,32 @@ Page({
 
   // 用最新剧本数据重建首页卡片 + 分类
   _reloadScripts() {
-    const scripts = SCRIPTS.list().map((s) => ({
-      id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
-      players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
-      cat: (s.tag || '').split('·')[0].trim() || '其他',
-    }));
-    this.setData({ scripts }, () => { this.initCategories(); this.applyFilter(); });
+    const scripts = SCRIPTS.list().map(toCard);
+    this.setData({ scripts }, () => { this.initCategories(); this.applyFilter(); this._resolveCovers(); });
+  },
+
+  // 封面 cloud:// → https 直链：缓存优先秒显，未缓存的批量取并存（1小时有效）
+  _resolveCovers() {
+    const CK = 'coverUrlMapV1';
+    const c = wx.getStorageSync(CK);
+    const map = (c && c.ts && (Date.now() - c.ts < 3600000) && c.map) || {};
+    // 1) 缓存命中的立刻替换
+    const apply = (m) => this.data.scripts.map((s) => {
+      const fid = s.coverFid;
+      return (fid && m[fid]) ? { ...s, cover: { ...s.cover, image: m[fid] } } : s;
+    });
+    let scripts = apply(map);
+    this.setData({ scripts }, () => this.applyFilter());
+    // 2) 仍是 cloud:// 没缓存的，批量取临时链接
+    const need = [...new Set(this.data.scripts
+      .filter((s) => s.coverFid && s.coverFid.indexOf('cloud://') === 0 && s.cover.image === s.coverFid)
+      .map((s) => s.coverFid))];
+    if (!need.length) return;
+    wx.cloud.getTempFileURL({ fileList: need }).then((res) => {
+      (res.fileList || []).forEach((f) => { if (f.fileID && f.tempFileURL) map[f.fileID] = f.tempFileURL; });
+      wx.setStorageSync(CK, { ts: Date.now(), map });
+      this.setData({ scripts: apply(map) }, () => this.applyFilter());
+    }).catch(() => {});
   },
 
   // 初始化分类标签 + 默认展示全部剧本
@@ -251,12 +277,16 @@ Page({
   // 点剧本封面 → 先看详情，不直接建房
   openDetail(e) {
     if (this.data.loading) return;
-    const s = SCRIPTS.byId(e.currentTarget.dataset.id);
+    const id = e.currentTarget.dataset.id;
+    const s = SCRIPTS.byId(id);
     if (!s) return;
+    // 复用列表里已转好的 https 封面，避免详情页又拉一次 cloud://
+    const card = this.data.scripts.find((c) => c.id === id);
+    const cover = (card && card.cover) || { ...(s.cover || {}) };
     this.setData({
       showDetail: true,
       detail: {
-        id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover: s.cover,
+        id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag, cover,
         players: `${s.minPlayers}-${s.maxPlayers}人`, duration: s.duration,
         intro: s.intro || '',
         worldview: s.worldview || '',

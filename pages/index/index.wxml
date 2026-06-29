@@ -76,6 +76,7 @@
     <view wx:if="{{!filteredScripts.length}}" class="pick-empty">没有匹配的剧本，换个分类或关键词试试</view>
     <view class="pick-card" wx:for="{{filteredScripts}}" wx:key="id" data-id="{{item.id}}" bindtap="openDetail">
       <view class="pick-cover" style="background:{{item.cover.gradient}}">
+        <image wx:if="{{item.cover.image}}" class="cover-ph" src="/assets/cover_ph.jpg" mode="aspectFill"></image>
         <image wx:if="{{item.cover.image}}" class="pick-cover-img" src="{{item.cover.image}}" mode="aspectFill"></image>
         <view wx:if="{{item.cover.image}}" class="pick-cover-scrim"></view>
         <text wx:else class="pick-emoji">{{item.cover.emoji}}</text>
@@ -136,6 +137,7 @@
   <scroll-view class="detail-scroll" scroll-y wx:if="{{detail}}">
     <!-- 封面 -->
     <view class="detail-cover" style="background:{{detail.cover.gradient}}">
+      <image wx:if="{{detail.cover.image}}" class="cover-ph" src="/assets/cover_ph.jpg" mode="aspectFill"></image>
       <image wx:if="{{detail.cover.image}}" class="pick-cover-img" src="{{detail.cover.image}}" mode="aspectFill"></image>
       <view wx:if="{{detail.cover.image}}" class="pick-cover-scrim"></view>
       <text wx:else class="detail-emoji">{{detail.cover.emoji}}</text>

@@ -185,6 +185,8 @@
   position: relative; height: 240rpx; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }
+/* 封面占位：模糊小图，真封面下完自动盖上 */
+.cover-ph { position: absolute; left: 0; top: 0; width: 100%; height: 100%; filter: blur(6rpx); transform: scale(1.12); }
 .pick-cover-img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; animation: kenburns 14s ease-in-out infinite alternate; }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.12); } }
 .pick-cover-scrim {

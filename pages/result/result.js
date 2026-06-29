@@ -234,5 +234,4 @@ Page({
 
   onUnload() { this.closeWatch(); },
 
-  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 });

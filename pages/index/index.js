@@ -31,13 +31,10 @@ Page({
     const nick = wx.getStorageSync('nick') || '';
     const avatar = wx.getStorageSync('avatar') || '';
     const gender = wx.getStorageSync('gender') || '';
-    // 测试身份直接放行；真实账号首次进入（缺头像/昵称/性别）才弹授权门
-    const isTest = !!app.getTestUid();
-    const needAuth = isTest ? false : !(nick && avatar && gender);
-    // 弹向导时昵称默认置空，让用户用微信昵称组件重新带出（避免残留旧昵称）
+    // 浏览免登录：进来先随便逛，开本/进房时再弹授权向导
     this.setData({
-      nick: needAuth ? '' : nick, avatar, gender, needAuth, authStep: 1,
-      testTag: isTest ? nick : '', isDev: app.testEnabled(),
+      nick, avatar, gender, needAuth: false, authStep: 1,
+      testTag: app.getTestUid() ? nick : '', isDev: app.testEnabled(),
     });
     app.ensureLogin().catch(() => {});
     this.initCategories();
@@ -89,17 +86,23 @@ Page({
     this.setData({ keyword: '' }, () => this.applyFilter());
   },
 
-  // 测试身份入口（仅开发/体验版显示）
-  gotoTest() { wx.reLaunch({ url: '/pages/test/test' }); },
-
   // 编辑资料：重新打开三步向导（带出当前头像/昵称/性别，改完再确认）
   editProfile() {
     this._orig = { avatar: this.data.avatar, nick: this.data.nick, gender: this.data.gender };
     this.setData({ needAuth: true, authStep: 1, editing: true });
   },
 
-  // 取消编辑：还原原值与缓存，关闭向导
+  // 需要资料才能做的动作（开本/进房）：没资料先弹向导，完成后自动执行
+  _requireAuth(fn) {
+    if (app.getTestUid() || (this.data.nick && this.data.avatar && this.data.gender)) return fn();
+    this._pendingAuthAction = fn;
+    this._orig = null;
+    this.setData({ needAuth: true, authStep: 1, editing: false, nick: '' });
+  },
+
+  // 取消编辑 / 取消授权：还原原值与缓存，关闭向导
   cancelEdit() {
+    this._pendingAuthAction = null;
     const o = this._orig || {};
     wx.setStorageSync('avatar', o.avatar || '');
     wx.setStorageSync('nick', o.nick || '');
@@ -164,7 +167,9 @@ Page({
     if (!this.data.gender) return wx.showToast({ title: '请选择性别', icon: 'none' });
     wx.setStorageSync('nick', nick);
     this.setData({ nick, needAuth: false, editing: false });
-    this._tryPendingJoin();   // 若来自分享卡片，资料完善后自动进房
+    // 资料完善后，执行刚才被挡下的动作（开本/进房）
+    const fn = this._pendingAuthAction; this._pendingAuthAction = null;
+    if (fn) fn(); else this._tryPendingJoin();
   },
 
   onShow() {
@@ -180,7 +185,7 @@ Page({
     if (!this.pendingJoinCode) return false;
     const code = this.pendingJoinCode;
     this.pendingJoinCode = '';
-    this.joinRoom(code);
+    this._requireAuth(() => this.joinRoom(code));
     return true;
   },
 
@@ -221,12 +226,12 @@ Page({
   },
   closeDetail() { this.setData({ showDetail: false }); },
 
-  // 详情页确认 → 用这个本创建房间
+  // 详情页确认 → 用这个本创建房间（没资料先弹向导）
   confirmCreate() {
     if (this.data.loading || !this.data.detail) return;
     const id = this.data.detail.id;
     this.setData({ showDetail: false, picking: false });
-    this.createRoom(id);
+    this._requireAuth(() => this.createRoom(id));
   },
 
   // 「进入房间」→ 弹窗输入房间号再加入
@@ -240,7 +245,7 @@ Page({
         if (!res.confirm) return;
         const code = (res.content || '').trim();
         if (!/^\d{4}$/.test(code)) return wx.showToast({ title: '请输入 4 位房间号', icon: 'none' });
-        this.joinRoom(code);
+        this._requireAuth(() => this.joinRoom(code));
       },
     });
   },

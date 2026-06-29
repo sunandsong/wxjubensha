@@ -130,6 +130,29 @@
 
 .pick-empty { text-align: center; color: #6f6385; font-size: 28rpx; padding: 80rpx 0; }
 .pick-scroll { flex: 1; min-height: 0; height: 0; padding: 8rpx 32rpx 48rpx; box-sizing: border-box; }
+
+/* 首页=列表：页头小标语 + 「我的」入口 + 列表底部给悬浮条留白 */
+.home-slogan { font-size: 24rpx; margin-top: 6rpx; }
+.home-me { width: 72rpx; height: 72rpx; flex: none; }
+.home-me-avatar { width: 72rpx; height: 72rpx; border-radius: 50%; display: block; background: #241c33; border: 1rpx solid rgba(255,255,255,0.12); }
+.home-me-ph { display: flex; align-items: center; justify-content: center; font-size: 26rpx; color: #b3a6cc; }
+.home-list .pick-scroll { padding-bottom: 190rpx; }
+
+/* 底部悬浮按钮 */
+.fab-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 92;
+  display: flex; gap: 20rpx;
+  padding: 16rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, #15101f 45%);
+}
+.fab {
+  flex: 1; text-align: center; border-radius: 999rpx;
+  font-size: 30rpx; font-weight: 600; padding: 24rpx 0; border: none;
+  background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff;
+  box-shadow: 0 6rpx 20rpx rgba(108,75,216,0.4);
+}
+.fab::after { border: none; }
+.fab-ghost { background: #2c2740; color: #e7e0f5; box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.3); }
 .pick-card {
   background: #241c33; border-radius: 24rpx; overflow: hidden;
   margin-bottom: 28rpx; border: 1rpx solid rgba(255,255,255,0.08);

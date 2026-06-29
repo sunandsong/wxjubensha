@@ -1,6 +1,6 @@
 // app.js
 // 测试身份总开关：自测多人时改 true，平时 false（彻底隐藏测试入口/角标）
-const TEST_ENABLED = true;
+const TEST_ENABLED = false;
 
 App({
   onLaunch() {

@@ -1,11 +1,7 @@
-<!-- 测试身份入口：测试中显示「切换身份」，否则开发/体验版显示「测试身份」-->
-<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
-<view wx:elif="{{isDev}}" class="test-switch" bindtap="gotoTest">测试身份</view>
-
 <!-- 强制授权门：三步向导（头像 → 昵称 → 性别）-->
 <view class="auth-mask" wx:if="{{needAuth}}" catchtouchmove="noop">
   <view class="auth-card">
-    <view wx:if="{{editing}}" class="auth-close" catchtap="cancelEdit">✕</view>
+    <view class="auth-close" catchtap="cancelEdit">✕</view>
     <view class="auth-steps">{{authStep}} / 3</view>
 
     <!-- 第一步：确认头像 -->
@@ -46,30 +42,17 @@
   </view>
 </view>
 
-<view class="container">
-  <view class="hero">
-    <view class="slogan">一局一故事，一人一面具</view>
-    <view class="subtitle muted">拉个群，开一局，揪出真凶</view>
-  </view>
-
-  <!-- 我的头像昵称（点右侧「编辑」可重新修改头像/昵称/性别）-->
-  <view class="profile" bindtap="editProfile">
-    <image wx:if="{{avatar}}" class="profile-avatar" src="{{avatar}}" mode="aspectFill" />
-    <view wx:else class="profile-avatar profile-ph">头像</view>
-    <view class="profile-nick">{{nick}}<text class="profile-gender" wx:if="{{gender}}">{{gender==='m' ? ' ♂' : ' ♀'}}</text></view>
-    <view class="profile-edit">编辑 ›</view>
-  </view>
-
-  <!-- 两个入口：全宽大按钮 -->
-  <button class="btn big-btn" bindtap="becomeHost" disabled="{{loading}}">我是房主</button>
-  <button class="btn btn-ghost big-btn" bindtap="enterRoom" disabled="{{loading}}">进入房间</button>
-</view>
-
-<!-- 剧本封面卡片选择层 -->
-<view class="pick-mask" wx:if="{{picking}}">
+<!-- 首页 = 剧本列表（免登录浏览）-->
+<view class="pick-mask home-list">
   <view class="pick-head">
-    <view class="pick-h-title">选择剧本</view>
-    <view class="pick-close" catchtap="closePicker">✕</view>
+    <view>
+      <view class="pick-h-title">剧本库</view>
+      <view class="home-slogan muted">一局一故事，一人一面具</view>
+    </view>
+    <view class="home-me" bindtap="editProfile">
+      <image wx:if="{{avatar}}" class="home-me-avatar" src="{{avatar}}" mode="aspectFill" />
+      <view wx:else class="home-me-avatar home-me-ph">我</view>
+    </view>
   </view>
 
   <!-- 搜索框 -->
@@ -101,8 +84,13 @@
         <view class="pick-meta">{{item.players}} · {{item.duration}}</view>
       </view>
     </view>
-    <view class="pick-bottom-tip">点封面查看剧本详情，再决定是否开局</view>
+    <view class="pick-bottom-tip">点封面看详情 → 详情页「创建房间」开局</view>
   </scroll-view>
+</view>
+
+<!-- 底部悬浮按钮 -->
+<view class="fab-bar">
+  <button class="fab" bindtap="enterRoom" disabled="{{loading}}">🚪 进入房间</button>
 </view>
 
 <!-- 剧本详情层：看完再决定是否创建房间 -->

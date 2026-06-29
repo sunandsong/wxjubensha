@@ -48,7 +48,6 @@ Page({
 
   onHide() { this.closeWatch(); },
 
-  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
   // 分享小程序卡片到群：群友点卡片 → 打开小程序 → 自动加入本房间
   onShareAppMessage() {

@@ -70,7 +70,6 @@ Page({
 
   onHide() { this.closeWatch(); },
 
-  gotoTest() { this.closeWatch(); wx.reLaunch({ url: '/pages/test/test' }); },
 
   // 主持人：复制文字（提示/问题/线索）到剪贴板，粘到群里
   copyText(e) {

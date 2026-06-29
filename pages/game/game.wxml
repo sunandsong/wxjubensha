@@ -1,4 +1,3 @@
-<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
 
 <!-- 分幕切换过场：幕号变化时淡入淡出 -->
 <view class="act-transition {{transShow ? 'show' : ''}}">

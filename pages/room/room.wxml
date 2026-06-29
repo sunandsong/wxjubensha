@@ -1,5 +1,3 @@
-<view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
-<view wx:elif="{{isDev}}" class="test-switch" bindtap="gotoTest">测试身份</view>
 
 <view class="container">
   <view class="card script-card">

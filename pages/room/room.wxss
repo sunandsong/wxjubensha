@@ -31,6 +31,15 @@
 .center { text-align: center; margin-top: 28rpx; }
 .warn { color: #ffb347; }
 
+/* 准备状态角标（头像下方）*/
+.ready-badge {
+  margin-top: 8rpx; font-size: 18rpx; white-space: nowrap;
+  display: inline-block; padding: 2rpx 12rpx; border-radius: 999rpx;
+  color: #b3a6cc; background: rgba(255,255,255,0.08);
+}
+.ready-badge.on { color: #1c3b22; background: #7fe0a8; }
+.ready-hint { margin-bottom: -8rpx; }
+
 /* 开始 / 结束游戏：整宽，和上方卡片对齐 */
 .btn { width: 100% !important; box-sizing: border-box; margin-left: 0; margin-right: 0; }
 .start-btn { margin-top: 32rpx; }

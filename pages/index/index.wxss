@@ -133,6 +133,30 @@
 
 /* 首页=列表：页头小标语 + 「我的」入口 + 列表底部给悬浮条留白 */
 .home-slogan { font-size: 24rpx; margin-top: 6rpx; }
+.home-head-right { display: flex; align-items: center; gap: 18rpx; }
+.home-guide-btn {
+  font-size: 24rpx; color: #cdbcff;
+  background: rgba(123,92,255,0.18); border: 1rpx solid rgba(123,92,255,0.4);
+  padding: 10rpx 20rpx; border-radius: 999rpx;
+}
+
+/* 新手指引弹层 */
+.guide-mask {
+  position: fixed; inset: 0; z-index: 110;
+  background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+  padding: 48rpx;
+}
+.guide-card {
+  width: 100%; max-height: 80vh; background: #241c33; border-radius: 28rpx;
+  padding: 40rpx 36rpx; display: flex; flex-direction: column;
+  border: 1rpx solid rgba(255,255,255,0.1);
+}
+.guide-title { font-size: 36rpx; font-weight: 700; color: #fff; text-align: center; margin-bottom: 12rpx; }
+.guide-body { flex: 1; min-height: 0; }
+.guide-step { margin-top: 24rpx; }
+.guide-h { font-size: 28rpx; font-weight: 600; color: #ffd9a8; margin-bottom: 8rpx; }
+.guide-p { font-size: 26rpx; line-height: 1.6; color: #ddd6ee; }
+.guide-ok { margin-top: 28rpx; }
 .home-me { width: 72rpx; height: 72rpx; flex: none; }
 .home-me-avatar { width: 72rpx; height: 72rpx; border-radius: 50%; display: block; background: #241c33; border: 1rpx solid rgba(255,255,255,0.12); }
 .home-me-ph { display: flex; align-items: center; justify-content: center; font-size: 26rpx; color: #b3a6cc; }

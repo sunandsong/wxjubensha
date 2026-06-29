@@ -49,9 +49,12 @@
       <view class="pick-h-title">剧本库</view>
       <view class="home-slogan muted">一局一故事，一人一面具</view>
     </view>
-    <view class="home-me" bindtap="editProfile">
-      <image wx:if="{{avatar}}" class="home-me-avatar" src="{{avatar}}" mode="aspectFill" />
-      <view wx:else class="home-me-avatar home-me-ph">我</view>
+    <view class="home-head-right">
+      <view class="home-guide-btn" bindtap="openGuide">❓ 怎么玩</view>
+      <view class="home-me" bindtap="editProfile">
+        <image wx:if="{{avatar}}" class="home-me-avatar" src="{{avatar}}" mode="aspectFill" />
+        <view wx:else class="home-me-avatar home-me-ph">我</view>
+      </view>
     </view>
   </view>
 
@@ -91,6 +94,36 @@
 <!-- 底部悬浮按钮 -->
 <view class="fab-bar">
   <button class="fab" bindtap="enterRoom" disabled="{{loading}}">🚪 进入房间</button>
+</view>
+
+<!-- 新手指引弹层 -->
+<view class="guide-mask" wx:if="{{showGuide}}" catchtouchmove="noop">
+  <view class="guide-card">
+    <view class="guide-title">🎭 三分钟看懂怎么玩</view>
+    <scroll-view class="guide-body" scroll-y>
+      <view class="guide-step">
+        <view class="guide-h">这是什么</view>
+        <view class="guide-p">微信群里玩的剧本杀——一群人围读一个故事，根据线索找出谁是凶手。</view>
+      </view>
+      <view class="guide-step">
+        <view class="guide-h">① 开一局（你当房主 = 主持人）</view>
+        <view class="guide-p">浏览剧本 → 选一个 → 点「创建房间」→ 点「分享到群」把卡片发群里，朋友点卡片就进房 → 人齐了点「开始游戏」，系统自动发角色。</view>
+      </view>
+      <view class="guide-step">
+        <view class="guide-h">② 主持人做什么</view>
+        <view class="guide-p">每一幕：照着手机提示，念剧情、把线索发到群、推进到下一幕；最后公布凶手和真相。手机上都有提示，照着做就行。</view>
+      </view>
+      <view class="guide-step">
+        <view class="guide-h">③ 玩家做什么</view>
+        <view class="guide-p">读自己角色的故事（只有你能看到）→ 在群里发言、互相盘问、找破绽 → 最后投票指认凶手。</view>
+      </view>
+      <view class="guide-step">
+        <view class="guide-h">要几个人 · 多久</view>
+        <view class="guide-p">看每个剧本（详情页有标）：一般 3–8 人、30–90 分钟。房主当主持人、不演角色。</view>
+      </view>
+    </scroll-view>
+    <button class="btn guide-ok" bindtap="closeGuide">知道了，开始逛</button>
+  </view>
 </view>
 
 <!-- 剧本详情层：看完再决定是否创建房间 -->

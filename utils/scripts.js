@@ -35,7 +35,7 @@ const SCRIPT_TONGXUEHUI = {
   cover: { emoji: "🌃", gradient: "linear-gradient(135deg,#6a44a8,#241043)" },
   minPlayers: 3,
   maxPlayers: 6,
-  duration: "约 30-40 分钟",
+  duration: "约 15 分钟",
   searchPerAct: 2,
 
   intro:
@@ -287,7 +287,7 @@ const SCRIPT_BOHEZHEN = {
   cover: { emoji: "🌲", gradient: "linear-gradient(135deg,#1f7a66,#0e2d28)" },
   minPlayers: 3,
   maxPlayers: 6,
-  duration: "约 35-45 分钟",
+  duration: "约 15 分钟",
   searchPerAct: 2,
 
   intro:
@@ -757,7 +757,7 @@ const SCRIPT_SHIGUANG = {
   cover: { emoji: "🍽", gradient: "linear-gradient(135deg,#3a3f55,#15171f)", image: "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/shiguang.jpg" },
   minPlayers: 3,
   maxPlayers: 3,
-  duration: "约 25 分钟",
+  duration: "约 15 分钟",
   autoClues: true,
 
   intro:
@@ -932,7 +932,7 @@ const SCRIPT_LANGLANGSHAN = {
   cover: { emoji: "🐗", gradient: "linear-gradient(135deg,#3a2f1a,#13100a)", image: "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/langlangshan.jpg" },
   minPlayers: 3,
   maxPlayers: 3,
-  duration: "约 25 分钟",
+  duration: "约 15 分钟",
   autoClues: true,
 
   intro:
@@ -1107,7 +1107,7 @@ const SCRIPT_YIDAIMI = {
   cover: { emoji: "🌾", gradient: "linear-gradient(135deg,#3a352c,#100e0a)", image: "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/yidaimi.jpg" },
   minPlayers: 3,
   maxPlayers: 3,
-  duration: "约 30 分钟",
+  duration: "约 15 分钟",
   autoClues: true,
 
   intro:
@@ -1280,7 +1280,7 @@ const SCRIPT_NANJI = {
   cover: { emoji: "🐧", gradient: "linear-gradient(135deg,#2a5a7a,#0c1822)", image: "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/nanji.jpg" },
   minPlayers: 3,
   maxPlayers: 3,
-  duration: "约 25 分钟",
+  duration: "约 15 分钟",
   autoClues: true,
 
   intro:
@@ -1453,7 +1453,7 @@ const SCRIPT_SHIQIAN = {
   cover: { emoji: "🔥", gradient: "linear-gradient(135deg,#6a3a1a,#2a1208)", image: "cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/covers/shiqian.jpg" },
   minPlayers: 3,
   maxPlayers: 3,
-  duration: "约 25 分钟",
+  duration: "约 15 分钟",
   autoClues: true,
 
   intro:

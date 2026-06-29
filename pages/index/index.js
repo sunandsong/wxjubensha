@@ -1,6 +1,17 @@
 const app = getApp();
 const SCRIPTS = require('../../utils/scriptStore.js');
 
+// 首页分享：5 张图 + 标题池，分享时随机组合（图固定打包；以后可换云存储）
+const HOME_SHARE_IMGS = ['/assets/app1.jpg', '/assets/app2.jpg', '/assets/app3.jpg', '/assets/app4.jpg', '/assets/app5.jpg'];
+const HOME_SHARE_TITLES = [
+  '群本杀 · 拉个群开一局，揪出真凶',
+  '谁在说谎？拉群来一局剧本杀 🔍',
+  '一局一故事，一人一面具',
+  '今晚谁是凶手？进来抓一个 🕵️',
+  '三五好友，一桩命案，你敢来吗',
+];
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
 Page({
   data: {
     nick: '',
@@ -22,24 +33,56 @@ Page({
     picking: false,  // 是否展开剧本封面选择层
     showDetail: false, // 是否展开剧本详情页（确认后才建房）
     detail: null,      // 当前查看的剧本详情
+    showGuide: false,  // 新手指引弹层
     uploading: false,
   },
 
+  // 新手指引：打开 / 关闭（关闭即记住，不再自动弹）
+  openGuide() { this.setData({ showGuide: true }); },
+  closeGuide() { this.setData({ showGuide: false }); wx.setStorageSync('seenGuide', 1); },
+
+  // 转发给好友/群：在详情页则分享该本，否则分享整个小程序（随机图+随机标题）
+  onShareAppMessage() {
+    const d = this.data.showDetail && this.data.detail;
+    if (d) {
+      const titles = [
+        `「${d.title}」${d.subtitle} — 来一局？`,
+        `敢挑战《${d.title}》吗？找出真凶 🔍`,
+        `《${d.title}》开局了，就差你一个`,
+      ];
+      return { title: pick(titles), path: `/pages/index/index?scriptId=${d.id}`, imageUrl: pick(HOME_SHARE_IMGS) };
+    }
+    return { title: pick(HOME_SHARE_TITLES), path: '/pages/index/index', imageUrl: pick(HOME_SHARE_IMGS) };
+  },
+
+  // 分享到朋友圈（随机图+随机标题）
+  onShareTimeline() {
+    return { title: pick(HOME_SHARE_TITLES), imageUrl: pick(HOME_SHARE_IMGS) };
+  },
+
   onLoad(options) {
-    // 从分享卡片进入：带 joinCode → 资料就绪后自动加入该房间
+    // 从分享卡片进入：带 joinCode → 自动加入；带 scriptId → 自动打开该本详情
     if (options && options.joinCode) this.pendingJoinCode = options.joinCode;
+    if (options && options.scriptId) this.pendingScriptId = options.scriptId;
     const nick = wx.getStorageSync('nick') || '';
     const avatar = wx.getStorageSync('avatar') || '';
     const gender = wx.getStorageSync('gender') || '';
     // 浏览免登录：进来先随便逛，开本/进房时再弹授权向导
     this.setData({
       nick, avatar, gender, needAuth: false, authStep: 1,
-      testTag: app.getTestUid() ? nick : '', isDev: app.testEnabled(),
+      showGuide: !wx.getStorageSync('seenGuide'),   // 首次进入自动弹一次新手指引
     });
     app.ensureLogin().catch(() => {});
     this.initCategories();
     // 云端剧本就绪后重建卡片（首屏先用兜底/缓存，秒开不白屏）
-    SCRIPTS.ensureLoaded().then(() => this._reloadScripts());
+    SCRIPTS.ensureLoaded().then(() => { this._reloadScripts(); this._tryOpenPendingDetail(); });
+  },
+
+  // 分享链接带 scriptId → 自动打开该本详情
+  _tryOpenPendingDetail() {
+    if (!this.pendingScriptId) return;
+    const id = this.pendingScriptId; this.pendingScriptId = '';
+    this.openDetail({ currentTarget: { dataset: { id } } });
   },
 
   // 用最新剧本数据重建首页卡片 + 分类

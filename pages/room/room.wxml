@@ -12,9 +12,9 @@
         <view class="muted">房间号</view>
         <view class="code">{{roomCode}}</view>
       </view>
-      <button class="btn-mini share" bindtap="copyCode">复制</button>
+      <button class="btn-mini share" open-type="share">分享链接</button>
     </view>
-    <view class="muted invite-tip">点「复制」把房间号复制，发到群里，群友输入房间号进房。</view>
+    <view class="muted invite-tip">点「分享链接」发卡片，群友点卡片直接进房（无需输房间号）。</view>
   </view>
 
   <view class="card">
@@ -30,17 +30,20 @@
         </view>
         <view class="pname">{{item.nick}}</view>
         <view class="host-badge" wx:if="{{item.isModerator}}">主持人</view>
+        <view wx:elif="{{!item.spectator}}" class="ready-badge {{item.ready ? 'on' : ''}}">{{item.ready ? '✓已准备' : '未准备'}}</view>
       </view>
     </view>
     <view class="muted tip">主持人只推进流程、公布真相；其余玩家由系统发牌分配角色。</view>
   </view>
 
   <block wx:if="{{isHost}}">
+    <view wx:if="{{realCount >= needPlayers && !allReady}}" class="muted center warn ready-hint">等待玩家准备：{{readyCount}}/{{realCount}} 已准备</view>
     <button class="btn start-btn" bindtap="startGame" disabled="{{!canStart || starting}}">开始游戏</button>
     <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
   </block>
   <block wx:else>
-    <view class="muted center wait-hint">等待主持人开始游戏…</view>
+    <button wx:if="{{!iAmSpectator}}" class="btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '✓ 已准备（点击取消）' : '准备好了'}}</button>
+    <view class="muted center wait-hint">{{iAmSpectator ? '你是围观，等主持人开始…' : (myReady ? '已准备，等所有人准备好主持人就开始' : '点「准备好了」，全员准备后主持人才能开始')}}</view>
     <button class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
   </block>
 </view>

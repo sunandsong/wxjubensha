@@ -55,7 +55,7 @@ Page({
     return {
       title: `「${this.data.scriptTitle || '剧本杀'}」房间 ${code}，点我直接进房`,
       path: `/pages/index/index?joinCode=${code}`,
-      imageUrl: this.data.shareImg || '/assets/share.jpg',   // 本封面优先，没拿到回退通用图
+      imageUrl: this.data.shareImg || '/assets/app1.jpg',   // 本封面优先，没拿到回退通用图
     };
   },
 
@@ -85,16 +85,24 @@ Page({
     }
     const raw = room.players || [];
     const script = SCRIPTS.byId(room.scriptId);
-    // 标注主持人（房主），统计真实玩家数（房主不参与）
+    // 标注主持人（房主），统计真实玩家（房主、吃瓜群众不算）
     const players = raw.map((p) => ({ ...p, isModerator: p.openid === room.hostOpenid }));
-    const realCount = raw.filter((p) => p.openid !== room.hostOpenid).length;
+    const realPlayers = raw.filter((p) => p.openid !== room.hostOpenid && !p.spectator);
+    const realCount = realPlayers.length;
     const needPlayers = (script.characters || []).length;
+    const readyCount = realPlayers.filter((p) => p.ready).length;
+    const allReady = realCount > 0 && readyCount === realCount;
+    const me = raw.find((p) => p.openid === this.data.openid);
     this.setData({
       players,
       realCount,
       needPlayers,
+      readyCount,
+      allReady,
+      myReady: !!(me && me.ready),
+      iAmSpectator: !!(me && me.spectator),
       isHost: room.hostOpenid === this.data.openid,
-      canStart: realCount >= needPlayers,
+      canStart: realCount >= needPlayers && allReady,   // 人齐 且 全员准备
       scriptTitle: script.title,
       scriptSub: script.subtitle,
     });
@@ -118,8 +126,19 @@ Page({
     if (this.watcher) { this.watcher.close(); this.watcher = null; }
   },
 
+  // 玩家：准备 / 取消准备
+  async toggleReady() {
+    wx.vibrateShort && wx.vibrateShort({ type: 'light' });
+    try {
+      await app.runOnce('ready', () => app.callGame({ action: 'ready', roomId: this.data.roomId }), '');
+    } catch (e) {
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+  },
+
   async startGame() {
-    if (!this.data.canStart) return wx.showToast({ title: `需要 ${this.data.needPlayers} 名玩家才能开始（房主不参与）`, icon: 'none' });
+    if (this.data.realCount < this.data.needPlayers) return wx.showToast({ title: `需要 ${this.data.needPlayers} 名玩家才能开始（房主不参与）`, icon: 'none' });
+    if (!this.data.allReady) return wx.showToast({ title: '等所有玩家点了「准备好了」再开始', icon: 'none' });
     wx.vibrateShort && wx.vibrateShort({ type: 'medium' });
     this.setData({ starting: true });
     let res;

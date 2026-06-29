@@ -220,6 +220,18 @@ exports.main = async (event) => {
       return { ok: true };
     }
 
+    // ── 玩家准备 / 取消准备（仅等待阶段）──
+    if (action === 'ready') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!room) return { ok: false, msg: '房间不存在' };
+      if (room.status && room.status !== 'waiting') return { ok: false, msg: '游戏已开始' };
+      const players = (room.players || []).map((p) =>
+        p.openid === OPENID ? { ...p, ready: !p.ready } : p
+      );
+      await rooms.doc(event.roomId).update({ data: { players } });
+      return { ok: true };
+    }
+
     // ── 开始游戏：发牌分角色 ──
     if (action === 'start') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
@@ -230,6 +242,8 @@ exports.main = async (event) => {
       const realPlayers = room.players.filter((p) => p.openid !== room.hostOpenid && !p.spectator);
       if (realPlayers.length < meta.charIds.length) return { ok: false, msg: `需要 ${meta.charIds.length} 名玩家才能开始（房主不参与）` };
       if (realPlayers.length > meta.charIds.length) return { ok: false, msg: `该剧本最多 ${meta.charIds.length} 名玩家（房主除外）` };
+      const notReady = realPlayers.filter((p) => !p.ready);
+      if (notReady.length) return { ok: false, msg: `还有 ${notReady.length} 名玩家未点准备` };
 
       const n = realPlayers.length;
       // 凶手角色一定发给真实玩家，其余随机补足

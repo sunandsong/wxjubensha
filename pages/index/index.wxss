@@ -140,6 +140,29 @@
   padding: 10rpx 20rpx; border-radius: 999rpx;
 }
 
+/* 进入房间弹层（主题色）*/
+.join-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 108;
+  background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+  padding: 48rpx;
+}
+.join-card {
+  position: relative; width: 100%; background: #241c33; border-radius: 28rpx;
+  padding: 48rpx 40rpx 40rpx; text-align: center;
+  border: 1rpx solid rgba(255,255,255,0.1);
+}
+.join-close { position: absolute; top: 20rpx; right: 24rpx; font-size: 36rpx; color: #b3a6cc; padding: 6rpx 12rpx; }
+.join-title { font-size: 38rpx; font-weight: 700; color: #fff; }
+.join-sub { font-size: 26rpx; margin: 14rpx 0 32rpx; }
+.join-input {
+  height: 110rpx; background: #15101f; border-radius: 18rpx;
+  border: 1rpx solid rgba(123,92,255,0.5);
+  font-size: 56rpx; font-weight: 700; letter-spacing: 18rpx; text-align: center; color: #fff;
+  margin-bottom: 32rpx; padding-left: 18rpx;
+}
+.join-ph { color: #5a5172; letter-spacing: 18rpx; font-weight: 700; }
+.join-go { margin: 0; }
+
 /* 新手指引弹层 */
 .guide-mask {
   position: fixed; inset: 0; z-index: 110;

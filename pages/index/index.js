@@ -39,6 +39,8 @@ Page({
     showDetail: false, // 是否展开剧本详情页（确认后才建房）
     detail: null,      // 当前查看的剧本详情
     showGuide: false,  // 新手指引弹层
+    showJoin: false,   // 进入房间弹层
+    joinInput: '',     // 房间号输入
     uploading: false,
   },
 
@@ -310,17 +312,17 @@ Page({
   // 「进入房间」→ 弹窗输入房间号再加入
   enterRoom() {
     if (this.data.loading) return;
-    wx.showModal({
-      title: '进入房间',
-      editable: true,
-      placeholderText: '输入 4 位房间号',
-      success: (res) => {
-        if (!res.confirm) return;
-        const code = (res.content || '').trim();
-        if (!/^\d{4}$/.test(code)) return wx.showToast({ title: '请输入 4 位房间号', icon: 'none' });
-        this._requireAuth(() => this.joinRoom(code));
-      },
-    });
+    this.setData({ showJoin: true, joinInput: '' });
+  },
+  closeJoin() { this.setData({ showJoin: false }); },
+  onJoinInput(e) {
+    this.setData({ joinInput: (e.detail.value || '').replace(/\D/g, '').slice(0, 4) });
+  },
+  confirmJoin() {
+    const code = (this.data.joinInput || '').trim();
+    if (!/^\d{4}$/.test(code)) return wx.showToast({ title: '请输入 4 位房间号', icon: 'none' });
+    this.setData({ showJoin: false });
+    this._requireAuth(() => this.joinRoom(code));
   },
 
   async createRoom(scriptId) {

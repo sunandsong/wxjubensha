@@ -97,6 +97,18 @@
   <button class="fab" bindtap="enterRoom" disabled="{{loading}}">🚪 进入房间</button>
 </view>
 
+<!-- 进入房间弹层（主题色，替代原生 showModal）-->
+<view class="join-mask" wx:if="{{showJoin}}" catchtouchmove="noop" catchtap="closeJoin">
+  <view class="join-card" catchtap="noop">
+    <view class="join-close" catchtap="closeJoin">✕</view>
+    <view class="join-title">进入房间</view>
+    <view class="join-sub muted">输入房主给的 4 位房间号</view>
+    <input class="join-input" type="number" maxlength="4" value="{{joinInput}}"
+      bindinput="onJoinInput" placeholder="0000" placeholder-class="join-ph" focus="{{showJoin}}" />
+    <button class="btn join-go" bindtap="confirmJoin" disabled="{{joinInput.length !== 4}}">进入房间</button>
+  </view>
+</view>
+
 <!-- 新手指引弹层 -->
 <view class="guide-mask" wx:if="{{showGuide}}" catchtouchmove="noop">
   <view class="guide-card">
@@ -137,7 +149,6 @@
   <scroll-view class="detail-scroll" scroll-y wx:if="{{detail}}">
     <!-- 封面 -->
     <view class="detail-cover" style="background:{{detail.cover.gradient}}">
-      <image wx:if="{{detail.cover.image}}" class="cover-ph" src="/assets/cover_ph.jpg" mode="aspectFill"></image>
       <image wx:if="{{detail.cover.image}}" class="pick-cover-img" src="{{detail.cover.image}}" mode="aspectFill"></image>
       <view wx:if="{{detail.cover.image}}" class="pick-cover-scrim"></view>
       <text wx:else class="detail-emoji">{{detail.cover.emoji}}</text>

@@ -88,10 +88,18 @@ page { background: #201f3b; }
   transition: transform 0.12s ease;
 }
 .gcard:active { transform: scale(0.97); }
-.gc-img { position: absolute; right: -6rpx; top: 44rpx; width: 190rpx; height: 190rpx; filter: drop-shadow(0 8rpx 16rpx rgba(0,0,0,0.35)); }
-.gc-name { font-size: 46rpx; font-weight: 800; color: #fff; letter-spacing: 2rpx; }
-.gc-en { font-size: 22rpx; font-weight: 700; color: rgba(210,185,255,0.85); letter-spacing: 4rpx; margin-top: 8rpx; text-transform: uppercase; }
-.gc-desc { font-size: 28rpx; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1.55; margin-top: 22rpx; }
+/* 角落主题辉光 */
+.gc-glow { position: absolute; inset: 0; z-index: 0; border-radius: 32rpx; pointer-events: none;
+  background: radial-gradient(120% 92% at 100% 0%, var(--ac), transparent 52%); opacity: 0.20; }
+/* 巨大幽灵水印字 */
+.gc-mark { position: absolute; right: -10rpx; bottom: -30rpx; z-index: 0; font-size: 120rpx; font-weight: 900;
+  color: var(--ac); opacity: 0.08; letter-spacing: -6rpx; pointer-events: none; white-space: nowrap; }
+.gc-img { position: absolute; right: -6rpx; top: 44rpx; width: 190rpx; height: 190rpx; z-index: 1; filter: drop-shadow(0 8rpx 16rpx rgba(0,0,0,0.35)); }
+.gc-name { position: relative; z-index: 2; font-size: 46rpx; font-weight: 800; letter-spacing: 2rpx;
+  background: linear-gradient(150deg, #ffffff 30%, var(--ac) 120%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2rpx 10rpx rgba(0,0,0,0.3)); }
+.gc-en { position: relative; z-index: 2; font-size: 22rpx; font-weight: 700; letter-spacing: 4rpx; margin-top: 8rpx; text-transform: uppercase; color: var(--ac); opacity: 0.8; }
+.gc-desc { position: relative; z-index: 2; font-size: 28rpx; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1.55; margin-top: 22rpx; }
 .gc-desc .br { display: block; height: 0; }
 .br { display: block; height: 0; }
 .gc-bottom { position: absolute; left: 26rpx; right: 26rpx; bottom: 24rpx; display: flex; align-items: center; justify-content: space-between; }

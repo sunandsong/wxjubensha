@@ -25,7 +25,9 @@
 
   <!-- 4 个派对游戏 2×2 -->
   <view class="cards">
-    <view class="gcard" wx:for="{{games}}" wx:key="id" data-game="{{item.id}}" bindtap="goGame">
+    <view class="gcard" wx:for="{{games}}" wx:key="id" data-game="{{item.id}}" bindtap="goGame" style="--ac:{{item.c}}">
+      <view class="gc-glow"></view>
+      <text class="gc-mark">{{item.name}}</text>
       <image class="gc-img" src="{{item.img}}" mode="aspectFit"></image>
       <view class="gc-name">{{item.name}}</view>
       <view class="gc-en">{{item.en}}</view>

@@ -380,7 +380,7 @@ Page({
   onDissolved() {
     this.closeWatch();
     app.clearSession();
-    wx.showModal({ title: '提示', content: '本局游戏已结束', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+    wx.showModal({ title: '提示', content: '本局游戏已结束', showCancel: false, success: () => wx.reLaunch({ url: '/pages/hub/hub' }) });
   },
 
   // 玩家：退出房间（游戏中退出 → 本局结束、房间解散）
@@ -391,7 +391,7 @@ Page({
       this.closeWatch();
       app.clearSession();
       await app.callGame({ action: 'leave', roomId: this.data.roomId }).catch(() => {});
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.reLaunch({ url: '/pages/hub/hub' });
     }, '退出中');
   },
 
@@ -403,7 +403,7 @@ Page({
       this.closeWatch();
       app.clearSession();
       await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.reLaunch({ url: '/pages/hub/hub' });
     }, '结束中');
   },
 

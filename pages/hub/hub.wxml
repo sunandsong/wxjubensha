@@ -1,0 +1,36 @@
+<view class="home">
+  <!-- 全屏夜幕背景图 -->
+  <image class="pagebg" src="/assets/games/hero_bg.jpg" mode="widthFix"></image>
+  <view class="pagebg-fade"></view>
+  <view class="bokeh"></view>
+
+  <!-- 极简问候条 -->
+  <view class="userbar">
+    <view class="ub-hi">Hi，{{nick}} <text class="ub-wave">👋</text></view>
+    <view class="ub-av" bindtap="goMe">
+      <image wx:if="{{avatar}}" class="ub-img" src="{{avatar}}" mode="aspectFill" />
+      <view wx:else class="ub-img ub-ph">🐱</view>
+    </view>
+  </view>
+
+  <!-- 剧本杀 · 招牌大横幅 -->
+  <view class="hero" bindtap="goScripts">
+    <view class="hero-body">
+      <view class="hero-logo">剧本杀</view>
+      <view class="hero-title">夜幕降临 · 推理开始</view>
+      <view class="hero-sub">谁是隐藏在暗处的真凶？</view>
+      <view class="hero-join">快速加入 ›</view>
+    </view>
+  </view>
+
+  <!-- 4 个派对游戏 2×2 -->
+  <view class="cards">
+    <view class="gcard" wx:for="{{games}}" wx:key="id" data-game="{{item.id}}" bindtap="goGame">
+      <image class="gc-img" src="{{item.img}}" mode="aspectFit"></image>
+      <view class="gc-name">{{item.name}}</view>
+      <view class="gc-en">{{item.en}}</view>
+      <view class="gc-desc">{{item.d1}}<text class="br"></text>{{item.d2}}</view>
+    </view>
+  </view>
+
+</view>

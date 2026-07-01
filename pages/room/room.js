@@ -80,7 +80,7 @@ Page({
     if (!room) {
       app.clearSession();
       this.closeWatch();
-      wx.showModal({ title: '提示', content: '房间已解散', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+      wx.showModal({ title: '提示', content: '房间已解散', showCancel: false, success: () => wx.reLaunch({ url: '/pages/hub/hub' }) });
       return;
     }
     const raw = room.players || [];
@@ -166,7 +166,7 @@ Page({
       this.closeWatch();
       app.clearSession();
       await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.reLaunch({ url: '/pages/hub/hub' });
     }, '结束中');
   },
 
@@ -179,7 +179,7 @@ Page({
       this.closeWatch();
       app.clearSession();   // 主动离开 → 不再续局
       await app.callGame({ action: 'leave', roomId: this.data.roomId }).catch(() => {});
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.reLaunch({ url: '/pages/hub/hub' });
     }, '退出中');
   },
 

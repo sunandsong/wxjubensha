@@ -95,7 +95,7 @@ Page({
     if (!room) {                          // 房主已结束游戏、房间解散 → 退出
       this.closeWatch();
       app.clearSession();
-      wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+      wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/hub/hub' }) });
       return;
     }
     const SCRIPT = SCRIPTS.byId(room.scriptId);
@@ -175,7 +175,7 @@ Page({
         if (!room) {                       // 房主结束游戏、房间被解散
           this.closeWatch();
           app.clearSession();
-          wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/index/index' }) });
+          wx.showModal({ title: '提示', content: '主持人已结束游戏', showCancel: false, success: () => wx.reLaunch({ url: '/pages/hub/hub' }) });
           return;
         }
         if (room.status === 'waiting') {   // 房主点了「再来一局」
@@ -218,7 +218,7 @@ Page({
       this.closeWatch();
       app.clearSession();
       await app.callGame({ action: 'dissolve', roomId: this.data.roomId }).catch(() => {});
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.reLaunch({ url: '/pages/hub/hub' });
     }, '结束中');
   },
 
@@ -227,7 +227,7 @@ Page({
     app.runOnce('backHome', () => {
       this.closeWatch();
       app.clearSession();   // 回到首页 → 结束续局
-      wx.reLaunch({ url: '/pages/index/index' });
+      wx.reLaunch({ url: '/pages/hub/hub' });
     }, '');
   },
 

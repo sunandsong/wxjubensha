@@ -4,21 +4,22 @@
   <view class="pagebg-fade"></view>
   <view class="bokeh"></view>
 
-  <!-- 极简问候条 -->
+  <!-- 用户信息条：头像在左 -->
   <view class="userbar">
-    <view class="ub-hi">Hi，{{nick}} <text class="ub-wave">👋</text></view>
     <view class="ub-av" bindtap="goMe">
       <image wx:if="{{avatar}}" class="ub-img" src="{{avatar}}" mode="aspectFill" />
       <view wx:else class="ub-img ub-ph">🐱</view>
     </view>
+    <view class="ub-hi">Hi，{{nick}} <text class="ub-wave">👋</text></view>
   </view>
 
   <!-- 剧本杀 · 招牌大横幅 -->
   <view class="hero" bindtap="goScripts">
+    <image class="hero-man" src="/assets/games/hero_man.png" mode="aspectFit"></image>
     <view class="hero-body">
-      <view class="hero-logo">剧本杀</view>
-      <view class="hero-title">夜幕降临 · 推理开始</view>
-      <view class="hero-sub">谁是隐藏在暗处的真凶？</view>
+      <view class="hero-logo">夜幕降临</view>
+      <view class="hero-logo">推理开始</view>
+      <view class="hero-sub">谁是隐藏在黑暗中的真相？</view>
       <view class="hero-join">快速加入 ›</view>
     </view>
   </view>
@@ -26,12 +27,14 @@
   <!-- 4 个派对游戏 2×2 -->
   <view class="cards">
     <view class="gcard" wx:for="{{games}}" wx:key="id" data-game="{{item.id}}" bindtap="goGame" style="--ac:{{item.c}}">
-      <view class="gc-glow"></view>
-      <text class="gc-mark">{{item.name}}</text>
-      <image class="gc-img" src="{{item.img}}" mode="aspectFit"></image>
-      <view class="gc-name">{{item.name}}</view>
-      <view class="gc-en">{{item.en}}</view>
-      <view class="gc-desc">{{item.d1}}<text class="br"></text>{{item.d2}}</view>
+      <image class="gc-pic-blur" src="{{item.img}}" mode="aspectFill"></image>
+      <image class="gc-pic" src="{{item.img}}" mode="aspectFill"></image>
+      <view class="gc-scrim"></view>
+      <view class="gc-head"><text class="gc-ico">{{item.ico}}</text><text class="gc-name">{{item.name}}</text></view>
+      <view class="gc-foot">
+        <view class="gc-count">{{item.d1}}，{{item.d2}}</view>
+        <view class="gc-go">›</view>
+      </view>
     </view>
   </view>
 

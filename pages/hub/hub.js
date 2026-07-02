@@ -8,10 +8,10 @@ Page({
   data: {
     nick: '', avatar: '',
     games: [
-      { id: 'spy',  name: '谁是卧底', en: 'SPY GAME',    d1: '隐藏身份', d2: '找出破绽', c: '#37e0cf', img: '/assets/games/spy.png' },
-      { id: 'bomb', name: '数字炸弹', en: 'NUMBER BOMB', d1: '猜数字',   d2: '别踩雷',   c: '#ff7a45', img: '/assets/games/bomb.png' },
-      { id: 'soup', name: '海龟汤',   en: 'TURTLE SOUP', d1: '脑洞推理', d2: '神奇反转', c: '#5fd672', img: '/assets/games/soup.png' },
-      { id: 'chain', name: '成语接龙', en: 'IDIOM CHAIN', d1: '接不上',   d2: '就出局',   c: '#ffce54', img: '/assets/games/chain.png' },
+      { id: 'spy',  name: '谁是卧底', ico: '🎩', d1: '隐藏身份', d2: '智胜全场', count: '8.7k', c: '#ff5c8a', img: '/assets/games/chain.jpg' },
+      { id: 'bomb', name: '数字炸弹', ico: '💣', d1: '猜数字',   d2: '别踩雷',   count: '5.2k', c: '#ff7a45', img: '/assets/games/spy.jpg' },
+      { id: 'soup', name: '海龟汤',   ico: '🥣', d1: '脑洞提问', d2: '神奇汤面', count: '6.3k', c: '#4db8ff', img: '/assets/games/soup.jpg' },
+      { id: 'chain', name: '成语接龙', ico: '🔠', d1: '妙语连珠', d2: '接不上出局', count: '9.1k', c: '#ffce54', img: '/assets/games/bomb.jpg' },
     ],
   },
 

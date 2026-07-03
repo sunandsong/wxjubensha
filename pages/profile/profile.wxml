@@ -1,0 +1,33 @@
+<view class="page">
+  <!-- 头像：点击唤起微信头像选择 -->
+  <view class="sec">
+    <button class="av-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+      <view class="av-wrap">
+        <image wx:if="{{avatar}}" class="av-img" src="{{avatar}}" mode="aspectFill"
+          bindload="onAvatarLoad" binderror="onAvatarError" />
+        <view wx:else class="av-img av-ph">🐱</view>
+        <view wx:if="{{avLoading}}" class="av-loading"><view class="spin"></view></view>
+        <view class="av-badge">{{uploading ? '⏳' : '✎'}}</view>
+      </view>
+      <view class="av-tip">点击更换头像</view>
+    </button>
+  </view>
+
+  <!-- 昵称 -->
+  <view class="sec">
+    <view class="label">昵称</view>
+    <input class="input" type="nickname" placeholder="点这里填写微信昵称" value="{{nick}}"
+      bindinput="onNick" bindblur="onNick" maxlength="8" />
+  </view>
+
+  <!-- 性别：决定对局里的角色照片 -->
+  <view class="sec">
+    <view class="label">性别 <text class="label-sub">（决定剧本里的角色形象）</text></view>
+    <view class="genders">
+      <view class="g-opt {{gender==='m'?'on':''}}" data-g="m" bindtap="pickGender">♂ 男</view>
+      <view class="g-opt {{gender==='f'?'on':''}}" data-g="f" bindtap="pickGender">♀ 女</view>
+    </view>
+  </view>
+
+  <button class="save" bindtap="save">保存</button>
+</view>

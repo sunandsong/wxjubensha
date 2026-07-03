@@ -99,27 +99,53 @@ Page({
     this.setData({ scripts }, () => { this.initCategories(); this.applyFilter(); this._resolveCovers(); });
   },
 
-  // 封面 cloud:// → https 直链：缓存优先秒显，未缓存的批量取并存（1小时有效）
+  // 封面三级缓存：本地文件(永久,秒显) > https 临时链接(1小时) > cloud:// 现取
+  // 首次用临时链接显示并后台下载落盘，之后每次直接读本地文件，不再重复下载
   _resolveCovers() {
-    const CK = 'coverUrlMapV1';
+    const CK = 'coverUrlMapV1';    // fileID → https 临时链接
+    const LK = 'coverLocalMapV1';  // fileID → 已落盘的本地文件路径
+    const fs = wx.getFileSystemManager();
+    const dir = `${wx.env.USER_DATA_PATH}/covers`;
+    const local = wx.getStorageSync(LK) || {};
+    // 0) 本地文件已被系统清理的，从映射里剔除
+    Object.keys(local).forEach((fid) => {
+      try { fs.accessSync(local[fid]); } catch (e) { delete local[fid]; }
+    });
     const c = wx.getStorageSync(CK);
     const map = (c && c.ts && (Date.now() - c.ts < 3600000) && c.map) || {};
-    // 1) 缓存命中的立刻替换
-    const apply = (m) => this.data.scripts.map((s) => {
-      const fid = s.coverFid;
-      return (fid && m[fid]) ? { ...s, cover: { ...s.cover, image: m[fid] } } : s;
+    const best = (fid) => local[fid] || map[fid] || '';
+    // 1) 本地/链接缓存命中的立刻替换
+    const apply = () => this.data.scripts.map((s) => {
+      const u = s.coverFid && best(s.coverFid);
+      return u ? { ...s, cover: { ...s.cover, image: u } } : s;
     });
-    let scripts = apply(map);
-    this.setData({ scripts }, () => this.applyFilter());
-    // 2) 仍是 cloud:// 没缓存的，批量取临时链接
+    this.setData({ scripts: apply() }, () => this.applyFilter());
+    // 2) 后台把还没落盘的封面下载到本地，下次秒开
+    const download = (fid, url) => wx.downloadFile({
+      url,
+      success: (r) => {
+        if (r.statusCode !== 200) return;
+        try { fs.mkdirSync(dir, true); } catch (e) {}
+        const dest = `${dir}/${fid.split('/').pop()}`;
+        fs.saveFile({
+          tempFilePath: r.tempFilePath, filePath: dest,
+          success: () => { local[fid] = dest; wx.setStorageSync(LK, local); },
+        });
+      },
+    });
+    const toSave = (m) => [...new Set(this.data.scripts
+      .filter((s) => s.coverFid && s.coverFid.indexOf('cloud://') === 0 && !local[s.coverFid])
+      .map((s) => s.coverFid))].forEach((fid) => m[fid] && download(fid, m[fid]));
+    // 3) 连临时链接都没有的，批量取一次再显示+落盘
     const need = [...new Set(this.data.scripts
-      .filter((s) => s.coverFid && s.coverFid.indexOf('cloud://') === 0 && s.cover.image === s.coverFid)
+      .filter((s) => s.coverFid && s.coverFid.indexOf('cloud://') === 0 && !best(s.coverFid))
       .map((s) => s.coverFid))];
-    if (!need.length) return;
+    if (!need.length) { toSave(map); return; }
     wx.cloud.getTempFileURL({ fileList: need }).then((res) => {
       (res.fileList || []).forEach((f) => { if (f.fileID && f.tempFileURL) map[f.fileID] = f.tempFileURL; });
       wx.setStorageSync(CK, { ts: Date.now(), map });
-      this.setData({ scripts: apply(map) }, () => this.applyFilter());
+      this.setData({ scripts: apply() }, () => this.applyFilter());
+      toSave(map);
     }).catch(() => {});
   },
 

@@ -1,0 +1,33 @@
+<view class="page">
+  <view class="bomb-ico">💣</view>
+  <view class="title">数字炸弹</view>
+  <view class="rule">1~100 里藏着一颗炸弹，轮流报数缩小范围，报中的人爆炸 💥</view>
+
+  <!-- 当前安全范围 -->
+  <view class="range">
+    <text class="rn">{{min}}</text>
+    <text class="rsep">~</text>
+    <text class="rn">{{max}}</text>
+  </view>
+
+  <!-- 报数 -->
+  <view class="guess-row">
+    <input class="g-input" type="number" placeholder="报个数" value="{{val}}" bindinput="onInput" bindconfirm="guess" />
+    <button class="g-btn" bindtap="guess">就它了</button>
+  </view>
+
+  <!-- 已报记录 -->
+  <view class="history" wx:if="{{guesses.length}}">
+    <text class="h-chip" wx:for="{{guesses}}" wx:key="index">{{item}}</text>
+  </view>
+
+  <!-- 爆炸弹层 -->
+  <view class="boom-mask" wx:if="{{boom}}">
+    <view class="boom-card">
+      <view class="boom-emoji">💥</view>
+      <view class="boom-t">BOOM！炸弹就是 {{bombNum}}</view>
+      <view class="boom-sub">这位朋友，愿赌服输吧～</view>
+      <button class="boom-btn" bindtap="newRound">再来一局</button>
+    </view>
+  </view>
+</view>

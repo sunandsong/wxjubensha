@@ -2,6 +2,8 @@
   "pages": [
     "pages/hub/hub",
     "pages/index/index",
+    "pages/profile/profile",
+    "pages/bomb/bomb",
     "pages/room/room",
     "pages/game/game",
     "pages/result/result"

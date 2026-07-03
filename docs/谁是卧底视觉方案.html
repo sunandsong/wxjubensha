@@ -1,0 +1,257 @@
+<title>谁是卧底 · 简洁故事感（原风格）</title>
+<style>
+  :root {
+    /* 完全沿用小程序现有设计语言 */
+    --bg: #1e1830; --bg-deep: #14101f;
+    --ink: #ece8f5; --muted: #b3a6cc;
+    --card: rgba(255,255,255,0.06); --card-bd: rgba(255,255,255,0.1);
+    --pink: #ff4d7e; --pink2: #ff85a8; --pink-glow: rgba(255,92,138,0.4);
+    --page: #14101f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: var(--pink2);
+    border: 1px solid rgba(255,133,168,0.4); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted); font-size: 14px; max-width: 62ch; margin: 0 0 36px; }
+  .lede b { color: var(--ink); }
+
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, var(--pink), var(--pink2)); border-radius: 2px; }
+  .sub { color: var(--muted); font-size: 13.5px; max-width: 68ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink); font-weight: 600; }
+
+  .keepcut { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .kc { border: 1px solid var(--card-bd); border-radius: 14px; padding: 16px 18px; background: var(--card); }
+  .kc h3 { font-size: 14px; margin: 0 0 8px; letter-spacing: 2px; }
+  .kc.keep h3 { color: #7fe0a8; } .kc.cut h3 { color: #ff8f8f; }
+  .kc ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+  .kc li { margin: 4px 0; }
+  .kc li b { color: var(--ink); }
+
+  /* 手机框 */
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  /* 底色 = 现有的 #1e1830，只加一束很轻的粉紫顶光 + 轻暗角 */
+  .scr { position: relative; min-height: 560px; padding: 40px 14px 26px; overflow: hidden;
+    background:
+      radial-gradient(90% 50% at 50% -8%, rgba(196,77,255,0.14), transparent 60%),
+      var(--bg); }
+  .vig { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 85% at 50% 30%, transparent 58%, rgba(10,6,20,0.5) 100%); }
+
+  .p-title { font-size: 22px; letter-spacing: 3px; font-weight: 700; }
+  .p-narr { font-size: 12.5px; color: var(--muted); margin: 4px 0 12px; }
+
+  /* 卡片：与现有 app.wxss 一致 */
+  .card { position: relative; background: var(--card); border: 1px solid var(--card-bd);
+    border-radius: 12px; padding: 14px; margin-top: 12px; }
+  .c-tit { font-size: 14px; font-weight: 600; }
+  .c-narr { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .code-row { display: flex; align-items: center; justify-content: space-between; }
+  .code { font-size: 30px; font-weight: 700; letter-spacing: 8px; color: #fff; margin-top: 2px; }
+  .mini { font-size: 12px; color: #fff; padding: 7px 16px; border-radius: 999px; font-weight: 600;
+    background: linear-gradient(90deg, var(--pink), var(--pink2)); }
+  .lbl { font-size: 11px; color: var(--muted); }
+
+  .avs { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
+  .av { width: 56px; text-align: center; position: relative; }
+  .av .c { width: 44px; height: 44px; line-height: 44px; margin: 0 auto; border-radius: 50%;
+    font-size: 18px; color: #fff; background: linear-gradient(135deg, #7b5cff, #c44dff); }
+  .av .n { font-size: 10.5px; color: #ddd6ee; margin-top: 4px; }
+  .av .tag { font-size: 9px; margin-top: 3px; display: inline-block; padding: 1px 7px; border-radius: 999px;
+    color: #1c3b22; background: #7fe0a8; }
+  .av.dim { opacity: 0.4; filter: grayscale(0.8); }
+  .av.spy .c { background: linear-gradient(135deg, var(--pink), #c2185b);
+    box-shadow: 0 0 16px var(--pink-glow); }
+
+  .cta { margin-top: 14px; text-align: center; padding: 13px 0; border-radius: 10px; color: #fff;
+    font-size: 15px; font-weight: 600; letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--pink), var(--pink2)); }
+  .ghostbtn { margin-top: 10px; text-align: center; padding: 12px 0; border-radius: 10px; font-size: 13px;
+    color: #d9d2ec; border: 1px solid rgba(255,255,255,0.25); }
+
+  /* 机密卡看词：暗夜配色的"物件"，按住显影 */
+  .secret-zone { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 14px; }
+  .secret { width: 224px; border-radius: 14px; padding: 14px 16px 12px; cursor: pointer; position: relative;
+    background: linear-gradient(160deg, #2c2244, #221936);
+    border: 1px solid rgba(255,133,168,0.35);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.5), inset 0 0 24px rgba(196,77,255,0.08); }
+  .s-head { display: flex; justify-content: space-between; align-items: center; font-size: 10px;
+    letter-spacing: 3px; color: var(--muted); border-bottom: 1px dashed rgba(255,255,255,0.14); padding-bottom: 7px; }
+  .s-head .mi { color: var(--pink2); border: 1px solid rgba(255,133,168,0.6); padding: 1px 7px; border-radius: 3px;
+    transform: rotate(-4deg); letter-spacing: 2px; }
+  .s-body { text-align: center; padding: 16px 0 8px; }
+  .s-word { font-size: 34px; font-weight: 700; letter-spacing: 8px; color: transparent;
+    text-shadow: 0 0 16px rgba(236,232,245,0.9); transition: all .45s; }
+  .secret.open .s-word { color: #fff; text-shadow: 0 0 20px var(--pink-glow); }
+  .s-tip { font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-top: 8px; text-align: center; }
+  .secret-hint { font-size: 11px; color: var(--muted); }
+
+  /* 揭晓卡 */
+  .v-rows { margin-top: 8px; font-size: 14px; }
+  .v-rows .r { display: flex; justify-content: space-between; padding: 7px 2px;
+    border-bottom: 1px dashed rgba(255,255,255,0.12); }
+  .v-rows .r:last-child { border-bottom: none; }
+  .v-rows b { letter-spacing: 2px; color: #fff; }
+  .v-rows .warn { color: #ffb347; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl { overflow-x: auto; border: 1px solid var(--card-bd); border-radius: 14px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); vertical-align: top; }
+  th { font-size: 12px; letter-spacing: 2px; color: var(--muted); font-weight: 600; background: rgba(255,255,255,0.03); }
+  tr:last-child td { border-bottom: none; }
+  td.old { color: var(--muted); }
+  td.new { color: #ffd7e3; }
+
+  ol.plan { padding-left: 20px; font-size: 14px; }
+  ol.plan li { margin-bottom: 8px; }
+  ol.plan .cost { font-size: 12px; color: var(--pink2); margin-left: 6px; }
+</style>
+
+<div class="wrap">
+  <h1>谁是卧底 · 简洁故事感<span class="tag">原风格 · 不换皮</span></h1>
+  <p class="lede">这版<b>完全待在你现有的设计语言里</b>：还是 #1e1830 暗夜紫底、白 6% 玻璃卡片、粉色渐变按钮、系统字体——和 hub、和其他页面无缝。故事感只来自三处克制的加法：一束顶光、一句旁白、一张"机密卡"。</p>
+
+  <h2>加了什么（就三样）</h2>
+  <div class="keepcut">
+    <div class="kc keep">
+      <h3>✓ 加法（都在现有语言内）</h3>
+      <ul>
+        <li><b>一束粉紫顶光 + 轻暗角</b>——底色还是 #1e1830，只是不再"平"，和 hub 鬼宅夜景的氛围接上</li>
+        <li><b>每张卡一句旁白</b>——"有一个人，拿到的词不一样"，字体字号不变，只换措辞</li>
+        <li><b>词卡 → 机密卡</b>——深紫卡面 + 粉色「机密」角标 + 按住显影，交互不变，只是把"文字框"变成"物件"</li>
+      </ul>
+    </div>
+    <div class="kc cut">
+      <h3>✗ 不做</h3>
+      <ul>
+        <li>不换配色宇宙（民国墨绿金那版作废）</li>
+        <li>不用衬线字体</li>
+        <li>不加黑边/字幕卡/颗粒/动画表演</li>
+        <li>不改任何布局结构和交互流程</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>三个界面（和现在逐像素可对照）</h2>
+  <p class="sub">结构、颜色、按钮全是现状；差异只有顶光、旁白句、机密卡。<b>点第二台手机的机密卡试试显影</b>。</p>
+
+  <div class="stage">
+    <!-- ① 等待 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr">
+          <div class="p-title">谁是卧底 🎩</div>
+          <div class="p-narr">人到齐了，戏才开场</div>
+          <div class="card">
+            <div class="code-row">
+              <div><div class="lbl">房间号</div><div class="code">3721</div></div>
+              <div class="mini">分享链接</div>
+            </div>
+            <div class="c-narr">把消息递到群里 · 满 4 人开始</div>
+          </div>
+          <div class="card">
+            <div class="c-tit">玩家（5）</div>
+            <div class="avs">
+              <div class="av"><div class="c">薄</div><div class="n">薄荷</div></div>
+              <div class="av"><div class="c">阿</div><div class="n">阿岚</div><span class="tag">已准备</span></div>
+              <div class="av"><div class="c">大</div><div class="n">大熊</div><span class="tag">已准备</span></div>
+              <div class="av"><div class="c">小</div><div class="n">小鹿</div><span class="tag">已准备</span></div>
+              <div class="av"><div class="c">卷</div><div class="n">卷卷</div></div>
+            </div>
+          </div>
+          <div class="cta">开始游戏（自动发词）</div>
+          <div class="ghostbtn">退出房间</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">① 等待 · 只多了顶光和旁白</div>
+    </div>
+
+    <!-- ② 游戏中 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr">
+          <div class="p-title">第 1 轮</div>
+          <div class="p-narr">有一个人，拿到的词不一样</div>
+          <div class="secret-zone">
+            <div class="secret" id="sec" onclick="this.classList.toggle('open')">
+              <div class="s-head"><span>你 的 词</span><span class="mi">机密</span></div>
+              <div class="s-body"><div class="s-word">奶茶</div></div>
+              <div class="s-tip">按住显影 · 松手复原</div>
+            </div>
+            <div class="secret-hint">点机密卡试试（实际为长按）</div>
+          </div>
+          <div class="card">
+            <div class="c-tit">玩家（5）</div>
+            <div class="c-narr">去群里轮流描述 · 说完口头投票</div>
+            <div class="avs">
+              <div class="av"><div class="c">薄</div><div class="n">薄荷</div></div>
+              <div class="av"><div class="c">阿</div><div class="n">阿岚</div></div>
+              <div class="av"><div class="c">大</div><div class="n">大熊</div></div>
+              <div class="av"><div class="c">小</div><div class="n">小鹿</div></div>
+              <div class="av"><div class="c">卷</div><div class="n">卷卷</div></div>
+            </div>
+          </div>
+          <div class="ghostbtn">揭晓（公布卧底）</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">② 游戏中 · 机密卡显影（点它）</div>
+    </div>
+
+    <!-- ③ 揭晓 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr">
+          <div class="p-title">真相</div>
+          <div class="p-narr">说谎的人，终于开了口</div>
+          <div class="card">
+            <div class="c-tit">结案</div>
+            <div class="v-rows">
+              <div class="r"><span class="lbl">平民词</span><b>奶茶</b></div>
+              <div class="r"><span class="lbl">卧底词</span><b class="warn">咖啡</b></div>
+              <div class="r"><span class="lbl">卧底是</span><b class="warn">阿岚</b></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="avs">
+              <div class="av dim"><div class="c">薄</div><div class="n">薄荷</div></div>
+              <div class="av spy"><div class="c">阿</div><div class="n">阿岚</div></div>
+              <div class="av dim"><div class="c">大</div><div class="n">大熊</div></div>
+              <div class="av dim"><div class="c">小</div><div class="n">小鹿</div></div>
+              <div class="av dim"><div class="c">卷</div><div class="n">卷卷</div></div>
+            </div>
+          </div>
+          <div class="cta">再来一局</div>
+          <div class="ghostbtn">解散房间</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">③ 揭晓 · 卧底粉光高亮，其他人熄灭</div>
+    </div>
+  </div>
+
+  <h2>旁白文案（全页共四句）</h2>
+  <div class="tbl"><table>
+    <tr><th style="width:44%">现在</th><th>换成</th></tr>
+    <tr><td class="old">把链接发到群里，点开直接进房 · 满 4 人可开始</td><td class="new">把消息递到群里 · 满 4 人开始</td></tr>
+    <tr><td class="old">游戏中 · 去群里轮流描述，口头投票</td><td class="new">有一个人，拿到的词不一样</td></tr>
+    <tr><td class="old">🔒 长按看词（松手盖回）</td><td class="new">按住显影 · 松手复原</td></tr>
+    <tr><td class="old">你就是卧底 🎭 / 你是平民 🙂</td><td class="new">说谎的人——是你 🎭 / 你干干净净，全身而退 🙂</td></tr>
+  </table></div>
+
+  <h2>落地</h2>
+  <ol class="plan">
+    <li><b>一次到位，纯代码</b>：顶光+暗角（2 行 CSS）、四句旁白、机密卡样式、揭晓页卧底高亮/其他人熄灭。<span class="cost">只改 spy 页，两三个小时的量</span></li>
+    <li><b>验证后复制</b>：同样的手法给狼人杀——夜晚顶光偏蓝紫、白天偏暖、身份卡同款"机密卡"，全程不离开现有设计语言。</li>
+  </ol>
+</div>

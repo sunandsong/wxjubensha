@@ -1,0 +1,370 @@
+<title>海龟汤 · 宇宙尽头的酒馆（吧台版）</title>
+<style>
+  :root {
+    --bg: #1e1830; --page: #14101f;
+    --ink: #ece8f5; --muted: #b3a6cc;
+    --card: rgba(255,255,255,0.06); --card-bd: rgba(255,255,255,0.1);
+    --cyan: #4dd8ff; --cyan-glow: rgba(77,216,255,0.5);
+    --pink: #ff5c8a; --purple: #c44dff;
+    --blue: #4db8ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: var(--cyan);
+    border: 1px solid rgba(77,216,255,0.4); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted); font-size: 14px; max-width: 64ch; margin: 0 0 36px; }
+  .lede b { color: var(--ink); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, var(--cyan), var(--purple)); border-radius: 2px; }
+  .sub { color: var(--muted); font-size: 13.5px; max-width: 68ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink); font-weight: 600; }
+
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 620px; padding: 28px 16px 26px; overflow: hidden; text-align: center;
+    background: radial-gradient(85% 45% at 50% 0%, rgba(196,77,255,0.16), transparent 62%), var(--bg); }
+  .vig { position: absolute; inset: 0; pointer-events: none; z-index: 7;
+    background: radial-gradient(120% 85% at 50% 30%, transparent 55%, rgba(10,6,20,0.55) 100%); }
+
+  .starf i { position: absolute; border-radius: 50%; background: #cfe6ff; opacity: .7;
+    animation: drift 9s ease-in-out infinite; }
+  @keyframes drift { 0%,100% { transform: translateY(0); opacity: .25; } 50% { transform: translateY(-16px); opacity: .9; } }
+
+  /* 霓虹招牌 */
+  .neon { position: relative; z-index: 3; display: inline-block;
+    font-size: 17px; font-weight: 700; letter-spacing: 5px; color: #dff6ff;
+    text-shadow: 0 0 6px var(--cyan), 0 0 16px var(--cyan), 0 0 34px rgba(77,216,255,0.7);
+    animation: neonflick 5s linear infinite; }
+  @keyframes neonflick { 0%,100% { opacity: 1; } 92% { opacity: 1; } 93% { opacity: .4; } 94% { opacity: 1; } 96.5% { opacity: .55; } 97% { opacity: 1; } }
+  .neon .sub-en { display: block; font-size: 8px; letter-spacing: 4px; color: #9ee6ff; font-weight: 400;
+    text-shadow: 0 0 8px var(--cyan); margin-top: 2px; }
+  .closed .neon { color: #5a5470; text-shadow: none; animation: none; }
+  .closed .neon .sub-en { color: #4a4560; text-shadow: none; }
+
+  /* ══ 吧台场景（第一人称：压扁成横幅，不抢内容区） ══ */
+  .scene { position: relative; z-index: 3; height: 158px; margin-top: 6px; }
+  /* 酒瓶架 */
+  .ledge { position: absolute; left: 14%; right: 14%; height: 2px; background: rgba(77,216,255,0.28); }
+  .lg1 { top: 26px; } .lg2 { top: 50px; }
+  .bot { position: absolute; width: 8px; border-radius: 4px 4px 2px 2px; opacity: .9; }
+  .bot::after { content: ""; position: absolute; top: -4px; left: 2px; width: 4px; height: 5px; border-radius: 2px;
+    background: inherit; }
+  .r1 { height: 17px; top: 9px; } .r2 { height: 14px; top: 36px; }
+  .c1 { background: #3fd8ff; box-shadow: 0 0 10px rgba(77,216,255,0.7); }
+  .c2 { background: #ff6a9e; box-shadow: 0 0 10px rgba(255,92,138,0.7); }
+  .c3 { background: #b06aff; box-shadow: 0 0 10px rgba(176,106,255,0.7); }
+  .c4 { background: #58e6a8; box-shadow: 0 0 10px rgba(88,230,168,0.7); }
+  .c5 { background: #ffc95e; box-shadow: 0 0 10px rgba(255,201,94,0.7); }
+  .closed .bot { opacity: .25; box-shadow: none; }
+  .closed .bot::after { box-shadow: none; }
+
+  /* 酒保（吧台后） */
+  .keeper { position: absolute; top: 54px; left: 50%; transform: translateX(-50%); z-index: 4; text-align: center; }
+  .keeper .head { display: block; font-size: 23px; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5));
+    animation: bob 3.6s ease-in-out infinite; }
+  .keeper .nm { display: block; font-size: 8px; color: #ffd7e3; letter-spacing: 1px; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+  /* 吧台台面 + 前板 */
+  .counter { position: absolute; top: 100px; left: -6%; right: -6%; height: 13px; z-index: 5;
+    background: linear-gradient(180deg, #45376e, #2c2450);
+    border-top: 2px solid rgba(77,216,255,0.55); box-shadow: 0 -2px 18px rgba(77,216,255,0.18); }
+  .counter-front { position: absolute; top: 113px; left: -6%; right: -6%; bottom: 0; z-index: 5;
+    background: linear-gradient(180deg, #241c40, #1a1430);
+    background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 40px); }
+
+  /* 邻座酒客（和你一起坐在吧台这一侧的左右邻座） */
+  .mate { position: absolute; z-index: 6; text-align: center; }
+  .mate .head { display: block; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.55)); animation: bob 3.2s ease-in-out infinite; }
+  .mate .nm { display: block; font-size: 8px; color: #9a8fb8; letter-spacing: 1px; }
+  .m1 { left: 4%; top: 74px; font-size: 25px; }
+  .m2 { left: 23%; top: 82px; font-size: 22px; }
+  .m3 { right: 21%; top: 82px; font-size: 22px; }
+  .m4 { right: 3%; top: 74px; font-size: 25px; }
+  .m2 .head { animation-delay: .7s; } .m3 .head { animation-delay: 1.3s; } .m4 .head { animation-delay: .4s; }
+  .closed .mate { opacity: 0; transition: opacity 1s; }
+
+  /* 台面上：你的特调 + 邻座的杯子 */
+  .mydrink { position: absolute; z-index: 6; top: 74px; left: 50%; transform: translateX(-50%) translateX(52px); width: 24px; }
+  .cup { position: relative; height: 20px; overflow: hidden;
+    clip-path: polygon(8% 0, 92% 0, 68% 100%, 32% 100%);
+    background: rgba(180,230,255,0.1); border-top: 1px solid rgba(255,255,255,0.4); }
+  .liquid { position: absolute; left: 0; right: 0; bottom: 0; height: 66%;
+    background: linear-gradient(180deg, #55e0ff, #2a7fd4 70%, #7b5cff);
+    box-shadow: 0 0 14px var(--cyan-glow); transition: background .6s, box-shadow .6s; }
+  .hotdrink .liquid { background: linear-gradient(180deg, #ff8f6a, #e63a5e 70%, #8f1d4a);
+    box-shadow: 0 0 14px rgba(255,92,110,0.6); }
+  .bub { position: absolute; bottom: 2px; width: 3px; height: 3px; border-radius: 50%;
+    background: rgba(255,255,255,0.9); animation: rise 2.6s linear infinite; }
+  @keyframes rise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 20% { opacity: .9; }
+    100% { transform: translateY(-14px) scale(1.1); opacity: 0; } }
+  .stem { width: 3px; height: 6px; margin: 0 auto; background: rgba(200,235,255,0.35); }
+  .foot { width: 14px; height: 3px; margin: 0 auto; border-radius: 50%; background: rgba(200,235,255,0.35); }
+  .glass-s { position: absolute; z-index: 6; top: 86px; width: 9px; height: 12px; border-radius: 2px 2px 3px 3px;
+    background: rgba(190,235,255,0.18); border-top: 1px solid rgba(255,255,255,0.35); }
+  .closed .glass-s { opacity: .5; }
+
+  /* 聊天气泡：接力（一轮 15s） */
+  .bb { position: absolute; z-index: 8; font-size: 10.5px; padding: 4px 10px; border-radius: 10px;
+    background: rgba(16,24,44,0.94); border: 1px solid rgba(77,216,255,0.45); color: #bfeaff;
+    white-space: nowrap; opacity: 0; animation: bbpop 15s linear infinite; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .bb.ans { border-color: rgba(255,92,138,0.6); color: #ffd7e3; font-weight: 600; letter-spacing: 2px; }
+  @keyframes bbpop { 0% { opacity: 0; transform: translateY(5px); } 1.5% { opacity: 1; transform: none; }
+    13% { opacity: 1; } 16% { opacity: 0; transform: translateY(-7px); } 100% { opacity: 0; } }
+  .b1 { left: 1%;  top: 52px;  animation-delay: 0s; }
+  .b2 { left: 40%; top: 30px;  animation-delay: 2.5s; }
+  .b3 { right: 1%; top: 56px;  animation-delay: 5s; }
+  .b4 { left: 43%; top: 30px;  animation-delay: 7.5s; }
+  .b5 { left: 14%; top: 60px;  animation-delay: 10s; }
+  .b6 { left: 45%; top: 30px;  animation-delay: 12.5s; }
+  .closed .bb { display: none; }
+
+  .p-narr { position: relative; z-index: 6; font-size: 12.5px; color: var(--muted); margin: 6px 0 8px; }
+
+  /* 点单（换一碗）：清汤/红汤/随机 */
+  .order { position: relative; z-index: 6; display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  .od { font-size: 12px; color: #d9d2ec; padding: 7px 13px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.05); }
+  .od.on { color: #dff6ff; border-color: rgba(77,216,255,0.65);
+    box-shadow: 0 0 12px rgba(77,216,255,0.3); background: rgba(77,216,255,0.08); }
+  .od.hot.on { color: #ffd7e3; border-color: rgba(255,92,138,0.65);
+    box-shadow: 0 0 12px rgba(255,92,138,0.3); background: rgba(255,92,138,0.08); }
+  .order-lab { position: relative; z-index: 6; font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-top: 8px; }
+
+  /* 酒单卡 */
+  .menu { position: relative; z-index: 6; margin: 8px auto 0; width: 94%; text-align: left;
+    background: rgba(30,24,48,0.92); border: 1px solid rgba(77,216,255,0.25); border-radius: 12px; padding: 12px 15px; }
+  .m-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: 2px;
+    color: #9ee6ff; border-bottom: 1px dashed rgba(77,216,255,0.3); padding-bottom: 6px; }
+  .m-tags { display: flex; gap: 5px; }
+  .tg { font-size: 9px; padding: 1px 8px; border-radius: 999px; letter-spacing: 1px; }
+  .tg.qing { color: #9ee6ff; border: 1px solid rgba(77,216,255,0.5); }
+  .tg.diff { color: #ffd7e3; border: 1px solid rgba(255,92,138,0.5); }
+  .m-body { font-size: 12.5px; line-height: 1.85; color: #ddd6ee; padding-top: 7px; }
+  .m-sign { text-align: right; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .cta { position: relative; z-index: 6; margin: 12px auto 0; width: 100%; text-align: center; padding: 13px 0;
+    border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 1px;
+    background: linear-gradient(90deg, #2f9be6, var(--blue)); box-shadow: 0 6px 20px rgba(77,184,255,0.25); }
+  .ghostbtn { position: relative; z-index: 6; margin: 10px auto 0; width: 100%; text-align: center; padding: 12px 0;
+    border-radius: 10px; font-size: 13px; color: #d9d2ec; border: 1px solid rgba(255,255,255,0.25); }
+
+  /* 杯垫 */
+  .coasterzone { position: relative; z-index: 6; margin-top: 10px; perspective: 700px; }
+  .coaster { width: 208px; height: 122px; margin: 0 auto; cursor: pointer; position: relative;
+    transform-style: preserve-3d; transition: transform .8s cubic-bezier(.3,.8,.3,1); }
+  .coaster.flip { transform: rotateX(180deg); }
+  .co-face { position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .co-front { background: linear-gradient(160deg, #2c2244, #1e1836); border: 1px solid rgba(77,216,255,0.4); }
+  .co-front .ring { width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(77,216,255,0.5);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    box-shadow: 0 0 16px rgba(77,216,255,0.25); }
+  .co-front .t { font-size: 10px; letter-spacing: 3px; color: #9ee6ff; }
+  .co-back { transform: rotateX(180deg); padding: 12px;
+    background: linear-gradient(160deg, #241c3e, #191331); border: 1px solid rgba(255,92,138,0.45); }
+  .co-back .txt { font-size: 11.5px; line-height: 1.75; color: #ffe0ea; text-align: left; }
+  .co-hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  /* 打烊 */
+  .closed-tag { display: inline-block; margin-top: 8px; font-size: 11px; letter-spacing: 4px; color: #ffb3c8;
+    border: 1px solid rgba(255,92,138,0.7); border-radius: 4px; padding: 3px 14px; transform: rotate(-5deg);
+    box-shadow: 0 0 14px rgba(255,92,138,0.3); }
+  .fin { opacity: 0; transform: translateY(10px); position: relative; z-index: 6; }
+  .closed .fin { animation: rise2 .8s ease .8s forwards; }
+  @keyframes rise2 { to { opacity: 1; transform: none; } }
+  .play-btn { position: absolute; z-index: 9; bottom: 12px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: #dff6ff; background: rgba(14,24,40,0.92); border: 1px solid rgba(77,216,255,0.4);
+    padding: 8px 18px; border-radius: 999px; cursor: pointer; letter-spacing: 1px; }
+
+  .kc { border: 1px solid var(--card-bd); border-radius: 14px; padding: 16px 18px; background: var(--card); }
+  .kc ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+  .kc li { margin: 4px 0; } .kc li b { color: var(--ink); }
+  code.prompt { display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px;
+    line-height: 1.6; color: #bfeaff; background: rgba(14,30,44,0.55); border: 1px solid rgba(77,216,255,0.25);
+    border-radius: 8px; padding: 10px 12px; margin-top: 8px; white-space: pre-wrap; }
+  ol.plan { padding-left: 20px; font-size: 14px; }
+  ol.plan li { margin-bottom: 8px; }
+  ol.plan .cost { font-size: 12px; color: var(--cyan); margin-left: 6px; }
+</style>
+
+<div class="wrap">
+  <h1>海龟汤 · 宇宙尽头的酒馆<span class="tag">吧台版 · 功能不动</span></h1>
+  <p class="lede">第一人称：<b>你就坐在吧台前</b>。对面是系着领结的酒保和一排发光的酒瓶，左右邻座是各个星球来的酒客，你面前的台面上放着一杯冒气泡的特调。邻座轮流开口发问，酒保只回"是 / 不是 / 无关"——气泡接力一轮 15 秒，正好演完一段盘问。</p>
+
+  <h2>三个画面（①的吧台一直在聊天，②③可交互）</h2>
+  <div class="stage">
+    <!-- ① 吧台盘问 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr">
+          <div class="starf">
+            <i style="top:6%;left:12%;width:2px;height:2px"></i><i style="top:4%;left:72%;width:3px;height:3px;animation-delay:1.4s"></i>
+            <i style="top:10%;left:88%;width:2px;height:2px;animation-delay:2.8s"></i>
+          </div>
+          <div class="neon">宇宙尽头酒馆<span class="sub-en">TONIGHT · 怪谈第 47 夜</span></div>
+          <div class="scene">
+            <!-- 酒瓶架 -->
+            <div class="ledge lg1"></div><div class="ledge lg2"></div>
+            <span class="bot r1 c1" style="left:16%"></span><span class="bot r1 c2" style="left:24%"></span>
+            <span class="bot r1 c3" style="left:32%"></span><span class="bot r1 c5" style="left:62%"></span>
+            <span class="bot r1 c4" style="left:70%"></span><span class="bot r1 c2" style="left:78%"></span>
+            <span class="bot r2 c4" style="left:19%"></span><span class="bot r2 c5" style="left:27%"></span>
+            <span class="bot r2 c1" style="left:66%"></span><span class="bot r2 c3" style="left:74%"></span>
+            <!-- 酒保 -->
+            <span class="keeper"><span class="head">🐙</span><span class="nm">酒保 · 只说三个词</span></span>
+            <!-- 吧台 -->
+            <div class="counter"></div>
+            <div class="counter-front"></div>
+            <!-- 邻座 -->
+            <span class="mate m1"><span class="head">👽</span><span class="nm">泽塔星</span></span>
+            <span class="mate m2"><span class="head">👾</span><span class="nm">像素星</span></span>
+            <span class="mate m3"><span class="head">🦎</span><span class="nm">蜥人</span></span>
+            <span class="mate m4"><span class="head">🍄</span><span class="nm">孢子星</span></span>
+            <!-- 台面上的杯子 -->
+            <div class="mydrink">
+              <div class="cup"><div class="liquid"></div><div class="bub" style="left:36%"></div><div class="bub" style="left:60%;animation-delay:1.2s"></div></div>
+              <div class="stem"></div><div class="foot"></div>
+            </div>
+            <span class="glass-s" style="left:12%"></span>
+            <span class="glass-s" style="right:11%"></span>
+            <!-- 对话接力 -->
+            <div class="bb b1">他是走路回家的吗？</div>
+            <div class="bb ans b2">无 关</div>
+            <div class="bb b3">那他还活着吗？</div>
+            <div class="bb ans b4">不 是</div>
+            <div class="bb b5">妻子早知道他死了！</div>
+            <div class="bb ans b6">是</div>
+          </div>
+          <div class="order-lab">🍸 向酒保点单 · 换一杯就是换一碗汤（仅主持人可见）</div>
+          <div class="order">
+            <div class="od on" onclick="soupPick(this,'qing')">星云特调 🍵</div>
+            <div class="od hot" onclick="soupPick(this,'hong')">超新星 🌶️</div>
+            <div class="od" onclick="soupPick(this,'all')">盲调 🎲</div>
+          </div>
+          <div class="menu">
+            <div class="m-head"><span>今晚的怪谈 · 雨夜归人</span>
+              <span class="m-tags"><span class="tg qing">星云蓝</span><span class="tg diff">★★★</span></span></div>
+            <div class="m-body">蓝星旅人说：他每天深夜准时回家，从不带伞。那天暴雨，他浑身干爽地推开了门，妻子看了一眼，报了警。</div>
+          </div>
+          <div class="cta">把怪谈分享到群</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">① 吧台盘问 · 邻座接力提问（盯 15 秒）</div>
+    </div>
+
+    <!-- ② 杯垫 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr">
+          <div class="starf">
+            <i style="top:6%;left:20%;width:2px;height:2px"></i><i style="top:9%;left:78%;width:3px;height:3px;animation-delay:1.8s"></i>
+          </div>
+          <div class="neon">宇宙尽头酒馆<span class="sub-en">BARTENDER ONLY</span></div>
+          <div class="p-narr">你是酒保 🐙 真相压在你面前的杯垫下</div>
+          <div class="coasterzone">
+            <div class="coaster" id="co" onclick="this.classList.toggle('flip')">
+              <div class="co-face co-front">
+                <div class="ring">🛸</div>
+                <div class="t">真 相 压 在 杯 垫 背 面</div>
+              </div>
+              <div class="co-face co-back">
+                <div class="txt">他三年前就死于雨夜车祸。每晚的脚步声是妻子的幻听——那晚推门进来的"他"浑身干爽，因为雨，淋不到已经不在的人。</div>
+              </div>
+            </div>
+            <div class="co-hint">点杯垫翻面（实际为长按 · 客人视角没有杯垫）</div>
+          </div>
+          <div class="menu">
+            <div class="m-head"><span>吧台备忘</span></div>
+            <div class="m-body" style="font-size:12px">客人问到点子上就回"是"；跑偏了回"无关"；别多说一个字——话多的酒保，留不住怪谈。</div>
+          </div>
+          <div class="ghostbtn">把真相分享到群（揭晓）</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">② 酒保视角 · 杯垫背面（点它）</div>
+    </div>
+
+    <!-- ③ 打烊 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr" id="fin">
+          <div class="starf">
+            <i style="top:7%;left:14%;width:2px;height:2px"></i><i style="top:5%;left:66%;width:2px;height:2px;animation-delay:2.2s"></i>
+          </div>
+          <div class="neon">宇宙尽头酒馆<span class="sub-en">SEE YOU TOMORROW NIGHT</span></div><br/>
+          <div class="closed-tag">CLOSED · 今夜打烊</div>
+          <div class="scene" style="height:130px">
+            <div class="ledge lg1"></div><div class="ledge lg2"></div>
+            <span class="bot r1 c1" style="left:16%"></span><span class="bot r1 c2" style="left:24%"></span>
+            <span class="bot r1 c3" style="left:32%"></span><span class="bot r1 c5" style="left:62%"></span>
+            <span class="bot r1 c4" style="left:70%"></span><span class="bot r1 c2" style="left:78%"></span>
+            <span class="bot r2 c4" style="left:19%"></span><span class="bot r2 c1" style="left:66%"></span>
+            <span class="keeper"><span class="head">🐙</span><span class="nm">酒保</span></span>
+            <div class="counter"></div>
+            <div class="counter-front"></div>
+            <span class="mate m1"><span class="head">👽</span></span>
+            <span class="mate m4"><span class="head">🍄</span></span>
+            <span class="glass-s" style="left:14%"></span>
+            <span class="glass-s" style="left:38%"></span>
+            <span class="glass-s" style="right:13%"></span>
+          </div>
+          <div class="p-narr">客人散了，酒保擦着杯子，终于开了口</div>
+          <div class="menu fin">
+            <div class="m-head"><span>怪谈 No.47 · 真相</span></div>
+            <div class="m-body">他三年前就死于雨夜车祸。每晚的脚步声是妻子的幻听——那晚推门进来的"他"浑身干爽，因为雨，淋不到已经不在的人。</div>
+            <div class="m-sign">—— 下一位旅人，明晚见</div>
+          </div>
+          <div class="play-btn" onclick="var w=document.getElementById('fin'); w.classList.remove('closed'); void w.offsetWidth; setTimeout(function(){w.classList.add('closed')},60);">🌌 打烊（播放揭晓）</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">③ 打烊 · 邻座散去只剩空杯（点按钮）</div>
+    </div>
+  </div>
+
+  <h2>吧台对话的两种用法</h2>
+  <div class="kc" style="margin-bottom:14px">
+    <ul>
+      <li><b>基础版（本预览）</b>：邻座是<b>氛围角色</b>，气泡循环播一段示例盘问——页面永远热闹，即使群里还没人说话</li>
+      <li><b>进阶版（可选）</b>：气泡换成<b>本汤定制的"好问题示范"</b>——每碗汤配 3 组问答，新手看一轮就知道怎么提问</li>
+    </ul>
+  </div>
+
+  <h2>图片素材（三张）</h2>
+  <div class="kc" style="margin-bottom:14px">
+    <ul style="list-style:none;padding:0">
+      <li style="margin-bottom:16px"><b>① 酒保+邻座一组 aliens.png（透明底 ×5）</b>——替换 emoji：领结章鱼酒保 + 四位常客<br/>
+      <code class="prompt">Set of 5 cute alien bar characters on transparent background, sticker style: an octopus bartender with a bow tie polishing a glass, a grey alien sipping through a straw, a pixel-blocky robot with a mug, a lizard traveler with a scarf leaning on the counter, a glowing mushroom person; consistent retro sci-fi storybook style, cyan-magenta rim light on deep violet, no text</code></li>
+      <li style="margin-bottom:16px"><b>② 氛围底图 soup_alien_bg.jpg（750×1600）</b>——第一人称吧台视角：瓶架+台面轮廓，全屏垫底 18%<br/>
+      <code class="prompt">First-person view sitting at a cozy alien tavern bar counter, glowing bottles on shelves across, a porthole window with purple-pink nebula on the side, the counter surface at the bottom of frame, neon cyan and magenta accents against deep violet darkness, retro sci-fi storybook illustration, heavy vignette, upper half mostly dark for UI, vertical 9:16, no characters, no text</code></li>
+      <li><b>③ 分享卡封面 soup_alien_share.jpg（900×720 两版）</b>——汤面卡=吧台边的外星人们凑向一杯问号特调；汤底卡=打烊空吧台+翻开的杯垫<br/>
+      <code class="prompt">Two-variant retro sci-fi illustration: version A, cute aliens on bar stools leaning toward a glowing cocktail with question-mark steam, bartender behind the counter, lively night; version B, the same bar empty at closing, stools tucked, one flipped coaster under a single lamp; deep violet with cyan-magenta neon, space at bottom for a title, no text</code></li>
+    </ul>
+  </div>
+
+  <h2>落地</h2>
+  <ol class="plan">
+    <li><b>阶段一 · CSS 骨架</b>：霓虹招牌、瓶架+吧台+邻座（emoji 占位）、接力气泡、特调杯、点单换汤（换口味台面上的酒变色）、杯垫翻面、打烊演出。<span class="cost">一天～一天半</span></li>
+    <li><b>阶段二 · 接图</b>：角色立绘替换 emoji、底图/分享卡接线。<span class="cost">你出图，我接线</span></li>
+  </ol>
+</div>
+
+<script>
+  function soupPick(el, f) {
+    var ods = el.parentNode.children;
+    for (var i = 0; i < ods.length; i++) ods[i].classList.remove('on');
+    el.classList.add('on');
+    // 换口味：台面上那杯特调跟着变色（红汤=超新星红）
+    var scene = el.parentNode.parentNode.querySelector('.scene');
+    if (scene) scene.classList.toggle('hotdrink', f === 'hong');
+  }
+</script>

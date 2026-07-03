@@ -1,0 +1,168 @@
+<title>数字炸弹 · 视觉方案</title>
+<style>
+  :root {
+    --bg: #1e1830; --page: #14101f;
+    --ink: #ece8f5; --muted: #b3a6cc;
+    --card: rgba(255,255,255,0.06); --card-bd: rgba(255,255,255,0.1);
+    --yel: #ffce54; --org: #ff7a45;
+    --yel-glow: rgba(255,206,84,0.35);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: var(--yel);
+    border: 1px solid rgba(255,206,84,0.4); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted); font-size: 14px; max-width: 62ch; margin: 0 0 36px; }
+  .lede b { color: var(--ink); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, var(--yel), var(--org)); border-radius: 2px; }
+  .sub { color: var(--muted); font-size: 13.5px; max-width: 68ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink); font-weight: 600; }
+
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 560px; padding: 40px 16px 26px; overflow: hidden; text-align: center;
+    background: radial-gradient(90% 50% at 50% -8%, var(--yel-glow), transparent 62%), var(--bg); }
+  .vig { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 85% at 50% 30%, transparent 58%, rgba(10,6,20,0.5) 100%); }
+
+  .p-title { font-size: 22px; letter-spacing: 3px; font-weight: 700; }
+  .p-narr { font-size: 12.5px; color: var(--muted); margin: 4px 0 14px; }
+  .bomb-big { font-size: 52px; line-height: 1.1; filter: drop-shadow(0 6px 18px rgba(255,160,60,0.35)); }
+
+  .card { position: relative; background: var(--card); border: 1px solid var(--card-bd);
+    border-radius: 12px; padding: 14px; margin-top: 12px; text-align: left; }
+  .c-narr { font-size: 12px; color: var(--muted); }
+
+  /* LED 数字盒 */
+  .led { margin: 14px auto 0; width: 76%; border-radius: 14px; padding: 20px 10px 14px;
+    background: #120e20; border: 1px solid rgba(255,206,84,0.35);
+    box-shadow: inset 0 0 26px rgba(0,0,0,0.7), 0 0 22px rgba(255,206,84,0.12); }
+  .led .n { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 56px; font-weight: 700;
+    letter-spacing: 6px; color: var(--yel); text-shadow: 0 0 18px var(--yel-glow); line-height: 1.15; }
+  .led .n.q { color: #5c5478; text-shadow: none; }
+  .led .meta { font-size: 10px; color: #6f6786; margin-top: 8px; letter-spacing: 1px; }
+  .led .meta b { color: #9a8fb8; font-weight: 500; }
+
+  .cta { margin: 16px auto 0; width: 100%; text-align: center; padding: 13px 0; border-radius: 10px; color: #3a2a00;
+    font-size: 15px; font-weight: 700; letter-spacing: 2px; cursor: pointer;
+    background: linear-gradient(90deg, var(--yel), var(--org)); box-shadow: 0 6px 20px rgba(255,160,60,0.25); }
+  .ghostbtn { margin: 10px auto 0; width: 100%; text-align: center; padding: 12px 0; border-radius: 10px; font-size: 13px;
+    color: #d9d2ec; border: 1px solid rgba(255,255,255,0.25); }
+
+  /* 生成时的爆炸小演出 */
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 8; }
+  .genwrap.on .flash { animation: flash 0.45s ease-out; }
+  @keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+  .genwrap.on .quaker { animation: quake 0.4s ease-in-out; }
+  @keyframes quake { 0%,100% { transform: none; } 20% { transform: translate(-5px,3px) rotate(-0.5deg); }
+    40% { transform: translate(5px,-3px) rotate(0.5deg); } 60% { transform: translate(-4px,-2px); } 80% { transform: translate(4px,2px); } }
+  .genwrap.on .bomb-big { animation: bpop 0.5s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes bpop { 0% { transform: scale(0.7); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .genwrap.on .led .n { animation: npop 0.5s cubic-bezier(.2,1.6,.4,1) 0.15s backwards; }
+  @keyframes npop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+  .keepcut { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .kc { border: 1px solid var(--card-bd); border-radius: 14px; padding: 16px 18px; background: var(--card); }
+  .kc h3 { font-size: 14px; margin: 0 0 8px; letter-spacing: 2px; }
+  .kc.keep h3 { color: #7fe0a8; } .kc.cut h3 { color: #ff8f8f; }
+  .kc ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+  .kc li { margin: 4px 0; } .kc li b { color: var(--ink); }
+  ol.plan { padding-left: 20px; font-size: 14px; }
+  ol.plan li { margin-bottom: 8px; }
+  ol.plan .cost { font-size: 12px; color: var(--yel); margin-left: 6px; }
+</style>
+
+<div class="wrap">
+  <h1>数字炸弹 · 视觉方案<span class="tag">功能不动 · CSS 打底 + 图片加成</span></h1>
+  <p class="lede">功能保持现状：<b>生成炸弹数 + 保存防伪图</b>，仅此而已。CSS 负责骨架（顶光、LED 盒、爆炸演出），<b>图片素材负责质感</b>：一张氛围底图 + 一枚炸弹立绘替换 emoji + 一张留证分享图的专属底——清单和提示词在下方。</p>
+
+  <h2>两个状态（第二台点"生成"看演出）</h2>
+  <div class="stage">
+    <!-- ① 待抽 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr">
+          <div class="bomb-big">💣</div>
+          <div class="p-title">数字炸弹</div>
+          <div class="p-narr">一颗炸弹，藏在 1 到 100 之间</div>
+          <div class="led">
+            <div class="n q">?</div>
+          </div>
+          <div class="cta">生成炸弹数</div>
+          <div class="card"><div class="c-narr">主持人暗抽一颗炸弹数，群里轮流报数，报中的人爆炸 💥</div></div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">① 待抽 · LED 盒暗着</div>
+    </div>
+
+    <!-- ② 生成 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr genwrap" id="gen">
+          <div class="quaker">
+            <div class="bomb-big">💣</div>
+            <div class="p-title">数字炸弹</div>
+            <div class="p-narr">这个数烂在心里，别露馅</div>
+            <div class="led">
+              <div class="n">73</div>
+              <div class="meta">07-03 21:14 · 防伪码 <b>X7K2-09QF</b></div>
+            </div>
+            <div class="cta" onclick="var w=document.getElementById('gen'); w.classList.remove('on'); void w.offsetWidth; w.classList.add('on');">重新生成</div>
+            <div class="ghostbtn">保存为图片 🖼️</div>
+            <div class="card"><div class="c-narr">带时间和防伪码，改图对不上号，赖不掉～</div></div>
+          </div>
+          <div class="flash"></div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">② 已抽 · 点"重新生成"看爆炸演出</div>
+    </div>
+  </div>
+
+  <h2>加什么 / 不动什么</h2>
+  <div class="keepcut">
+    <div class="kc keep">
+      <h3>✓ 换皮（三样）</h3>
+      <ul>
+        <li><b>黄橙顶光 + 轻暗角</b>——同一手法，主题色换成炸弹的黄</li>
+        <li><b>LED 数字盒</b>——数字放进带辉光的显示屏，防伪码变"铭牌小字"</li>
+        <li><b>生成演出</b>——点生成：白闪一帧 + 震屏 0.4 秒 + 数字弹出，配 wx.vibrateShort 轻震</li>
+      </ul>
+    </div>
+    <div class="kc cut">
+      <h3>✗ 不动</h3>
+      <ul>
+        <li>功能零改动：生成、保存留证、防伪码逻辑全保持</li>
+        <li>不做区间收窄、不做房间联机</li>
+        <li>无音效、无粒子</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>图片素材清单（生图提示词已备好）</h2>
+  <p class="sub">三张图，风格锚点与 hub 鬼宅夜景一致：暗色、体积光、轻插画。生成后传云存储 games/，走现有 imgCache 本地缓存。CSS 版没图也能先上线，图到了再接。</p>
+  <div class="kc" style="margin-bottom:14px">
+    <ul style="list-style:none;padding:0">
+      <li style="margin-bottom:16px"><b>① 氛围底图 bomb_bg.jpg（750×1600）</b>——全屏垫底，透明度约 18%，暗紫世界里的"拆弹暗室"<br/>
+      <code style="display:block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;color:#ffe6b0;background:rgba(40,30,10,0.5);border:1px solid rgba(255,206,84,0.25);border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap">Dark purple dim room interior, a wooden table lit by a single warm desk lamp, scattered wires and an old alarm clock, faint smoke in the lamp light, deep violet shadows with amber highlights, storybook illustration, heavy vignette, upper half mostly dark for UI, vertical 9:16, no people, no text</code></li>
+      <li style="margin-bottom:16px"><b>② 炸弹立绘 bomb_hero.png（600×600 透明底）</b>——替换页面顶部的 💣 emoji，主视觉<br/>
+      <code style="display:block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;color:#ffe6b0;background:rgba(40,30,10,0.5);border:1px solid rgba(255,206,84,0.25);border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap">Cute but menacing round black bomb with a lit sparking fuse, subtle purple rim light from below, warm orange glow from the spark, glossy highlights, sticker-style illustration on transparent background, slight 3/4 angle, no text</code></li>
+      <li><b>③ 留证分享图底 bomb_proof.jpg（900×1200）</b>——「保存为图片」的 canvas 背景：现在是素底，换成有设计感的"封条卡"，发到群里更有面子<br/>
+      <code style="display:block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;color:#ffe6b0;background:rgba(40,30,10,0.5);border:1px solid rgba(255,206,84,0.25);border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap">Vertical certificate card design, dark purple background with golden warning-stripe border top and bottom, a wax-seal style badge at top center, large empty area in the middle for a number, subtle bomb watermark in the corner, flat illustration, no text</code></li>
+    </ul>
+  </div>
+
+  <h2>落地</h2>
+  <ol class="plan">
+    <li><b>阶段一 · CSS 骨架</b>：顶光、LED 盒、生成演出、轻震动。<span class="cost">只改 bomb 页，两小时内，不等图</span></li>
+    <li><b>阶段二 · 接图</b>：三张图生成后传云存储，底图/立绘/留证底一次接上（canvas 画留证时叠加底图）。<span class="cost">你出图，我接线</span></li>
+  </ol>
+</div>

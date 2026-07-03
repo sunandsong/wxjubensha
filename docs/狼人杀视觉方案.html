@@ -1,299 +1,314 @@
-<title>狼人杀页面视觉方案</title>
+<title>狼人杀 · 米勒山谷经典版方案</title>
 <style>
   :root {
-    /* 夜 */
-    --night-sky0: #060818; --night-sky1: #10142e; --night-sky2: #1c2145;
-    --moon: #d8e4ff; --moon-glow: rgba(160, 190, 255, 0.35);
-    /* 昼 */
-    --day-sky0: #2a1c33; --day-sky1: #6d3a4e; --day-sky2: #c96a4a; --day-sun: #ffd9a0;
-    /* 通用 */
-    --ink: #ece8f5; --muted: #a89ec4; --card: rgba(255,255,255,0.06); --card-bd: rgba(255,255,255,0.12);
-    --wolf: #ff7a45; --wolf2: #ffb347;
-    --page: #100c1c;
+    --bg: #1e1830; --page: #14101f;
+    --ink: #ece8f5; --muted: #b3a6cc;
+    --card: rgba(255,255,255,0.06); --card-bd: rgba(255,255,255,0.1);
+    --org: #ff7a45; --org2: #ffb347; --org-glow: rgba(255,140,70,0.4);
+    --moon: #e8ecff; --parch: #ede0c4; --parch-ink: #33261a;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--page); color: var(--ink);
-    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
-    padding: 48px 24px 80px; line-height: 1.7;
-  }
-  .wrap { max-width: 1180px; margin: 0 auto; }
-  h1 { font-size: 26px; letter-spacing: 2px; margin: 0 0 6px; }
-  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: var(--wolf2);
-    border: 1px solid rgba(255,179,71,0.4); border-radius: 999px; padding: 3px 12px; margin-left: 12px; }
-  .lede { color: var(--muted); font-size: 14px; max-width: 62ch; margin: 0 0 40px; }
-
-  h2 { font-size: 17px; margin: 56px 0 6px; letter-spacing: 1px; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: var(--org2);
+    border: 1px solid rgba(255,179,71,0.4); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted); font-size: 14px; max-width: 64ch; margin: 0 0 36px; }
+  .lede b { color: var(--ink); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
   h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
-    background: linear-gradient(90deg, var(--wolf), var(--wolf2)); border-radius: 2px; }
-  .sub { color: var(--muted); font-size: 13.5px; max-width: 68ch; margin: 0 0 24px; }
+    background: linear-gradient(90deg, var(--org), var(--org2)); border-radius: 2px; }
+  .sub { color: var(--muted); font-size: 13.5px; max-width: 68ch; margin: 0 0 22px; }
   .sub b, li b { color: var(--ink); font-weight: 600; }
 
-  /* 原则四格 */
-  .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
-  .p-card { background: var(--card); border: 1px solid var(--card-bd); border-radius: 14px; padding: 18px 18px 14px; }
-  .p-card .no { font-size: 12px; letter-spacing: 2px; color: var(--wolf2); }
-  .p-card h3 { font-size: 15px; margin: 6px 0 6px; }
-  .p-card p { font-size: 13px; color: var(--muted); margin: 0; }
-
-  /* 手机框 */
-  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
   .slot { display: flex; flex-direction: column; gap: 10px; }
   .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted); }
   .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
-    border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
-  .scr { position: relative; min-height: 560px; padding: 40px 14px 26px; overflow: hidden; }
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 620px; padding: 26px 16px 26px; overflow: hidden; text-align: center;
+    background: radial-gradient(85% 45% at 50% 0%, rgba(120,140,220,0.13), transparent 62%), var(--bg); }
+  .scr.day { background: radial-gradient(85% 45% at 50% 0%, rgba(255,160,80,0.17), transparent 62%), var(--bg); }
+  .vig { position: absolute; inset: 0; pointer-events: none; z-index: 7;
+    background: radial-gradient(120% 85% at 50% 30%, transparent 55%, rgba(10,6,20,0.55) 100%); }
 
-  /* ── 夜晚场景 ── */
-  .scr.night { background: linear-gradient(180deg, var(--night-sky0) 0%, var(--night-sky1) 46%, var(--night-sky2) 100%); }
-  .moon { position: absolute; top: 34px; right: 26px; width: 58px; height: 58px; border-radius: 50%;
-    background: radial-gradient(circle at 38% 35%, #fff, var(--moon) 55%, #aebcf0);
-    box-shadow: 0 0 40px 12px var(--moon-glow), 0 0 90px 30px rgba(140,170,255,0.15); }
-  .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #cfd9ff; opacity: 0.8;
-    animation: tw 3s ease-in-out infinite; }
-  @keyframes tw { 0%,100% { opacity: 0.15; } 50% { opacity: 0.9; } }
-  .ridge { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; pointer-events: none;
-    background: radial-gradient(120% 100% at 50% 130%, #05060f 55%, transparent 78%); }
-  .vig { position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(130% 90% at 50% 30%, transparent 55%, rgba(3,4,12,0.55) 100%); }
+  /* ══ 村庄横幅：满月 + 剪影 ══ */
+  .vill { position: relative; z-index: 3; height: 110px; margin: 4px -16px 0; overflow: hidden; }
+  .moon { position: absolute; top: 6px; right: 60px; width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 35%, #fff, var(--moon) 55%, #aeb8e8);
+    box-shadow: 0 0 30px 10px rgba(170,190,255,0.35); transition: all 1.4s; }
+  .day .moon { background: radial-gradient(circle at 40% 38%, #fff6e0, #ffd9a0 60%, #f0a35e);
+    box-shadow: 0 0 34px 12px rgba(255,190,110,0.4); }
+  .sil { position: absolute; bottom: 0; left: 0; right: 0; height: 54px; }
+  .sil i { position: absolute; bottom: 0; background: #0c0916; }
+  /* 教堂 */
+  .ch-t { left: 44%; width: 14px; height: 46px; clip-path: polygon(50% 0, 100% 28%, 100% 100%, 0 100%, 0 28%); }
+  .ch-b { left: 40%; width: 34px; height: 26px; }
+  /* 木屋 */
+  .h1a { left: 10%; width: 30px; height: 20px; }
+  .h1r { left: 8%;  width: 38px; height: 12px; bottom: 20px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .h2a { left: 66%; width: 26px; height: 16px; }
+  .h2r { left: 64%; width: 34px; height: 11px; bottom: 16px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  /* 松树 */
+  .t1 { left: 2%;  width: 16px; height: 34px; clip-path: polygon(50% 0, 90% 60%, 70% 60%, 100% 100%, 0 100%, 30% 60%, 10% 60%); }
+  .t2 { left: 28%; width: 13px; height: 26px; clip-path: polygon(50% 0, 90% 60%, 70% 60%, 100% 100%, 0 100%, 30% 60%, 10% 60%); }
+  .t3 { right: 3%; width: 18px; height: 38px; clip-path: polygon(50% 0, 90% 60%, 70% 60%, 100% 100%, 0 100%, 30% 60%, 10% 60%); }
+  .t4 { right: 24%; width: 13px; height: 27px; clip-path: polygon(50% 0, 90% 60%, 70% 60%, 100% 100%, 0 100%, 30% 60%, 10% 60%); }
+  .ground { position: absolute; bottom: 0; left: 0; right: 0; height: 7px; background: #0c0916; }
+  /* 山坡上的狼 */
+  .howl { position: absolute; bottom: 46px; left: 20%; font-size: 15px; filter: brightness(0); transform: scaleX(-1); }
+  /* 亮灯的窗 */
+  .winlit { position: absolute; bottom: 8px; left: 47%; width: 5px; height: 7px; background: var(--org2);
+    box-shadow: 0 0 8px var(--org-glow); animation: winf 3s ease-in-out infinite; }
+  @keyframes winf { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
 
-  /* ── 白天场景 ── */
-  .scr.day { background: linear-gradient(180deg, var(--day-sky0) 0%, var(--day-sky1) 52%, var(--day-sky2) 100%); }
-  .sun { position: absolute; top: 44px; right: 30px; width: 52px; height: 52px; border-radius: 50%;
-    background: radial-gradient(circle at 40% 38%, #fff6e0, var(--day-sun) 60%, #f0a35e);
-    box-shadow: 0 0 46px 16px rgba(255,200,120,0.35); }
-  .scr.day .vig { background: radial-gradient(130% 90% at 50% 30%, transparent 60%, rgba(30,10,10,0.4) 100%); }
+  /* 主持词大字 */
+  .host-line { position: relative; z-index: 3; font-size: 21px; letter-spacing: 6px; font-weight: 700; margin-top: 8px; }
+  .host-sub { position: relative; z-index: 3; font-size: 12.5px; color: var(--muted); margin: 4px 0 8px; }
 
-  /* 场景内组件 */
-  .phase { font-size: 11px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; }
-  .phase-title { font-size: 22px; font-weight: 700; letter-spacing: 3px; margin: 2px 0 2px; }
-  .phase-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-  .n-card { position: relative; background: rgba(10,12,30,0.55); border: 1px solid rgba(160,180,255,0.16);
-    border-radius: 14px; padding: 13px; margin-top: 12px; backdrop-filter: blur(4px); }
-  .scr.day .n-card { background: rgba(30,14,18,0.42); border-color: rgba(255,200,150,0.2); }
-  .n-tit { font-size: 13.5px; font-weight: 600; }
-  .n-tip { font-size: 11.5px; color: var(--wolf2); margin-top: 3px; }
+  /* 卡片容器 */
+  .card { position: relative; z-index: 3; background: rgba(30,24,48,0.92); border: 1px solid var(--card-bd);
+    border-radius: 12px; padding: 13px; margin-top: 12px; text-align: left; }
+  .c-tit { font-size: 14px; font-weight: 600; }
+  .c-narr { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-  .avs { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
-  .av { width: 56px; text-align: center; position: relative; }
+  /* ══ 经典身份牌（翻牌） ══ */
+  .fzone { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 12px; perspective: 800px; }
+  .fcard { width: 150px; height: 212px; cursor: pointer; position: relative;
+    transform-style: preserve-3d; transition: transform .75s cubic-bezier(.25,.9,.3,1); }
+  .fcard.on { transform: rotateY(180deg); }
+  .fface { position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    border: 1px solid rgba(255,179,71,0.4); }
+  .fback { background:
+      radial-gradient(circle at 50% 30%, rgba(255,150,70,0.16), transparent 55%),
+      repeating-linear-gradient(45deg, #241a33 0 9px, #1d1529 9px 18px);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.6); }
+  .fback .totem { font-size: 40px; filter: drop-shadow(0 0 12px rgba(255,150,70,0.55)); }
+  .fback .bmoon { font-size: 15px; margin-top: -4px; }
+  .fback .hint { font-size: 10px; letter-spacing: 3px; color: var(--muted); }
+  .ffront { transform: rotateY(180deg); background: linear-gradient(170deg, var(--parch), #d9c9a4);
+    color: var(--parch-ink); box-shadow: 0 14px 34px rgba(120,70,20,0.4); }
+  .ffront::before { content: ""; position: absolute; inset: 7px; border: 2px solid rgba(140,90,40,0.5); border-radius: 8px; }
+  .ffront .ric { font-size: 46px; filter: drop-shadow(0 4px 10px rgba(120,70,20,0.4)); }
+  .ffront .rname { font-size: 19px; font-weight: 700; letter-spacing: 8px; }
+  .ffront .rtip { font-size: 9.5px; color: #7a6448; letter-spacing: 1px; padding: 0 16px; text-align: center; }
+  .fnote { font-size: 11px; color: var(--muted); }
+
+  /* 玩家排 + 墓碑 */
+  .avs { position: relative; z-index: 3; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 10px; }
+  .av { width: 56px; text-align: center; position: relative; cursor: pointer; }
   .av .c { width: 44px; height: 44px; line-height: 44px; margin: 0 auto; border-radius: 50%;
-    font-size: 18px; color: #fff; background: linear-gradient(135deg, #46508a, #2c3358);
-    border: 1px solid rgba(180,200,255,0.25); transition: transform .15s; }
-  .av .n { font-size: 10.5px; color: #c6cdea; margin-top: 4px; }
-  .av.lit .c { background: linear-gradient(135deg, var(--wolf), var(--wolf2)); border-color: transparent;
-    box-shadow: 0 0 18px rgba(255,140,70,0.55); }
-  .av.dead .c { background: #23263c; color: #565b7c; border-style: dashed; filter: grayscale(1); }
-  .av.dead .n { color: #565b7c; text-decoration: line-through; }
-  .av .rip { position: absolute; top: -6px; left: 50%; transform: translateX(-50%) rotate(-8deg);
-    font-size: 9px; background: #1a1d33; border: 1px solid #3a3f63; color: #8b92b8; border-radius: 4px; padding: 1px 5px; }
+    font-size: 18px; color: #fff; background: linear-gradient(135deg, #7b5cff, #c44dff);
+    transition: filter .6s, opacity .6s; }
+  .av .n { font-size: 10.5px; color: #ddd6ee; margin-top: 4px; }
+  .av.dead .c { filter: grayscale(1) brightness(.55); }
+  .av.dead .n { color: #6f6786; text-decoration: line-through; }
+  .av .rip { position: absolute; top: -10px; left: 50%; transform: translateX(-50%) scale(0); font-size: 15px;
+    transition: transform .5s cubic-bezier(.2,1.5,.4,1); }
+  .av.dead .rip { transform: translateX(-50%) scale(1); }
 
-  .cta { margin-top: 14px; text-align: center; padding: 13px 0; border-radius: 12px; color: #fff;
-    font-size: 14px; font-weight: 600; letter-spacing: 1px;
-    background: linear-gradient(90deg, var(--wolf), var(--wolf2)); box-shadow: 0 6px 22px rgba(255,120,60,0.35); }
-  .ann { margin-top: 12px; text-align: center; font-size: 12.5px; color: #ffdba8;
+  .ann { position: relative; z-index: 3; margin-top: 10px; text-align: center; font-size: 12.5px; color: #ffdba8;
     padding: 10px; border-radius: 10px; background: rgba(255,170,80,0.1); border: 1px dashed rgba(255,180,90,0.35); }
 
-  /* ── 翻牌 demo ── */
-  .flip-zone { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 0 6px; }
-  .fcard { width: 170px; height: 240px; perspective: 900px; cursor: pointer; }
-  .fc-in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.2,.7,.25,1); }
-  .fcard.on .fc-in { transform: rotateY(180deg); }
-  .fc-face { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-    border: 1px solid rgba(255,255,255,0.18); }
-  .fc-back {
-    background:
-      radial-gradient(circle at 50% 32%, rgba(255,170,80,0.18), transparent 55%),
-      repeating-linear-gradient(45deg, #191533 0 10px, #151129 10px 20px);
-    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
-  }
-  .fc-back .sig { font-size: 44px; filter: drop-shadow(0 0 14px rgba(255,170,80,0.5)); }
-  .fc-back .hint { font-size: 11px; letter-spacing: 3px; color: var(--muted); }
-  .fc-front { transform: rotateY(180deg);
-    background: linear-gradient(165deg, #2b1030 0%, #4a1626 55%, #6e2418 100%);
-    box-shadow: 0 16px 40px rgba(120,40,20,0.5); }
-  .fc-front .role-ico { font-size: 52px; filter: drop-shadow(0 4px 16px rgba(255,140,70,0.6)); }
-  .fc-front .role-name { font-size: 22px; font-weight: 700; letter-spacing: 6px; color: #ffe3c9; }
-  .fc-front .role-tip { font-size: 10.5px; color: rgba(255,220,190,0.75); padding: 0 18px; text-align: center; }
-  .flip-note { font-size: 12px; color: var(--muted); }
+  .cta { position: relative; z-index: 3; margin: 12px auto 0; width: 100%; text-align: center; padding: 13px 0;
+    border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--org), var(--org2)); box-shadow: 0 6px 20px rgba(255,140,70,0.25); }
+  .ghostbtn { position: relative; z-index: 3; margin: 10px auto 0; width: 100%; text-align: center; padding: 12px 0;
+    border-radius: 10px; font-size: 13px; color: #d9d2ec; border: 1px solid rgba(255,255,255,0.25); }
 
-  /* ── 天黑过场 demo ── */
-  .trans-demo { position: relative; }
-  .curtain { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
-    background: radial-gradient(150% 120% at 50% -20%, transparent 30%, #04050e 72%);
-    transition: opacity 1.4s ease; }
-  .trans-demo.dark .curtain { opacity: 1; }
-  .trans-btn { position: absolute; z-index: 6; bottom: 14px; left: 50%; transform: translateX(-50%);
-    font-size: 12px; color: #cfd6f5; background: rgba(20,24,52,0.85); border: 1px solid rgba(160,180,255,0.3);
-    padding: 8px 18px; border-radius: 999px; cursor: pointer; }
+  /* ══ 终局亮牌 ══ */
+  .deal { position: relative; z-index: 3; display: flex; justify-content: center; gap: 8px; margin-top: 12px; perspective: 700px; }
+  .mini { width: 52px; height: 74px; position: relative; transform-style: preserve-3d;
+    transition: transform .7s cubic-bezier(.25,.9,.3,1); }
+  .shown .mini { transform: rotateY(180deg); }
+  .shown .mini.d1 { transition-delay: .15s; } .shown .mini.d2 { transition-delay: .4s; }
+  .shown .mini.d3 { transition-delay: .65s; } .shown .mini.d4 { transition-delay: .9s; }
+  .shown .mini.d5 { transition-delay: 1.15s; }
+  .mf { position: absolute; inset: 0; border-radius: 7px; backface-visibility: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    border: 1px solid rgba(255,179,71,0.4); }
+  .mb { background: repeating-linear-gradient(45deg, #241a33 0 7px, #1d1529 7px 14px); font-size: 17px; }
+  .mfr { transform: rotateY(180deg); background: linear-gradient(170deg, var(--parch), #d9c9a4); color: var(--parch-ink); }
+  .mfr .i { font-size: 19px; }
+  .mfr .t { font-size: 8.5px; font-weight: 700; letter-spacing: 1px; }
+  .mfr.wolfy { background: linear-gradient(170deg, #4a2020, #331414); color: #ffcaa8; border-color: rgba(255,110,70,0.6); }
+  .mname { text-align: center; font-size: 9px; color: var(--muted); margin-top: 4px; }
+  .win-line { position: relative; z-index: 3; margin-top: 12px; font-size: 17px; font-weight: 700; letter-spacing: 4px;
+    color: var(--org2); opacity: 0; }
+  .shown ~ .win-line, .revealed .win-line { opacity: 0; }
+  .scrwrap.shown .win-line { animation: rise .7s ease 1.6s forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .play-btn { position: absolute; z-index: 9; bottom: 12px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: #ffe6c0; background: rgba(40,28,10,0.92); border: 1px solid rgba(255,190,106,0.4);
+    padding: 8px 18px; border-radius: 999px; cursor: pointer; letter-spacing: 1px; }
 
-  /* 素材清单 */
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .tbl { overflow-x: auto; border: 1px solid var(--card-bd); border-radius: 14px; }
-  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); vertical-align: top; }
-  th { font-size: 12px; letter-spacing: 1px; color: var(--muted); font-weight: 600; background: rgba(255,255,255,0.03); }
-  tr:last-child td { border-bottom: none; }
-  td .use { color: var(--muted); font-size: 12px; }
+  .kc { border: 1px solid var(--card-bd); border-radius: 14px; padding: 16px 18px; background: var(--card); }
+  .kc ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+  .kc li { margin: 4px 0; } .kc li b { color: var(--ink); }
   code.prompt { display: block; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px;
-    line-height: 1.6; color: #c9d4ff; background: rgba(20,24,52,0.6); border: 1px solid rgba(160,180,255,0.18);
+    line-height: 1.6; color: #ffe2b8; background: rgba(50,32,12,0.5); border: 1px solid rgba(255,190,106,0.25);
     border-radius: 8px; padding: 10px 12px; margin-top: 8px; white-space: pre-wrap; }
-
   ol.plan { padding-left: 20px; font-size: 14px; }
-  ol.plan li { margin-bottom: 10px; }
-  ol.plan .cost { font-size: 12px; color: var(--wolf2); margin-left: 6px; }
+  ol.plan li { margin-bottom: 8px; }
+  ol.plan .cost { font-size: 12px; color: var(--org2); margin-left: 6px; }
 </style>
 
 <div class="wrap">
-  <h1>狼人杀页面视觉方案<span class="tag">PROPOSAL · 不动代码</span></h1>
-  <p class="lede">目标：把"表单感"的游戏页改造成有世界、有仪式感的游戏现场。方案分两层——第一层纯 CSS/动效（零素材成本，先落地），第二层接入 AI 生成的美术资源（提示词已备好）。下面的手机画面都是可交互的示意。</p>
+  <h1>狼人杀 · 米勒山谷经典版<span class="tag">原汁原味 · 功能不动</span></h1>
+  <p class="lede">不讲新故事，把玩家心里已有的那个狼人杀画出来：<b>满月、村庄剪影、狼嚎、"天黑请闭眼"、经典身份牌、墓碑、终局亮牌</b>。文案全套用主持词腔——没有上帝，但页面替上帝说话。底色仍是暗夜紫，橙色给月下的灯火。</p>
 
-  <h2>设计原则</h2>
-  <div class="grid4">
-    <div class="p-card"><div class="no">01</div><h3>世界感</h3><p>夜晚是冷月深蓝，白天是黎明暖橙。页面背景即场景，不再是中性深紫底。</p></div>
-    <div class="p-card"><div class="no">02</div><h3>仪式感</h3><p>发身份=翻牌，入夜=幕布压暗，死讯=墓碑标记，胜负=全屏揭晓。关键时刻要"演"。</p></div>
-    <div class="p-card"><div class="no">03</div><h3>物件化</h3><p>身份是一张实体卡牌，房间号是木质门牌，玩家是围坐篝火的一圈人。</p></div>
-    <div class="p-card"><div class="no">04</div><h3>微反馈</h3><p>行动目标有辉光锁定，倒牌头像灰化+墓碑，等待中的角色呼吸闪烁。</p></div>
-  </div>
+  <h2>三个画面（①②③全部可交互）</h2>
+  <p class="sub">① 天黑请闭眼：满月升起、教堂窗里一点灯火在闪，<b>点身份牌翻开</b>（狼人牌，附队友）。② 天亮了：暖光洒在同一座村庄上，公告死讯；<b>点头像</b>=放逐，头像立起小墓碑。③ 终局：<b>点"亮牌"</b>——五张牌从左到右依次翻开，狼人牌是深红的。</p>
 
-  <h2>夜 / 昼 双场景</h2>
-  <p class="sub">同一套布局、两套光照。<b>夜晚</b>：冷蓝底、月亮、星闪、四角暗角把视线压向中央的行动区；正在行动的目标用狼橙辉光点亮。<b>白天</b>：黎明色、暖阳，公告条是全场焦点。倒牌的人头像熄灭并挂上小墓碑——存活/出局一眼可分。</p>
   <div class="stage">
+    <!-- ① 夜 -->
     <div class="slot">
       <div class="phone">
-        <div class="scr night">
-          <div class="stars">
-            <i style="top:8%;left:12%"></i><i style="top:14%;left:34%;animation-delay:.6s"></i>
-            <i style="top:6%;left:58%;animation-delay:1.2s"></i><i style="top:20%;left:74%;animation-delay:.3s"></i>
-            <i style="top:11%;left:88%;animation-delay:.9s"></i><i style="top:24%;left:22%;animation-delay:1.6s"></i>
-          </div>
-          <div class="moon"></div>
-          <div class="phase">NIGHT · 03</div>
-          <div class="phase-title">第 3 夜</div>
-          <div class="phase-sub">天黑请闭眼，狼人正在行动…</div>
-          <div class="n-card">
-            <div class="n-tit">🐺 狼人频道</div>
-            <div class="n-tip">🔪 点头像选择今晚的目标</div>
-            <div class="avs">
-              <div class="av"><div class="c">薄</div><div class="n">薄荷</div></div>
-              <div class="av lit"><div class="c">阿</div><div class="n">阿岚</div></div>
-              <div class="av"><div class="c">大</div><div class="n">大熊</div></div>
-              <div class="av dead"><div class="rip">R.I.P</div><div class="c">小</div><div class="n">小鹿</div></div>
-              <div class="av"><div class="c">卷</div><div class="n">卷卷</div></div>
-              <div class="av"><div class="c">十</div><div class="n">十三</div></div>
+        <div class="scr">
+          <div class="vill">
+            <div class="moon"></div>
+            <span class="howl">🐺</span>
+            <div class="sil">
+              <i class="t1"></i><i class="h1r"></i><i class="h1a"></i><i class="t2"></i>
+              <i class="ch-t"></i><i class="ch-b"></i>
+              <i class="h2r"></i><i class="h2a"></i><i class="t4"></i><i class="t3"></i>
+              <div class="ground"></div>
             </div>
+            <div class="winlit"></div>
           </div>
-          <div class="n-card" style="text-align:center">
-            <div style="font-size:11.5px;color:var(--muted)">队友「老K」已选 → 阿岚</div>
+          <div class="host-line">天黑请闭眼</div>
+          <div class="host-sub">第 2 夜 · 狼人请睁眼，其他人请保持安静</div>
+          <div class="fzone">
+            <div class="fcard" id="fc" onclick="this.classList.toggle('on')">
+              <div class="fface fback">
+                <div class="totem">🐺</div>
+                <div class="bmoon">🌕</div>
+                <div class="hint">点 击 翻 牌</div>
+              </div>
+              <div class="fface ffront">
+                <div class="ric">🐺</div>
+                <div class="rname">狼 人</div>
+                <div class="rtip">你的同伴：老K<br/>今夜与他共同选择目标</div>
+              </div>
+            </div>
+            <div class="fnote">再点一次盖回 · 实际页面保留长按防误翻</div>
           </div>
-          <div class="cta">确认刀 阿岚</div>
-          <div class="ridge"></div><div class="vig"></div>
+          <div class="vig"></div>
         </div>
       </div>
-      <div class="slot-label">夜晚 · 狼人视角</div>
+      <div class="slot-label">① 夜 · 天黑请闭眼 + 经典翻牌（点牌）</div>
     </div>
 
+    <!-- ② 昼 -->
     <div class="slot">
       <div class="phone">
         <div class="scr day">
-          <div class="sun"></div>
-          <div class="phase">DAY · 03</div>
-          <div class="phase-title">第 3 天</div>
-          <div class="phase-sub">天亮了，回群里讨论</div>
-          <div class="ann">☀️ 昨夜 阿岚 倒牌 · 遗言在群里说</div>
-          <div class="n-card">
-            <div class="n-tit">🗳 投票执行</div>
-            <div class="n-tip">群里口头投票后，房主点头像执行出局</div>
-            <div class="avs">
-              <div class="av"><div class="c">薄</div><div class="n">薄荷</div></div>
-              <div class="av dead"><div class="rip">R.I.P</div><div class="c">阿</div><div class="n">阿岚</div></div>
-              <div class="av"><div class="c">大</div><div class="n">大熊</div></div>
-              <div class="av dead"><div class="rip">R.I.P</div><div class="c">小</div><div class="n">小鹿</div></div>
-              <div class="av"><div class="c">卷</div><div class="n">卷卷</div></div>
-              <div class="av"><div class="c">十</div><div class="n">十三</div></div>
+          <div class="vill">
+            <div class="moon"></div>
+            <div class="sil">
+              <i class="t1"></i><i class="h1r"></i><i class="h1a"></i><i class="t2"></i>
+              <i class="ch-t"></i><i class="ch-b"></i>
+              <i class="h2r"></i><i class="h2a"></i><i class="t4"></i><i class="t3"></i>
+              <div class="ground"></div>
             </div>
           </div>
-          <div class="ann" style="color:#cfd6f5;background:rgba(120,140,255,0.08);border-color:rgba(150,170,255,0.3)">💬 讨论发言在微信群 · App 只管出结果</div>
-          <div class="ridge"></div><div class="vig"></div>
-        </div>
-      </div>
-      <div class="slot-label">白天 · 全员视角</div>
-    </div>
-
-    <div class="slot">
-      <div class="phone trans-demo" id="trans">
-        <div class="scr day">
-          <div class="sun"></div>
-          <div class="phase">TRANSITION</div>
-          <div class="phase-title">入夜过场</div>
-          <div class="phase-sub">出局执行后 1.5 秒幕布压暗 → 月亮升起</div>
-          <div class="ann">🗳 大熊 被投票出局，TA 是「平民」</div>
-          <div class="n-card" style="text-align:center;padding:26px 13px">
-            <div style="font-size:34px">🌘</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:6px">天黑请闭眼…</div>
+          <div class="host-line">天亮请睁眼</div>
+          <div class="host-sub">第 3 天 · 请到村口集合</div>
+          <div class="ann">☀️ 昨夜倒牌的是——「卷卷」</div>
+          <div class="card">
+            <div class="c-tit">🗳 放逐投票 · 房主执行</div>
+            <div class="c-narr">群里投完票，点头像执行放逐（点一个试试）</div>
+            <div class="avs">
+              <div class="av" onclick="this.classList.toggle('dead')"><span class="rip">🪦</span><div class="c">薄</div><div class="n">薄荷</div></div>
+              <div class="av" onclick="this.classList.toggle('dead')"><span class="rip">🪦</span><div class="c">阿</div><div class="n">阿岚</div></div>
+              <div class="av" onclick="this.classList.toggle('dead')"><span class="rip">🪦</span><div class="c">大</div><div class="n">大熊</div></div>
+              <div class="av dead"><span class="rip">🪦</span><div class="c">卷</div><div class="n">卷卷</div></div>
+              <div class="av" onclick="this.classList.toggle('dead')"><span class="rip">🪦</span><div class="c">小</div><div class="n">小鹿</div></div>
+            </div>
           </div>
-          <div class="ridge"></div><div class="vig"></div>
+          <div class="ghostbtn">提前揭晓（结束本局）</div>
+          <div class="vig"></div>
         </div>
-        <div class="curtain"></div>
-        <div class="trans-btn" onclick="document.getElementById('trans').classList.toggle('dark')">▶ 播放天黑过场</div>
       </div>
-      <div class="slot-label">仪式感 · 天黑幕布（点按钮试试）</div>
+      <div class="slot-label">② 昼 · 天亮请睁眼 + 墓碑放逐（点头像）</div>
+    </div>
+
+    <!-- ③ 终局亮牌 -->
+    <div class="slot">
+      <div class="phone">
+        <div class="scr scrwrap" id="fin">
+          <div class="vill">
+            <div class="moon"></div>
+            <div class="sil">
+              <i class="t1"></i><i class="h1r"></i><i class="h1a"></i><i class="t2"></i>
+              <i class="ch-t"></i><i class="ch-b"></i>
+              <i class="h2r"></i><i class="h2a"></i><i class="t4"></i><i class="t3"></i>
+              <div class="ground"></div>
+            </div>
+            <div class="winlit"></div>
+          </div>
+          <div class="host-line">请 亮 牌</div>
+          <div class="host-sub">游戏结束 · 全员翻开身份</div>
+          <div class="deal">
+            <div>
+              <div class="mini d1"><div class="mf mb">🐺</div><div class="mf mfr"><span class="i">🔮</span><span class="t">预言家</span></div></div>
+              <div class="mname">薄荷</div>
+            </div>
+            <div>
+              <div class="mini d2"><div class="mf mb">🐺</div><div class="mf mfr wolfy"><span class="i">🐺</span><span class="t">狼人</span></div></div>
+              <div class="mname">阿岚</div>
+            </div>
+            <div>
+              <div class="mini d3"><div class="mf mb">🐺</div><div class="mf mfr"><span class="i">🧪</span><span class="t">女巫</span></div></div>
+              <div class="mname">大熊</div>
+            </div>
+            <div>
+              <div class="mini d4"><div class="mf mb">🐺</div><div class="mf mfr wolfy"><span class="i">🐺</span><span class="t">狼人</span></div></div>
+              <div class="mname">卷卷</div>
+            </div>
+            <div>
+              <div class="mini d5"><div class="mf mb">🐺</div><div class="mf mfr"><span class="i">🧑‍🌾</span><span class="t">平民</span></div></div>
+              <div class="mname">小鹿</div>
+            </div>
+          </div>
+          <div class="win-line">好人阵营获胜 🎉</div>
+          <div class="cta" style="margin-top:16px">再来一局</div>
+          <div class="play-btn" onclick="var w=document.getElementById('fin'); w.classList.remove('shown'); void w.offsetWidth; setTimeout(function(){w.classList.add('shown')},60);">🃏 亮牌（播放揭晓）</div>
+          <div class="vig"></div>
+        </div>
+      </div>
+      <div class="slot-label">③ 终局 · 全员依次亮牌（点按钮）</div>
     </div>
   </div>
 
-  <h2>身份翻牌（点卡片试试）</h2>
-  <p class="sub">开局不再是"长按看文字"，而是发到手里一张<b>盖着的牌</b>：牌背是统一的狼纹图腾，点击 3D 翻转亮出角色。狼人翻出后底部追加一行"你的队友：老K"。这一下就是整局游戏的开场仪式，纯 CSS 实现、零素材也能先上（图腾用 emoji 占位，后续换 AI 生成的牌面）。</p>
-  <div class="flip-zone">
-    <div class="fcard" id="fc" onclick="this.classList.toggle('on')">
-      <div class="fc-in">
-        <div class="fc-face fc-back">
-          <div class="sig">🌒</div>
-          <div class="hint">点击翻开身份</div>
-        </div>
-        <div class="fc-face fc-front">
-          <div class="role-ico">🐺</div>
-          <div class="role-name">狼 人</div>
-          <div class="role-tip">夜晚与队友共同选择目标<br/>白天隐藏好自己</div>
-        </div>
-      </div>
-    </div>
-    <div class="flip-note">再点一次盖回 · 实际页面中保留"长按窥看"防误翻</div>
+  <h2>原味五要素 → 页面映射</h2>
+  <div class="kc" style="margin-bottom:14px">
+    <ul>
+      <li><b>满月+村庄剪影</b>：顶部横幅，CSS 多边形拼的教堂/木屋/松林 + 山坡上的狼；夜里教堂亮一扇小窗（呼吸闪烁）</li>
+      <li><b>主持词文案</b>："天黑请闭眼 / 狼人请睁眼 / 天亮请睁眼 / 昨夜倒牌的是—— / 请亮牌"——零成本，原味浓度最高的一项</li>
+      <li><b>经典身份牌</b>：羊皮纸牌面+双线框，牌背狼图腾+满月；发身份=翻牌</li>
+      <li><b>墓碑</b>：出局头像灰化，头顶弹出 🪦（弹性动画）</li>
+      <li><b>终局亮牌</b>：五张小牌从左到右依次翻开，狼人牌深红——桌游摊牌那一下</li>
+    </ul>
   </div>
 
-  <h2>需要 AI 生成的素材清单（提示词已备好）</h2>
-  <p class="sub">用即梦 / Midjourney 都行，风格锚点和 hub 首页的鬼宅夜景一致：暗色、体积光、轻插画质感。生成后传到云存储 games/ 目录，走现有的 imgCache 缓存。<b>没有这些图，第一阶段的 CSS 方案也能独立成立</b>——图是加成，不是前置条件。</p>
-  <div class="tbl"><table>
-    <tr><th style="width:180px">素材</th><th>用途 &amp; 提示词</th></tr>
-    <tr>
-      <td>夜晚村庄背景<br/><span class="use">wolf_night.jpg · 750×1600</span></td>
-      <td><span class="use">夜晚阶段全屏背景（顶部 40% 留空给 UI）</span>
-      <code class="prompt">Dark storybook illustration, small medieval village at night viewed from a hill, full moon with halo, deep indigo sky with stars, faint warm candlelight in one or two windows, silhouetted pine forest, fog at the ground, muted cold palette with a single warm accent, lots of empty dark sky in upper half for UI text, vertical 9:16, no people, no text</code></td>
-    </tr>
-    <tr>
-      <td>黎明村庄背景<br/><span class="use">wolf_day.jpg · 750×1600</span></td>
-      <td><span class="use">白天阶段全屏背景（同机位，光照换黎明）</span>
-      <code class="prompt">Same medieval village scene at dawn, warm amber sunrise behind the hills, long soft shadows, morning mist, rooster silhouette on a roof, cozy but slightly uneasy storybook mood, muted warm palette, upper half mostly clear sky for UI, vertical 9:16, no people, no text</code></td>
-    </tr>
-    <tr>
-      <td>身份牌牌背<br/><span class="use">wolf_cardback.png · 600×850</span></td>
-      <td><span class="use">翻牌交互的牌背（替换 emoji 占位）</span>
-      <code class="prompt">Ornate playing-card back design, wolf head totem in the center howling at a crescent moon, symmetrical art-deco border, deep navy and charcoal with antique gold linework, subtle paper texture, flat illustration, no text</code></td>
-    </tr>
-    <tr>
-      <td>四角色牌面 ×4<br/><span class="use">role_wolf/seer/witch/villager.png</span></td>
-      <td><span class="use">翻开后的角色卡（统一构图，一次生成一套）</span>
-      <code class="prompt">Set of 4 tarot-style character cards, same frame and style: ① werewolf standing in moonlit mist, amber eyes; ② hooded seer holding a glowing crystal orb; ③ witch with two potion bottles, one red one green; ④ humble villager with lantern. Dark storybook illustration, muted palette with one warm accent each, ornate border, portrait framing, no text</code></td>
-    </tr>
-    <tr>
-      <td>小图标一组<br/><span class="use">墓碑 / 月相 / 药瓶 · png 透明底</span></td>
-      <td><span class="use">倒牌标记、回合指示、女巫按钮</span>
-      <code class="prompt">Tiny game UI icons on transparent background, storybook style with gold outline: a small gravestone, moon phases set, two potion bottles (red and green), consistent stroke weight, flat, no text</code></td>
-    </tr>
-  </table></div>
+  <h2>图片素材（三张）</h2>
+  <div class="kc" style="margin-bottom:14px">
+    <ul style="list-style:none;padding:0">
+      <li style="margin-bottom:16px"><b>① 满月村庄横幅 wolf_village.jpg（750×500）</b>——替换 CSS 剪影（CSS 版本身也能用）<br/>
+      <code class="prompt">Full moon over a medieval village silhouette at night, church spire and wooden cottages and pine trees in solid black silhouette, a lone wolf howling on a hill, one tiny warm window lit, deep indigo-violet sky with stars, woodcut storybook style, wide banner composition, no text</code></li>
+      <li style="margin-bottom:16px"><b>② 四张角色牌面 wolf_roles.png（600×850 ×4）</b>——狼人/预言家/女巫/平民，木刻版画风<br/>
+      <code class="prompt">Set of 4 tarot-sized character cards in woodcut engraving style on aged parchment: ① a werewolf howling under the full moon; ② a hooded seer gazing into a crystal ball; ③ a witch holding one red and one green potion; ④ a villager with a lantern and pitchfork. Ornate double-line border, warm parchment background, muted ink with one orange accent each, no text</code></li>
+      <li><b>③ 牌背图腾 wolf_cardback.png（600×850）</b>——统一牌背<br/>
+      <code class="prompt">Playing card back design: a wolf head totem howling at a full moon in the center, symmetrical woodcut ornament border, deep charcoal-violet background with antique orange linework, subtle paper texture, no text</code></li>
+    </ul>
+  </div>
 
-  <h2>落地计划</h2>
+  <h2>落地</h2>
   <ol class="plan">
-    <li><b>阶段一 · 纯代码（先做）</b>：夜/昼双场景底色 + 月亮/太阳 + 暗角、身份翻牌、天黑过场幕布、倒牌墓碑与灰化、行动目标辉光。<span class="cost">零素材，改 wolf 页 wxml/wxss 为主</span></li>
-    <li><b>阶段二 · 接图</b>：你用上面的提示词生成 5 组图 → 传云存储 → 我把背景和卡面接进来（走现有 imgCache，不加载压力）。<span class="cost">你出图，我接线</span></li>
-    <li><b>阶段三 · 复制语言</b>：验证效果后，把"场景底 + 物件卡 + 过场"这套语言套到卧底（审讯室聚光灯）、海龟汤（深海）、数字炸弹（引线火花）。</li>
+    <li><b>阶段一 · CSS 骨架</b>：村庄剪影横幅（CSS 版）、昼夜顶光+月/日切换、主持词文案全量替换、身份翻牌、墓碑动画、终局依次亮牌。<span class="cost">一天～一天半</span></li>
+    <li><b>阶段二 · 接图</b>：横幅换 AI 图、牌面/牌背接上。<span class="cost">你出图，我接线</span></li>
   </ol>
 </div>

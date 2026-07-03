@@ -148,3 +148,5 @@
     <button class="btn btn-ghost" bindtap="leaveRoom">{{isSpectator ? '退出观战' : '退出房间'}}</button>
   </view>
 </view>
+
+<id-switch />

@@ -22,3 +22,5 @@
   <!-- 离屏画布：留证图片在这里画 -->
   <canvas id="proof" type="2d" class="proof-canvas"></canvas>
 </view>
+
+<id-switch />

@@ -41,3 +41,5 @@
     </view>
   </block>
 </view>
+
+<id-switch />

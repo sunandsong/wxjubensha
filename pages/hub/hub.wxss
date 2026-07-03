@@ -176,3 +176,29 @@ page { background: #2b2436; }
   position: absolute; top: -6rpx; right: 34rpx; min-width: 26rpx; height: 26rpx; line-height: 26rpx;
   font-size: 18rpx; color: #fff; text-align: center; background: #ff4d6a; border-radius: 999rpx; padding: 0 6rpx;
 }
+
+/* ── 悬浮圆钮：回房间/进房间（可拖动） ── */
+.fab {
+  position: fixed; z-index: 50;
+  width: 96rpx; height: 96rpx; line-height: 96rpx; text-align: center;
+  border-radius: 50%; font-size: 48rpx; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #7b5cff, #c44dff);
+  box-shadow: 0 8rpx 30rpx rgba(123, 92, 255, 0.45);
+  transition: transform 0.1s ease;
+}
+.fab:active { transform: scale(0.92); }
+.fab-back { background: linear-gradient(135deg, #ff4d7e, #ff85a8); box-shadow: 0 8rpx 30rpx rgba(255, 77, 126, 0.45); }
+
+/* 快速进房弹框 */
+.jmask { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 6, 20, 0.75); }
+.jmodal { width: 78%; padding: 44rpx 36rpx; border-radius: 24rpx;
+  background: #2a2140; border: 1rpx solid rgba(255, 255, 255, 0.12); }
+.j-title { font-size: 34rpx; font-weight: 700; color: #ece8f5; text-align: center; }
+.j-input { margin: 30rpx auto 0; height: 96rpx; border-radius: 16rpx; font-size: 40rpx; letter-spacing: 12rpx;
+  text-align: center; color: #fff; background: rgba(255, 255, 255, 0.08); border: 1rpx solid rgba(255, 255, 255, 0.16); }
+.j-tip { margin-top: 16rpx; text-align: center; font-size: 24rpx; color: #b3a6cc; }
+.j-cancel { margin-top: 26rpx; height: 88rpx; display: flex; align-items: center; justify-content: center;
+  border-radius: 16rpx; font-size: 29rpx; font-weight: 600; color: #d9d2ec;
+  background: transparent; border: 1rpx solid rgba(255, 255, 255, 0.25); }
+.j-cancel::after { border: none; }

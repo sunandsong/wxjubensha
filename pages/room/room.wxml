@@ -47,3 +47,5 @@
     <button class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
   </block>
 </view>
+
+<id-switch />

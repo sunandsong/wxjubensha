@@ -18,14 +18,13 @@ App({
     const cached = wx.getStorageSync('openid');
     if (cached) this.globalData.openid = cached;
     this.ensureLogin().catch(() => {});
-    // 冷启动后允许首页自动续上未结束的对局（仅一次）
-    this._autoResumePending = true;
   },
 
   globalData: {
     userInfo: null,
     openid: null,
     testUid: null,
+    roomAutoResumed: false,   // 启动后首页只自动续房一次，点 home 回大厅不再被弹回
   },
 
   // ── 测试身份（仅开发/体验版）──
@@ -36,6 +35,7 @@ App({
     this.globalData.testUid = uid || null;
     if (uid) wx.setStorageSync('testUid', uid);
     else wx.removeStorageSync('testUid');
+    this.globalData.roomAutoResumed = false;   // 切身份后允许再次自动续房
   },
   // 测试入口是否启用：总开关 且 非正式版
   testEnabled() {
@@ -108,5 +108,19 @@ App({
   },
   clearSession() {
     wx.removeStorageSync(this._sessionKey());
+  },
+
+  // ── 卧底局会话：同样按身份隔离，防止切测试身份后进了别人的房间 ──
+  _spySessionKey() {
+    return 'spySession' + (this.globalData.testUid ? '_' + this.globalData.testUid : '');
+  },
+  saveSpySession(session) {
+    wx.setStorageSync(this._spySessionKey(), session);
+  },
+  getSpySession() {
+    return wx.getStorageSync(this._spySessionKey()) || null;
+  },
+  clearSpySession() {
+    wx.removeStorageSync(this._spySessionKey());
   },
 });

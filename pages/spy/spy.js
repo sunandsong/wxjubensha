@@ -7,7 +7,6 @@ Page({
     spyCountSel: 1,     // 建房选项：卧底人数
     showJoin: false,    // 加入弹框
     joinInput: '',
-    lastSession: null,  // 上次未退出的房间 {roomId, roomCode}，大厅顶部提示可回去
     // 房间态（来自 watch）
     roomId: '', roomCode: '', openid: '',
     status: 'waiting', players: [], round: 0,
@@ -26,30 +25,22 @@ Page({
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     // 分享链接直接进房
     if (query && query.joinCode) return this._join(query.joinCode);
-    // 有上次未退出的卧底局：不自动进房，在大厅顶部提示可回去
-    const s = wx.getStorageSync('spySession');
-    if (s && s.roomId) this.setData({ lastSession: s });
+    // 已在某个房间（没点退出）→ 直接回到房间
+    const s = app.getSpySession();
+    if (s && s.roomId) return this._enterRoom(s.roomId, s.roomCode);
   },
 
   onShow() {
-    if (this.data.mode === 'room' && this.data.roomId) this._startWatch();
+    if (this.data.mode === 'room' && this.data.roomId) {
+      this._refresh();   // 回到前台先手动同步一次，watch 断线期间的变化（如已开局）别漏掉
+      this._startWatch();
+    }
   },
   onHide() { this._closeWatch(); },
   onUnload() { this._closeWatch(); },
 
   // ── 大厅 ──
   pickSpyCount(e) { this.setData({ spyCountSel: Number(e.currentTarget.dataset.n) }); },
-
-  resumeRoom() {
-    const s = this.data.lastSession;
-    if (!s) return;
-    this.setData({ lastSession: null });
-    this._enterRoom(s.roomId, s.roomCode);
-  },
-  dismissResume() {
-    wx.removeStorageSync('spySession');
-    this.setData({ lastSession: null });
-  },
 
   // 昵称：优先用资料页存的，没有就弹框补一个
   _getNick() {
@@ -86,13 +77,15 @@ Page({
 
   showJoinModal() { this.setData({ showJoin: true, joinInput: '' }); },
   hideJoinModal() { this.setData({ showJoin: false }); },
-  onJoinInput(e) { this.setData({ joinInput: e.detail.value.replace(/\D/g, '').slice(0, 4) }); },
-  joinConfirm() {
-    if (this.data.joinInput.length !== 4) return wx.showToast({ title: '输入 4 位房间号', icon: 'none' });
-    this.setData({ showJoin: false });
-    this._join(this.data.joinInput);
+  onJoinInput(e) {
+    const v = e.detail.value.replace(/\D/g, '').slice(0, 4);
+    this.setData({ joinInput: v });
+    // 输满 4 位直接进房，不用再点「进入」
+    if (v.length === 4) {
+      this.setData({ showJoin: false });
+      this._join(v);
+    }
   },
-
   async _join(code) {
     const nick = await this._getNick();
     let res;
@@ -110,8 +103,8 @@ Page({
 
   // ── 房间 ──
   _enterRoom(roomId, roomCode) {
-    wx.setStorageSync('spySession', { roomId, roomCode });
-    this.setData({ mode: 'room', roomId, roomCode, word: '', lastSession: null });
+    app.saveSpySession({ roomId, roomCode });
+    this.setData({ mode: 'room', roomId, roomCode, word: '' });
     this._refresh();
     this._startWatch();
   },
@@ -129,23 +122,41 @@ Page({
     const db = wx.cloud.database();
     this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
       onChange: (snap) => this._render(snap.docs && snap.docs[0]),
-      onError: () => {},
+      onError: () => {
+        // 监听断了：先手动拉一次兜底，稍后重建监听
+        this._closeWatch();
+        this._refresh();
+        setTimeout(() => {
+          if (this.data.mode === 'room' && this.data.roomId && !this.watcher) this._startWatch();
+        }, 2000);
+      },
     });
   },
   _closeWatch() {
-    if (this.watcher) { this.watcher.close(); this.watcher = null; }
+    if (this.watcher) {
+      try { this.watcher.close(); } catch (e) {}
+      this.watcher = null;
+    }
   },
 
   _render(room) {
     if (!room) {
       // 房间没了：回大厅
-      wx.removeStorageSync('spySession');
+      app.clearSpySession();
       this._closeWatch();
-      this.setData({ mode: 'lobby', roomId: '', word: '', reveal: null });
+      this.setData({ mode: 'lobby', roomId: '', word: '', reveal: null, peeking: false });
       wx.showToast({ title: '房间已解散', icon: 'none' });
       return;
     }
     const me = (room.players || []).find((p) => p.openid === this.data.openid);
+    // 我不在玩家列表里 → 这不是我的房间（脏的本地记录）→ 回大厅
+    if (this.data.openid && !me) {
+      app.clearSpySession();
+      this._closeWatch();
+      this.setData({ mode: 'lobby', roomId: '', word: '', reveal: null, peeking: false });
+      wx.showToast({ title: '你不在这个房间里', icon: 'none' });
+      return;
+    }
     const others = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
     const readyCount = others.filter((p) => p.ready).length;
     const players = (room.players || []).map((p) => ({
@@ -169,24 +180,35 @@ Page({
       spyNicks,
       iAmSpy: !!(room.reveal && room.reveal.spies && room.reveal.spies.includes(this.data.openid)),
     });
+    // 回到等待中（再来一局）→ 清掉上一局的词，否则下一局不会去取新词
+    if (room.status === 'waiting' && this.data.word) this.setData({ word: '', peeking: false });
     // 游戏中且还没拿到词 → 拉自己的词
     if (room.status === 'playing' && !this.data.word) this._fetchWord();
   },
 
-  async _fetchWord() {
-    if (this._fetchingWord) return;
+  async _fetchWord(showErr) {
+    if (this._fetchingWord) return '';
     this._fetchingWord = true;
+    let word = '';
     try {
       const res = await app.callGame({ action: 'myWord', roomId: this.data.roomId });
       const r = res && res.result;
-      if (r && r.ok) this.setData({ word: r.word });
-    } catch (e) {}
+      if (r && r.ok) word = r.word;
+      else if (showErr) wx.showToast({ title: (r && r.msg) || '取词失败，再试一次', icon: 'none' });
+    } catch (e) {
+      if (showErr) wx.showToast({ title: '网络异常，再长按一次', icon: 'none' });
+    }
     this._fetchingWord = false;
+    if (word) this.setData({ word });
+    return word;
   },
 
   async toggleReady() {
     try {
-      await app.runOnce('spyReady', () => app.callGame({ action: 'ready', roomId: this.data.roomId }), '');
+      const res = await app.runOnce('spyReady', () => app.callGame({ action: 'ready', roomId: this.data.roomId }), '');
+      const r = res && res.result;
+      if (r && !r.ok) return wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      this._refresh();   // 不等 watch 推送，立即拉一次，防监听断线时界面无反应
     } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },
 
@@ -208,8 +230,14 @@ Page({
     if (r && !r.ok) wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
   },
 
-  // 长按看词，松手盖回
-  peekOn() { if (this.data.word) this.setData({ peeking: true }); },
+  // 长按看词，松手盖回；本地还没词就现场补取一次（此前取词失败会卡在"长按没反应"）
+  async peekOn() {
+    if (this.data.word) return this.setData({ peeking: true });
+    wx.showLoading({ title: '取词中' });
+    const word = await this._fetchWord(true);
+    wx.hideLoading();
+    if (word) this.setData({ peeking: true });
+  },
   peekOff() { if (this.data.peeking) this.setData({ peeking: false }); },
 
   async revealAll() {
@@ -244,10 +272,10 @@ Page({
     });
     if (!ok) return;
     this._closeWatch();
-    wx.removeStorageSync('spySession');
+    app.clearSpySession();
     const action = isHost ? 'dissolve' : 'leave';
     await app.callGame({ action, roomId: this.data.roomId }).catch(() => {});
-    this.setData({ mode: 'lobby', roomId: '', word: '', reveal: null });
+    this.setData({ mode: 'lobby', roomId: '', word: '', reveal: null, peeking: false });
   },
 
   copyCode() {

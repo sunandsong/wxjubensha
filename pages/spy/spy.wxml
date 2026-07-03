@@ -5,12 +5,6 @@
     <view class="title">谁是卧底 🎩</view>
     <view class="subtitle">相近的两个词，轮流描述找出卧底；卧底自己也不知道自己是卧底</view>
 
-    <!-- 上次未退出的房间 -->
-    <view class="resume-bar" wx:if="{{lastSession}}">
-      <view class="resume-txt" bindtap="resumeRoom">上次的房间 <text class="resume-code">{{lastSession.roomCode}}</text> 还在，点我回去 →</view>
-      <view class="resume-close" bindtap="dismissResume">✕</view>
-    </view>
-
     <view class="card">
       <view class="sec-title">卧底人数</view>
       <view class="opts">
@@ -21,19 +15,20 @@
       <button class="btn btn-ghost" bindtap="showJoinModal">输入房间号加入</button>
     </view>
 
-    <!-- 加入弹框 -->
-    <view class="mask" wx:if="{{showJoin}}" bindtap="hideJoinModal">
-      <view class="modal" catchtap="">
-        <view class="m-title">加入房间</view>
-        <input class="m-input" type="number" maxlength="4" placeholder="4 位房间号"
-          value="{{joinInput}}" bindinput="onJoinInput" focus="{{showJoin}}" />
-        <view class="m-btns">
-          <button class="m-cancel" bindtap="hideJoinModal">取消</button>
-          <button class="m-ok" bindtap="joinConfirm">进入</button>
-        </view>
+  </block>
+
+  <!-- 加入弹框 -->
+  <view class="mask" wx:if="{{showJoin}}" bindtap="hideJoinModal">
+    <view class="modal" catchtap="">
+      <view class="m-title">加入房间</view>
+      <input class="m-input" type="number" maxlength="4" placeholder="4 位房间号"
+        value="{{joinInput}}" bindinput="onJoinInput" focus="{{showJoin}}" />
+      <view class="m-tip">输满 4 位自动进入</view>
+      <view class="m-btns">
+        <button class="m-cancel" bindtap="hideJoinModal">取消</button>
       </view>
     </view>
-  </block>
+  </view>
 
   <!-- ══ 房间 ══ -->
   <block wx:if="{{mode === 'room'}}">
@@ -119,3 +114,5 @@
     <button class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
   </block>
 </view>
+
+<id-switch />

@@ -18,6 +18,9 @@
     "backgroundColor": "#1a1626",
     "backgroundTextStyle": "light"
   },
+  "usingComponents": {
+    "id-switch": "/components/id-switch/id-switch"
+  },
   "style": "v2",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

@@ -20,3 +20,5 @@
   <view class="t-tip">封面挪到云存储：先在云函数调一次 seedScripts 灌库，再点下面按钮一键上传（跑完可删掉 /assets 里的封面图，缩小代码包）。</view>
   <button class="btn btn-ghost" bindtap="uploadCovers">⬆️ 上传封面到云存储（一次性）</button>
 </view>
+
+<id-switch />

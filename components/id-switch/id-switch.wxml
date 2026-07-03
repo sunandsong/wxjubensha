@@ -1,0 +1,1 @@
+<view wx:if="{{show}}" class="idsw" catchtap="switchId">{{label}}</view>

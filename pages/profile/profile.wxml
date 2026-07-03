@@ -31,3 +31,5 @@
 
   <button class="save" bindtap="save">保存</button>
 </view>
+
+<id-switch />

@@ -43,3 +43,5 @@
     <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
   </block>
 </view>
+
+<id-switch />

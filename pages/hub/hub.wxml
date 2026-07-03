@@ -48,4 +48,23 @@
     </view>
   </view>
 
+  <!-- 悬浮圆钮：回房间 / 快速进房（可拖动，位置记忆） -->
+  <view class="fab {{fabRoom ? 'fab-back' : ''}}" style="left:{{fabX}}px; top:{{fabY}}px;"
+    catchtouchstart="onFabStart" catchtouchmove="onFabMove" catchtouchend="onFabDrop" catchtouchcancel="onFabDrop">
+    {{fabRoom ? '↩' : '＋'}}
+  </view>
+
+  <!-- 快速进房弹框 -->
+  <view class="jmask" wx:if="{{showQuickJoin}}" bindtap="hideQuickJoin">
+    <view class="jmodal" catchtap="">
+      <view class="j-title">进入房间</view>
+      <input class="j-input" type="number" maxlength="4" placeholder="4 位房间号"
+        value="{{quickCode}}" bindinput="onQuickInput" focus="{{showQuickJoin}}" />
+      <view class="j-tip">输满 4 位自动进入 · 卧底/剧本杀房间都可以</view>
+      <button class="j-cancel" bindtap="hideQuickJoin">取消</button>
+    </view>
+  </view>
+
 </view>
+
+<id-switch />

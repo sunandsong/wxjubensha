@@ -198,3 +198,5 @@
     <button class="btn detail-btn-go" bindtap="confirmCreate" disabled="{{loading}}">用这个本创建房间</button>
   </view>
 </view>
+
+<id-switch />

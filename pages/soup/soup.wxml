@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="soup-ico">🐢</view>
+  <view class="title">海龟汤</view>
+  <view class="rule">主持人把汤面分享到群，群友轮流提问，主持人只回答「是 / 不是 / 无关」</view>
+
+  <!-- 换一碗：点即抽对应口味（群友视角不显示） -->
+  <view class="flavors" wx:if="{{!isGuest}}">
+    <view class="fl" data-f="qing" bindtap="drawFlavor">清汤 🍵</view>
+    <view class="fl" data-f="hong" bindtap="drawFlavor">红汤 🌶️</view>
+    <view class="fl" data-f="all" bindtap="drawFlavor">随机 🎲</view>
+  </view>
+
+  <!-- 汤面卡 -->
+  <view class="card" wx:if="{{soup}}">
+    <view class="card-head">
+      <text class="c-title">{{soup.title}}</text>
+      <view class="c-tags">
+        <text class="tag {{soup.flavor}}">{{flavorName}}</text>
+        <text class="tag diff">{{stars}}</text>
+      </view>
+    </view>
+    <view class="story">{{soup.story}}</view>
+  </view>
+
+  <!-- 汤底：群友看不到（除非收到汤底卡）；主持人长按偷看 / 揭晓 -->
+  <view class="card answer-card" wx:if="{{soup && (!isGuest || revealed)}}">
+    <view class="ans-head">汤底 · 真相</view>
+    <view class="ans-body {{(peeking || revealed) ? 'open' : ''}}">
+      <view wx:if="{{peeking || revealed}}" class="ans-text">{{soup.answer}}</view>
+      <view wx:if="{{!revealed}}" class="ans-cover {{peeking ? 'ghost' : ''}}"
+        bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">🔒 长按偷看（松手盖回）</view>
+    </view>
+  </view>
+  <view class="guest-tip" wx:if="{{isGuest && !revealed}}">🔒 汤底只有主持人能看到，在群里大胆提问吧</view>
+
+  <!-- 操作 -->
+  <block wx:if="{{!isGuest}}">
+    <view class="row share-row">
+      <button class="share-btn" open-type="share" data-what="story">分享汤面到群</button>
+      <button class="share-btn ans-share" open-type="share" data-what="answer">分享汤底到群</button>
+    </view>
+  </block>
+</view>

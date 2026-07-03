@@ -1,0 +1,55 @@
+page { background: #2b2436; }
+.page { padding: 50rpx 32rpx 80rpx; text-align: center; }
+
+.soup-ico { font-size: 110rpx; filter: drop-shadow(0 8rpx 20rpx rgba(77,184,255,0.3)); }
+.title { margin-top: 8rpx; font-size: 44rpx; font-weight: 900; letter-spacing: 4rpx;
+  background: linear-gradient(95deg, #fff, #8be0c9, #4db8ff);
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.rule { margin: 16rpx auto 0; max-width: 580rpx; font-size: 24rpx; line-height: 1.7; color: #b9a7e6; }
+
+/* 口味筛选 */
+.flavors { margin-top: 34rpx; display: flex; justify-content: center; gap: 16rpx; }
+.fl { padding: 12rpx 34rpx; border-radius: 999rpx; font-size: 26rpx; color: rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.07); border: 1rpx solid rgba(255,255,255,0.14); }
+.fl.on { color: #fff; font-weight: 700; background: linear-gradient(135deg, #4db8ff, #8b5cff);
+  border-color: transparent; box-shadow: 0 6rpx 16rpx rgba(90,140,255,0.35); }
+
+/* 卡片 */
+.card { margin-top: 30rpx; padding: 34rpx 32rpx; border-radius: 32rpx; text-align: left;
+  background: rgba(255,255,255,0.06); border: 1rpx solid rgba(255,255,255,0.14); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.c-title { font-size: 38rpx; font-weight: 800; color: #fff; letter-spacing: 1rpx; }
+.c-tags { display: flex; gap: 10rpx; flex: none; }
+.tag { padding: 6rpx 18rpx; border-radius: 999rpx; font-size: 20rpx; }
+.tag.qing { color: #8be0c9; background: rgba(139,224,201,0.12); border: 1rpx solid rgba(139,224,201,0.3); }
+.tag.hong { color: #ff8f8f; background: rgba(255,110,110,0.12); border: 1rpx solid rgba(255,120,120,0.3); }
+.tag.diff { color: #ffce54; background: rgba(255,206,84,0.1); border: 1rpx solid rgba(255,206,84,0.28); }
+.story { margin-top: 22rpx; font-size: 29rpx; line-height: 1.85; color: rgba(255,255,255,0.9); }
+
+/* 汤底 */
+.answer-card { position: relative; background: rgba(139,92,255,0.08); border-color: rgba(160,120,255,0.25); }
+.ans-head { font-size: 24rpx; font-weight: 700; color: #c9b0ff; letter-spacing: 2rpx; }
+.ans-body { position: relative; margin-top: 18rpx; }
+.ans-text { font-size: 28rpx; line-height: 1.85; color: rgba(255,255,255,0.92); }
+.ans-cover { padding: 44rpx 0; border-radius: 20rpx; text-align: center; font-size: 26rpx; color: rgba(255,255,255,0.5);
+  background: rgba(0,0,0,0.25); border: 1rpx dashed rgba(255,255,255,0.2); }
+/* 偷看中：遮罩变成透明层铺满卡片继续接住手指，松手 touchend 立刻盖回 */
+.ans-cover.ghost { position: absolute; inset: 0; z-index: 5; opacity: 0; padding: 0; border: none; }
+.guest-tip { margin-top: 26rpx; font-size: 24rpx; color: rgba(255,255,255,0.5); }
+
+/* 按钮 */
+.share-btn { flex: 1; margin: 0; height: 100rpx; display: flex; align-items: center; justify-content: center;
+  border-radius: 999rpx; font-size: 30rpx; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #4db8ff, #8b5cff); box-shadow: 0 8rpx 22rpx rgba(90,140,255,0.4); }
+.share-btn::after { border: none; }
+.ans-share { background: linear-gradient(135deg, #ffb84d, #ff7a45);
+  box-shadow: 0 8rpx 22rpx rgba(255,150,60,0.4); }
+.row { margin-top: 24rpx; display: flex; justify-content: center; gap: 22rpx; }
+.share-row { margin-top: 22rpx; }
+.sub-btn { flex: none; width: 270rpx; height: 92rpx; display: flex; align-items: center; justify-content: center; margin: 0;
+  border-radius: 999rpx; font-size: 28rpx; font-weight: 700; color: #fff;
+  background: rgba(255,255,255,0.1); border: 1rpx solid rgba(255,255,255,0.2); }
+.sub-btn::after { border: none; }
+.sub-btn.danger { background: linear-gradient(135deg, #ff7a45, #ff4d6a); border: none;
+  box-shadow: 0 8rpx 20rpx rgba(255,100,70,0.35); }
+.sub-btn[disabled] { opacity: 0.55; color: #fff; }

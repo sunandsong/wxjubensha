@@ -5,7 +5,9 @@ const db = cloud.database();
 const _ = db.command;
 const rooms = db.collection('rooms');
 const scriptsCol = db.collection('scripts');   // 剧本内容集合（后台可配；首次以种子兜底）
+const secrets = db.collection('spySecrets');   // 卧底局的词与身份（仅云函数可读，防 watch 泄底）
 const SEED = require('./scriptsSeed.json');     // 打包种子：灌库 + 兜底
+const SPY_PAIRS = require('./spywords.json');   // 谁是卧底词对库
 
 // 各剧本的角色 id 与凶手（旧硬编码，作为 getMeta 的最终兜底，逐步由数据库取代）
 // cluesByAct / searchPerAct 用于「限次搜证」：每幕可搜的线索点，及每人每幕的搜证次数上限
@@ -161,6 +163,22 @@ exports.main = async (event) => {
         code = genCode();
         exists = await getRoomByCode(code);
       } while (exists);
+      // 谁是卧底房间：无剧本，房主也是玩家
+      if (event.gameType === 'spy') {
+        const add = await rooms.add({
+          data: {
+            roomCode: code,
+            hostOpenid: OPENID,
+            gameType: 'spy',
+            spyCount: event.spyCount === 2 ? 2 : 1,
+            status: 'waiting',
+            players: [{ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', ready: false, out: false }],
+            round: 0,
+            createdAt: db.serverDate(),
+          },
+        });
+        return { ok: true, roomId: add._id, roomCode: code, openid: OPENID };
+      }
       const player = { openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '' };
       const scriptId = (await getMeta(event.scriptId)) ? event.scriptId : DEFAULT_SCRIPT;
       const add = await rooms.add({
@@ -183,7 +201,16 @@ exports.main = async (event) => {
       const room = await getRoomByCode(event.roomCode);
       if (!room) return { ok: false, msg: '房间不存在' };
       const already = room.players.find((p) => p.openid === OPENID);
-      if (already) return { ok: true, roomId: room._id, roomCode: room.roomCode, spectator: !!already.spectator };
+      if (already) return { ok: true, roomId: room._id, roomCode: room.roomCode, gameType: room.gameType || '', spectator: !!already.spectator };
+      // 卧底房：开局后不能进（词已发完），最多 12 人
+      if (room.gameType === 'spy') {
+        if (room.status !== 'waiting') return { ok: false, msg: '本局已开始，等下一局再来' };
+        if (room.players.length >= 12) return { ok: false, msg: '房间已满（最多 12 人）' };
+        await rooms.doc(room._id).update({
+          data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', ready: false, out: false }) },
+        });
+        return { ok: true, roomId: room._id, roomCode: room.roomCode, gameType: 'spy', openid: OPENID };
+      }
       // 游戏开始后进来的，一律作为「吃瓜群众」：只能看第一幕、不参与搜证/投票
       const asSpectator = !!(room.status && room.status !== 'waiting');
       if (!asSpectator && room.players.length >= 6) return { ok: false, msg: '房间已满（最多 6 人）' };
@@ -207,11 +234,13 @@ exports.main = async (event) => {
       // 游戏已开始（非等待）：真实玩家退出 → 直接解散，本局结束
       if (room.status && room.status !== 'waiting') {
         await rooms.doc(event.roomId).remove();
+        if (room.gameType === 'spy') await secrets.doc(event.roomId).remove().catch(() => {});
         return { ok: true, dissolved: true };
       }
       const players = room.players.filter((p) => p.openid !== OPENID);
       if (players.length === 0) {
         await rooms.doc(event.roomId).remove();
+        if (room.gameType === 'spy') await secrets.doc(event.roomId).remove().catch(() => {});
         return { ok: true, dissolved: true };
       }
       const data = { players };
@@ -236,6 +265,28 @@ exports.main = async (event) => {
     if (action === 'start') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以开始游戏' };
+
+      // 卧底局：随机词对+随机卧底，词写入 spySecrets（不进 room 文档，防 watch 泄底）
+      if (room.gameType === 'spy') {
+        if (room.status !== 'waiting') return { ok: false, msg: '游戏已开始' };
+        const ps = room.players || [];
+        if (ps.length < 4) return { ok: false, msg: `至少 4 人才能开始（现在 ${ps.length} 人）` };
+        const notReady = ps.filter((p) => p.openid !== room.hostOpenid && !p.ready);
+        if (notReady.length) return { ok: false, msg: `还有 ${notReady.length} 名玩家未点准备` };
+        let spyCount = room.spyCount === 2 ? 2 : 1;
+        if (spyCount === 2 && ps.length < 6) spyCount = 1;   // 人少时兜底 1 卧底
+        const pair = SPY_PAIRS[Math.floor(Math.random() * SPY_PAIRS.length)];
+        const flip = Math.random() < 0.5;
+        const civilWord = pair[flip ? 0 : 1];
+        const spyWord = pair[flip ? 1 : 0];
+        const spies = shuffle(ps.map((p) => p.openid)).slice(0, spyCount);
+        const words = {};
+        ps.forEach((p) => { words[p.openid] = spies.includes(p.openid) ? spyWord : civilWord; });
+        await secrets.doc(event.roomId).set({ data: { words, spies, civilWord, spyWord, createdAt: db.serverDate() } });
+        const players = ps.map((p) => ({ ...p, out: false }));
+        await rooms.doc(event.roomId).update({ data: { players, status: 'playing', round: 1 } });
+        return { ok: true };
+      }
 
       const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       // 房主只主持、不参与；吃瓜群众也不发牌，只给真实玩家发牌
@@ -337,12 +388,37 @@ exports.main = async (event) => {
       return { ok: true };
     }
 
+    // ── 卧底：拉自己的词（只回自己的，不说是不是卧底）──
+    if (action === 'myWord') {
+      const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!sec) return { ok: false, msg: '本局还没发词' };
+      const word = sec.words && sec.words[OPENID];
+      if (!word) return { ok: false, msg: '你不在本局中' };
+      return { ok: true, word };
+    }
+
+    // ── 卧底：房主揭晓（公布词对与卧底名单，进入 finished）──
+    if (action === 'spyReveal') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!room) return { ok: false, msg: '房间不存在' };
+      if (room.gameType !== 'spy') return { ok: false, msg: '不是卧底局' };
+      if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以揭晓' };
+      if (room.status !== 'playing') return { ok: false, msg: '当前不在游戏中' };
+      const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!sec) return { ok: false, msg: '本局数据异常' };
+      await rooms.doc(event.roomId).update({
+        data: { status: 'finished', reveal: { civilWord: sec.civilWord, spyWord: sec.spyWord, spies: sec.spies } },
+      });
+      return { ok: true };
+    }
+
     // ── 主持人结束游戏，解散房间 ──
     if (action === 'dissolve') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room) return { ok: true };
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有主持人可以结束游戏' };
       await rooms.doc(event.roomId).remove();
+      if (room.gameType === 'spy') await secrets.doc(event.roomId).remove().catch(() => {});
       return { ok: true, dissolved: true };
     }
 
@@ -350,6 +426,15 @@ exports.main = async (event) => {
     if (action === 'reset') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以重开' };
+      // 卧底局重开：清准备/出局状态，删上局的词
+      if (room.gameType === 'spy') {
+        const players = room.players.map((p) => ({ ...p, ready: false, out: false }));
+        await rooms.doc(event.roomId).update({
+          data: { players, status: 'waiting', round: 0, reveal: _.remove() },
+        });
+        await secrets.doc(event.roomId).remove().catch(() => {});
+        return { ok: true };
+      }
       // 再来一局：清空发牌，并把吃瓜群众转为正常等待玩家
       const players = room.players.map((p) => ({ ...p, charId: '', spectator: false }));
       await rooms.doc(event.roomId).update({

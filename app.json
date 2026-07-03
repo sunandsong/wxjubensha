@@ -4,9 +4,12 @@
     "pages/index/index",
     "pages/profile/profile",
     "pages/bomb/bomb",
+    "pages/soup/soup",
+    "pages/spy/spy",
     "pages/room/room",
     "pages/game/game",
-    "pages/result/result"
+    "pages/result/result",
+    "pages/test/test"
   ],
   "window": {
     "navigationBarBackgroundColor": "#1a1626",

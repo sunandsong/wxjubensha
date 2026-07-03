@@ -5,6 +5,10 @@
   <view class="pagebg-fade"></view>
   <view class="bokeh"></view>
 
+  <!-- 测试身份入口（仅开发/体验版可见） -->
+  <view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
+  <view wx:elif="{{isDev}}" class="test-switch" bindtap="gotoTest">测试身份</view>
+
   <!-- 用户信息条：头像在左 -->
   <view class="userbar">
     <view class="ub-av" bindtap="goMe">
@@ -33,6 +37,7 @@
   <view class="cards">
     <view class="gcard" wx:for="{{games}}" wx:key="id" data-game="{{item.id}}" bindtap="goGame" style="--ac:{{item.c}}">
       <image class="gc-pic-blur" src="{{item.th}}" mode="aspectFill"></image>
+      <image class="gc-pic gc-pic-th" src="{{item.th}}" mode="aspectFill"></image>
       <image class="gc-pic hd {{item.ok ? 'on' : ''}}" src="{{item.img}}" mode="aspectFill" bindload="onCardLoad" data-i="{{index}}"></image>
       <view class="gc-scrim"></view>
       <view class="gc-head"><text class="gc-ico">{{item.ico}}</text><text class="gc-name">{{item.name}}</text></view>

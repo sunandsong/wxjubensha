@@ -1,33 +1,24 @@
-<view class="page">
+<view class="page {{booming ? 'quake' : ''}}">
   <view class="bomb-ico">💣</view>
   <view class="title">数字炸弹</view>
-  <view class="rule">1~100 里藏着一颗炸弹，轮流报数缩小范围，报中的人爆炸 💥</view>
+  <view class="rule">主持人点「生成」暗抽一颗 1~100 的炸弹数，群里轮流报数，报中的人爆炸 💥</view>
 
-  <!-- 当前安全范围 -->
-  <view class="range">
-    <text class="rn">{{min}}</text>
-    <text class="rsep">~</text>
-    <text class="rn">{{max}}</text>
-  </view>
-
-  <!-- 报数 -->
-  <view class="guess-row">
-    <input class="g-input" type="number" placeholder="报个数" value="{{val}}" bindinput="onInput" bindconfirm="guess" />
-    <button class="g-btn" bindtap="guess">就它了</button>
-  </view>
-
-  <!-- 已报记录 -->
-  <view class="history" wx:if="{{guesses.length}}">
-    <text class="h-chip" wx:for="{{guesses}}" wx:key="index">{{item}}</text>
-  </view>
-
-  <!-- 爆炸弹层 -->
-  <view class="boom-mask" wx:if="{{boom}}">
-    <view class="boom-card">
-      <view class="boom-emoji">💥</view>
-      <view class="boom-t">BOOM！炸弹就是 {{bombNum}}</view>
-      <view class="boom-sub">这位朋友，愿赌服输吧～</view>
-      <button class="boom-btn" bindtap="newRound">再来一局</button>
+  <!-- 抽出的数 / 问号 / 爆炸中 -->
+  <view class="num-box {{num ? 'lit' : ''}} {{booming ? 'shaking' : ''}}">
+    <view wx:if="{{booming}}" class="num boom-emoji">💥</view>
+    <view wx:elif="{{num}}" class="num pop">{{num}}</view>
+    <view wx:else class="num">?</view>
+    <view wx:if="{{num}}" class="meta">
+      <view class="meta-ln">{{ts}}</view>
+      <view class="meta-ln code">防伪码 {{code}}</view>
     </view>
   </view>
+
+  <!-- 操作 -->
+  <button class="gen-btn" bindtap="gen">{{num ? '重新生成' : '生成炸弹数'}}</button>
+  <button wx:if="{{num}}" class="save-btn" bindtap="save" disabled="{{saving}}">保存为图片 🖼️</button>
+  <view wx:if="{{num}}" class="tip">保存的图片带时间和防伪码，改图对不上号，赖不掉～</view>
+
+  <!-- 离屏画布：留证图片在这里画 -->
+  <canvas id="proof" type="2d" class="proof-canvas"></canvas>
 </view>

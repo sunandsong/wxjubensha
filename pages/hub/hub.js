@@ -29,10 +29,14 @@ Page({
   onCardLoad(e) { this.setData({ [`games[${e.currentTarget.dataset.i}].ok`]: true }); },
 
   onShow() {
-    this.setData({ nick: wx.getStorageSync('nick') || '群友', avatar: wx.getStorageSync('avatar') || '' });
+    this.setData({
+      nick: wx.getStorageSync('nick') || '群友',
+      avatar: wx.getStorageSync('avatar') || '',
+      testTag: app.getTestUid() ? (wx.getStorageSync('nick') || '') : '',
+      isDev: app.testEnabled && app.testEnabled(),
+    });
     const s = app.getSession && app.getSession();
     if (s && s.roomId) return wx.reLaunch({ url: `/pages/room/room?roomId=${s.roomId}&roomCode=${s.roomCode}` });
-    this._startParallax();
   },
   onHide() { this._stopParallax(); },
   onUnload() { this._stopParallax(); },
@@ -42,6 +46,7 @@ Page({
     if (this._pl) return;
     this._pl = true;
     this._plBase = null;
+    this._sx = 0; this._sy = 0;   // 低通滤波后的平滑值
     this._onMotion = (res) => {
       if (this._plBase === null) this._plBase = { b: res.beta, g: res.gamma };
       const now = Date.now();
@@ -50,12 +55,17 @@ Page({
       const clamp = (v) => Math.max(-1, Math.min(1, v));
       const dx = clamp((res.gamma - this._plBase.g) / 25);  // 左右倾
       const dy = clamp((res.beta - this._plBase.b) / 25);   // 前后倾
-      const manShift = `translate(${(dx * 14).toFixed(1)}px, ${(dy * 8).toFixed(1)}px)`;
-      if (manShift === this._plLast) return;   // 姿态没变就不 setData，避免空刷拖慢页面响应
+      // 低通滤波抹掉传感器噪声：只跟随趋势，不跟随手抖
+      this._sx = this._sx * 0.75 + dx * 0.25;
+      this._sy = this._sy * 0.75 + dy * 0.25;
+      // 量化到 1px 步长：静止时数值不变 → 不触发 setData → 画面纹丝不动
+      const mx = Math.round(this._sx * 14), my = Math.round(this._sy * 8);
+      const manShift = `translate(${mx}px, ${my}px)`;
+      if (manShift === this._plLast) return;
       this._plLast = manShift;
       this.setData({
         manShift,
-        bgShift: `translate(${(-dx * 6).toFixed(1)}px, ${(-dy * 4).toFixed(1)}px) scale(1.02)`,
+        bgShift: `translate(${-Math.round(this._sx * 6)}px, ${-Math.round(this._sy * 4)}px) scale(1.02)`,
       });
     };
     wx.startDeviceMotionListening({ interval: 'ui' });
@@ -75,9 +85,12 @@ Page({
   goGame(e) {
     const id = e && e.currentTarget && e.currentTarget.dataset.game;
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
+    if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });
+    if (id === 'spy') return wx.navigateTo({ url: '/pages/spy/spy' });
     wx.showToast({ title: '即将上线，敬请期待', icon: 'none' });
   },
   soon() { wx.showToast({ title: '即将上线', icon: 'none' }); },
+  gotoTest() { wx.navigateTo({ url: '/pages/test/test' }); },
   goMe() { wx.navigateTo({ url: '/pages/profile/profile' }); },   // 点头像 → 个人资料页
 
   onShareAppMessage() { return { title: rnd(TITLES), path: '/pages/hub/hub', imageUrl: rnd(IMGS) }; },

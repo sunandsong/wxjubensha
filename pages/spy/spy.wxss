@@ -1,5 +1,21 @@
 /* 谁是卧底 —— 复用全局暗夜悬疑风（app.wxss），此处只补页面特有部分 */
 
+/* 页面主题色：粉色（对齐 hub 卡片的 #ff5c8a），覆盖全局紫色按钮。
+   注意：页面样式在 app.wxss 之后加载，覆盖 .btn 会连带盖掉 .btn-ghost 的透明背景，
+   所以幽灵态必须在这里跟着重新声明一遍。 */
+.btn {
+  background: linear-gradient(90deg, #ff4d7e, #ff85a8);
+}
+.btn-ghost {
+  background: transparent;
+}
+.btn[disabled] {
+  background: linear-gradient(90deg, #ff4d7e, #ff85a8) !important;
+}
+.btn-ghost[disabled] {
+  background: transparent !important;
+}
+
 /* 房间号（对齐 room 页） */
 .code-row { display: flex; align-items: center; justify-content: space-between; }
 .code { font-size: 56rpx; font-weight: 700; letter-spacing: 12rpx; color: #fff; margin-top: 8rpx; }
@@ -8,7 +24,7 @@
   padding: 12rpx 28rpx; border-radius: 999rpx; line-height: 1.6;
 }
 .btn-mini::after { border: none; }
-.btn-mini.share { background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff; }
+.btn-mini.share { background: linear-gradient(90deg, #ff4d7e, #ff85a8); color: #fff; }
 .code-actions { display: flex; gap: 14rpx; align-items: center; }
 .invite-tip { margin-top: 18rpx; }
 
@@ -44,6 +60,16 @@
 .btn { width: 100% !important; box-sizing: border-box; margin-left: 0; margin-right: 0; }
 .start-btn { margin-top: 32rpx; }
 
+/* 大厅顶部：回到上次的房间 */
+.resume-bar {
+  display: flex; align-items: center; margin-bottom: 24rpx;
+  padding: 20rpx 24rpx; border-radius: 16rpx; font-size: 26rpx; color: #ffd9e5;
+  background: rgba(255,92,138,0.16); border: 1rpx solid rgba(255,92,138,0.45);
+}
+.resume-txt { flex: 1; }
+.resume-code { font-weight: 700; letter-spacing: 4rpx; color: #fff; }
+.resume-close { padding: 4rpx 8rpx 4rpx 24rpx; color: #b3a6cc; font-size: 28rpx; }
+
 /* 卧底人数选项 */
 .opts { display: flex; gap: 18rpx; margin-top: 22rpx; }
 .opt {
@@ -52,7 +78,7 @@
 }
 .opt.on {
   color: #fff; font-weight: 600; border-color: transparent;
-  background: linear-gradient(90deg, #7b5cff, #c44dff);
+  background: linear-gradient(90deg, #ff4d7e, #ff85a8);
 }
 
 /* 加入弹框（对齐进入房间弹框风格） */
@@ -67,7 +93,7 @@
 .m-cancel, .m-ok { flex: 1; height: 88rpx; display: flex; align-items: center; justify-content: center; margin: 0;
   border-radius: 16rpx; font-size: 29rpx; font-weight: 600; }
 .m-cancel { color: #d9d2ec; background: transparent; border: 1rpx solid rgba(255,255,255,0.25); }
-.m-ok { color: #fff; background: linear-gradient(90deg, #7b5cff, #c44dff); }
+.m-ok { color: #fff; background: linear-gradient(90deg, #ff4d7e, #ff85a8); }
 .m-cancel::after, .m-ok::after { border: none; }
 
 /* 词卡 */

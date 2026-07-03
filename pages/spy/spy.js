@@ -7,6 +7,7 @@ Page({
     spyCountSel: 1,     // 建房选项：卧底人数
     showJoin: false,    // 加入弹框
     joinInput: '',
+    lastSession: null,  // 上次未退出的房间 {roomId, roomCode}，大厅顶部提示可回去
     // 房间态（来自 watch）
     roomId: '', roomCode: '', openid: '',
     status: 'waiting', players: [], round: 0,
@@ -25,9 +26,9 @@ Page({
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     // 分享链接直接进房
     if (query && query.joinCode) return this._join(query.joinCode);
-    // 恢复上次未退出的卧底局
+    // 有上次未退出的卧底局：不自动进房，在大厅顶部提示可回去
     const s = wx.getStorageSync('spySession');
-    if (s && s.roomId) return this._enterRoom(s.roomId, s.roomCode);
+    if (s && s.roomId) this.setData({ lastSession: s });
   },
 
   onShow() {
@@ -38,6 +39,17 @@ Page({
 
   // ── 大厅 ──
   pickSpyCount(e) { this.setData({ spyCountSel: Number(e.currentTarget.dataset.n) }); },
+
+  resumeRoom() {
+    const s = this.data.lastSession;
+    if (!s) return;
+    this.setData({ lastSession: null });
+    this._enterRoom(s.roomId, s.roomCode);
+  },
+  dismissResume() {
+    wx.removeStorageSync('spySession');
+    this.setData({ lastSession: null });
+  },
 
   // 昵称：优先用资料页存的，没有就弹框补一个
   _getNick() {
@@ -99,7 +111,7 @@ Page({
   // ── 房间 ──
   _enterRoom(roomId, roomCode) {
     wx.setStorageSync('spySession', { roomId, roomCode });
-    this.setData({ mode: 'room', roomId, roomCode, word: '' });
+    this.setData({ mode: 'room', roomId, roomCode, word: '', lastSession: null });
     this._refresh();
     this._startWatch();
   },

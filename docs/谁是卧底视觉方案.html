@@ -117,8 +117,8 @@
 </style>
 
 <div class="wrap">
-  <h1>谁是卧底 · 简洁故事感<span class="tag">原风格 · 不换皮</span></h1>
-  <p class="lede">这版<b>完全待在你现有的设计语言里</b>：还是 #1e1830 暗夜紫底、白 6% 玻璃卡片、粉色渐变按钮、系统字体——和 hub、和其他页面无缝。故事感只来自三处克制的加法：一束顶光、一句旁白、一张"机密卡"。</p>
+  <h1>谁是卧底 · 简洁故事感<span class="tag">原风格 · CSS 打底 + 图片加成</span></h1>
+  <p class="lede">这版<b>完全待在你现有的设计语言里</b>：还是 #1e1830 暗夜紫底、白 6% 玻璃卡片、粉色渐变按钮、系统字体——和 hub、和其他页面无缝。CSS 负责骨架（顶光、旁白、机密卡显影），<b>图片素材负责质感</b>，清单和提示词在下方。</p>
 
   <h2>加了什么（就三样）</h2>
   <div class="keepcut">
@@ -249,9 +249,23 @@
     <tr><td class="old">你就是卧底 🎭 / 你是平民 🙂</td><td class="new">说谎的人——是你 🎭 / 你干干净净，全身而退 🙂</td></tr>
   </table></div>
 
+  <h2>图片素材清单（生图提示词已备好）</h2>
+  <p class="sub">三张图，风格锚点与 hub 鬼宅夜景一致：暗色、体积光、轻插画。生成后传云存储 games/，走现有 imgCache 本地缓存。CSS 版没图也能先上线，图到了再接。</p>
+  <div class="kc" style="margin-bottom:14px">
+    <ul style="list-style:none;padding:0">
+      <li style="margin-bottom:16px"><b>① 氛围底图 spy_bg.jpg（750×1600）</b>——全屏垫底，透明度约 18%：暗紫房间里一束顶光打在圆桌上<br/>
+      <code style="display:block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;color:#ffd0de;background:rgba(46,16,34,0.5);border:1px solid rgba(255,120,160,0.25);border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap">Dark violet room interior at night, a single spotlight cone from above hitting an empty round table, floating dust in the beam, scattered folded paper notes on the table, deep purple shadows with a magenta-pink rim light, storybook illustration, heavy vignette, upper half mostly dark for UI, vertical 9:16, no people, no text</code></li>
+      <li style="margin-bottom:16px"><b>② 礼帽面具立绘 spy_hero.png（600×600 透明底）</b>——替换标题的 🎩 emoji，页面主视觉，也可用在空状态<br/>
+      <code style="display:block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;color:#ffd0de;background:rgba(46,16,34,0.5);border:1px solid rgba(255,120,160,0.25);border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap">A gentleman's black top hat resting on a white masquerade mask, subtle magenta-pink rim light, soft purple glow from below, glossy highlights, mysterious sticker-style illustration on transparent background, slight 3/4 angle, no text</code></li>
+      <li><b>③ 机密卡卡面 spy_card.jpg（700×460）</b>——"机密卡"的底纹：暗紫卡面 + 暗纹 + 粉色封印徽记，长按显影的词压在上面<br/>
+      <code style="display:block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.6;color:#ffd0de;background:rgba(46,16,34,0.5);border:1px solid rgba(255,120,160,0.25);border-radius:8px;padding:10px 12px;margin-top:8px;white-space:pre-wrap">Dark purple classified document card, subtle guilloche pattern texture, ornate thin border, a small magenta wax-seal badge in the corner, large empty center area for a word, flat illustration, moody and secretive, no text</code></li>
+    </ul>
+  </div>
+
   <h2>落地</h2>
   <ol class="plan">
-    <li><b>一次到位，纯代码</b>：顶光+暗角（2 行 CSS）、四句旁白、机密卡样式、揭晓页卧底高亮/其他人熄灭。<span class="cost">只改 spy 页，两三个小时的量</span></li>
-    <li><b>验证后复制</b>：同样的手法给狼人杀——夜晚顶光偏蓝紫、白天偏暖、身份卡同款"机密卡"，全程不离开现有设计语言。</li>
+    <li><b>阶段一 · CSS 骨架</b>：顶光+暗角（2 行 CSS）、四句旁白、机密卡样式、揭晓页卧底高亮/其他人熄灭。<span class="cost">只改 spy 页，两三个小时，不等图</span></li>
+    <li><b>阶段二 · 接图</b>：三张图生成后传云存储，底图/立绘/卡面一次接上。<span class="cost">你出图，我接线</span></li>
+    <li><b>验证后复制</b>：同样的手法给狼人杀——夜晚顶光偏蓝紫、白天偏暖、身份卡同款"机密卡"。</li>
   </ol>
 </div>

@@ -35,7 +35,7 @@
 .announce { font-size: 28rpx; font-weight: 600; color: #ffb347; line-height: 1.6; }
 
 /* 玩家网格 */
-.players { display: flex; flex-wrap: wrap; gap: 24rpx; margin-top: 24rpx; }
+.players { display: flex; flex-wrap: wrap; justify-content: center; gap: 24rpx; margin-top: 24rpx; }
 .player { position: relative; width: 120rpx; text-align: center; }
 .avatar {
   width: 96rpx; height: 96rpx; line-height: 96rpx; margin: 0 auto;

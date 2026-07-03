@@ -1,1 +1,12 @@
-<view wx:if="{{show}}" class="idsw" catchtap="switchId">{{label}}</view>
+<view wx:if="{{show}}" class="idsw" catchtap="openPanel">{{label}}</view>
+
+<view wx:if="{{panel}}" class="idsw-mask" catchtap="closePanel">
+  <view class="idsw-panel" catchtap="">
+    <view class="idsw-title">切换身份</view>
+    <view class="idsw-item {{item.uid === current || (!item.uid && !current) ? 'on' : ''}}"
+      wx:for="{{options}}" wx:key="uid" data-uid="{{item.uid}}" catchtap="pick">
+      {{item.nick}}
+      <text class="idsw-cur" wx:if="{{item.uid === current || (!item.uid && !current)}}">当前</text>
+    </view>
+  </view>
+</view>

@@ -1,13 +1,9 @@
 <view class="home">
   <!-- 全屏夜幕背景图：缩略图秒显垫底，云图加载完淡入；随陀螺仪反向微动(视差远景) -->
   <image class="pagebg pagebg-th" src="{{bgTh}}" mode="widthFix" style="transform:{{bgShift}}"></image>
-  <image class="pagebg hd {{bgOk ? 'on' : ''}}" src="{{bg}}" mode="widthFix" bindload="onBgLoad" style="transform:{{bgShift}}"></image>
+  <image class="pagebg hd {{bgOk ? 'on' : ''}}" src="{{bg}}" mode="widthFix" bindload="onBgLoad" binderror="onBgErr" style="transform:{{bgShift}}"></image>
   <view class="pagebg-fade"></view>
   <view class="bokeh"></view>
-
-  <!-- 测试身份入口（仅开发/体验版可见） -->
-  <view wx:if="{{testTag}}" class="test-switch" bindtap="gotoTest">切换身份·{{testTag}}</view>
-  <view wx:elif="{{isDev}}" class="test-switch" bindtap="gotoTest">测试身份</view>
 
   <!-- 用户信息条：头像在左 -->
   <view class="userbar">
@@ -23,7 +19,7 @@
     <!-- 立绘随陀螺仪正向微动(视差近景)，与背景反向 → 裸眼3D纵深 -->
     <view class="hero-man-wrap" style="transform:{{manShift}}">
       <image class="hero-man" src="{{heroManTh}}" mode="aspectFit"></image>
-      <image class="hero-man hd {{heroOk ? 'on' : ''}}" src="{{heroMan}}" mode="aspectFit" bindload="onHeroLoad"></image>
+      <image class="hero-man hd {{heroOk ? 'on' : ''}}" src="{{heroMan}}" mode="aspectFit" bindload="onHeroLoad" binderror="onHeroErr"></image>
     </view>
     <view class="hero-body">
       <view class="hero-logo">夜幕降临</view>
@@ -38,7 +34,7 @@
     <view class="gcard" wx:for="{{games}}" wx:key="id" data-game="{{item.id}}" bindtap="goGame" style="--ac:{{item.c}}">
       <image class="gc-pic-blur" src="{{item.th}}" mode="aspectFill"></image>
       <image class="gc-pic gc-pic-th" src="{{item.th}}" mode="aspectFill"></image>
-      <image class="gc-pic hd {{item.ok ? 'on' : ''}}" src="{{item.img}}" mode="aspectFill" bindload="onCardLoad" data-i="{{index}}"></image>
+      <image class="gc-pic hd {{item.ok ? 'on' : ''}}" src="{{item.img}}" mode="aspectFill" bindload="onCardLoad" binderror="onCardErr" data-i="{{index}}"></image>
       <view class="gc-scrim"></view>
       <view class="gc-head"><text class="gc-ico">{{item.ico}}</text><text class="gc-name">{{item.name}}</text></view>
       <view class="gc-foot">

@@ -9,6 +9,8 @@ Page({
       { uid: 'test-B', nick: '玩家B', gender: 'f' },
       { uid: 'test-C', nick: '玩家C', gender: 'm' },
       { uid: 'test-D', nick: '玩家D', gender: 'f' },
+      { uid: 'test-E', nick: '玩家E', gender: 'm' },
+      { uid: 'test-F', nick: '玩家F', gender: 'f' },
     ],
   },
 

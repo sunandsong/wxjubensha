@@ -104,6 +104,7 @@ Page({
   // ── 房间 ──
   _enterRoom(roomId, roomCode) {
     app.saveSpySession({ roomId, roomCode });
+    app.globalData.roomAutoResumed = true;   // 已在房间里，后退回大厅不要再弹回来
     this.setData({ mode: 'room', roomId, roomCode, word: '' });
     this._refresh();
     this._startWatch();

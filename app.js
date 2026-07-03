@@ -123,4 +123,18 @@ App({
   clearSpySession() {
     wx.removeStorageSync(this._spySessionKey());
   },
+
+  // ── 狼人杀会话：同样按身份隔离 ──
+  _wolfSessionKey() {
+    return 'wolfSession' + (this.globalData.testUid ? '_' + this.globalData.testUid : '');
+  },
+  saveWolfSession(session) {
+    wx.setStorageSync(this._wolfSessionKey(), session);
+  },
+  getWolfSession() {
+    return wx.getStorageSync(this._wolfSessionKey()) || null;
+  },
+  clearWolfSession() {
+    wx.removeStorageSync(this._wolfSessionKey());
+  },
 });

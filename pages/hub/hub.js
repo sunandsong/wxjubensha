@@ -36,6 +36,15 @@ Page({
   onHeroLoad() { this.setData({ heroOk: true }); },
   onCardLoad(e) { this.setData({ [`games[${e.currentTarget.dataset.i}].ok`]: true }); },
 
+  // 缓存链接/本地文件坏了 → 清缓存，退回 cloud:// 原始地址重新加载
+  onBgErr() { IMGCACHE.invalidate(BG_FID); if (this.data.bg !== BG_FID) this.setData({ bg: BG_FID }); },
+  onHeroErr() { IMGCACHE.invalidate(MAN_FID); if (this.data.heroMan !== MAN_FID) this.setData({ heroMan: MAN_FID }); },
+  onCardErr(e) {
+    const i = e.currentTarget.dataset.i;
+    IMGCACHE.invalidate(GAME_FIDS[i]);
+    if (this.data.games[i] && this.data.games[i].img !== GAME_FIDS[i]) this.setData({ [`games[${i}].img`]: GAME_FIDS[i] });
+  },
+
   onLoad() {
     this._resolveImgs();
     // 悬浮钮初始位置：上次拖到哪就在哪（越界则收回屏内），默认右下角
@@ -91,12 +100,11 @@ Page({
     this.setData({
       nick: wx.getStorageSync('nick') || '群友',
       avatar: wx.getStorageSync('avatar') || '',
-      testTag: app.getTestUid() ? (wx.getStorageSync('nick') || '') : '',
-      isDev: app.testEnabled && app.testEnabled(),
     });
     const jb = app.getSession && app.getSession();
     const sp = app.getSpySession && app.getSpySession();
-    this.setData({ fabRoom: !!((jb && jb.roomId) || (sp && sp.roomId)) });
+    const wf = app.getWolfSession && app.getWolfSession();
+    this.setData({ fabRoom: !!((jb && jb.roomId) || (sp && sp.roomId) || (wf && wf.roomId)) });
     // 有未退出的对局 → 自动续上。只在启动后第一次生效：
     // 从房间点 home 回大厅时不再弹回去，悬浮钮可随时回房
     if (!app.globalData.roomAutoResumed) {
@@ -108,6 +116,10 @@ Page({
         app.globalData.roomAutoResumed = true;
         return wx.reLaunch({ url: '/pages/spy/spy' });
       }
+      if (wf && wf.roomId) {
+        app.globalData.roomAutoResumed = true;
+        return wx.reLaunch({ url: '/pages/wolf/wolf' });
+      }
     }
   },
 
@@ -117,6 +129,8 @@ Page({
     if (jb && jb.roomId) return wx.reLaunch({ url: `/pages/room/room?roomId=${jb.roomId}&roomCode=${jb.roomCode}` });
     const sp = app.getSpySession && app.getSpySession();
     if (sp && sp.roomId) return wx.navigateTo({ url: '/pages/spy/spy' });
+    const wf = app.getWolfSession && app.getWolfSession();
+    if (wf && wf.roomId) return wx.navigateTo({ url: '/pages/wolf/wolf' });
     this.setData({ showQuickJoin: true, quickCode: '' });
   },
   hideQuickJoin() { this.setData({ showQuickJoin: false }); },
@@ -143,6 +157,10 @@ Page({
     if (r.gameType === 'spy') {
       app.saveSpySession({ roomId: r.roomId, roomCode: r.roomCode });
       return wx.navigateTo({ url: '/pages/spy/spy' });
+    }
+    if (r.gameType === 'wolf') {
+      app.saveWolfSession({ roomId: r.roomId, roomCode: r.roomCode });
+      return wx.navigateTo({ url: '/pages/wolf/wolf' });
     }
     return wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
   },
@@ -195,10 +213,10 @@ Page({
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
     if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });
     if (id === 'spy') return wx.navigateTo({ url: '/pages/spy/spy' });
+    if (id === 'wolf') return wx.navigateTo({ url: '/pages/wolf/wolf' });
     wx.showToast({ title: '即将上线，敬请期待', icon: 'none' });
   },
   soon() { wx.showToast({ title: '即将上线', icon: 'none' }); },
-  gotoTest() { wx.navigateTo({ url: '/pages/test/test' }); },
   goMe() { wx.navigateTo({ url: '/pages/profile/profile' }); },   // 点头像 → 个人资料页
 
   onShareAppMessage() { return { title: rnd(TITLES), path: '/pages/hub/hub', imageUrl: rnd(IMGS) }; },

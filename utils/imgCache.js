@@ -50,4 +50,19 @@ function resolve(fids, onUpdate) {
   }).catch(() => {});
 }
 
-module.exports = { resolve };
+// 某个 fileID 的缓存坏了（链接过期/本地文件损坏）：清掉映射和落盘文件，下次重新取
+function invalidate(fid) {
+  const local = wx.getStorageSync(LK) || {};
+  if (local[fid]) {
+    try { wx.getFileSystemManager().unlinkSync(local[fid]); } catch (e) {}
+    delete local[fid];
+    wx.setStorageSync(LK, local);
+  }
+  const c = wx.getStorageSync(CK);
+  if (c && c.map && c.map[fid]) {
+    delete c.map[fid];
+    wx.setStorageSync(CK, c);
+  }
+}
+
+module.exports = { resolve, invalidate };

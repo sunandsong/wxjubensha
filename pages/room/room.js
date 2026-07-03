@@ -23,6 +23,7 @@ Page({
     this.setData({ roomId: query.roomId, roomCode: query.roomCode });
     // 记住当前对局，切屏/重启后可在首页续上
     app.saveSession({ roomId: query.roomId, roomCode: query.roomCode });
+    app.globalData.roomAutoResumed = true;   // 已在房间里，回大厅不要再弹回来
   },
 
   // 每次回到前台都确保身份就绪并重连监听（切屏后 watch 会断开）

@@ -50,13 +50,6 @@ page { background: #2b2436; }
 .brand-star { color: #ffcf4d; -webkit-text-fill-color: #ffcf4d; }
 .brand-sub { font-size: 24rpx; color: #b9a7e6; margin-top: 6rpx; letter-spacing: 2rpx; }
 
-/* 测试身份浮标 */
-.test-switch {
-  position: fixed; right: 20rpx; bottom: calc(30rpx + env(safe-area-inset-bottom)); z-index: 9;
-  font-size: 20rpx; color: #ffce54; padding: 8rpx 20rpx; border-radius: 999rpx;
-  background: rgba(255,206,84,0.12); border: 1rpx solid rgba(255,206,84,0.4);
-}
-
 /* 极简问候条 */
 .userbar { position: relative; z-index: 1; display: flex; align-items: center; gap: 16rpx; padding: 6rpx 6rpx 10rpx; }
 .ub-hi { font-size: 28rpx; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: 1rpx; }

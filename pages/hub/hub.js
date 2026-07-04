@@ -114,11 +114,11 @@ Page({
       }
       if (sp && sp.roomId) {
         app.globalData.roomAutoResumed = true;
-        return wx.reLaunch({ url: '/pages/spy/spy' });
+        return wx.reLaunch({ url: '/pages/spy/spy?resume=1' });
       }
       if (wf && wf.roomId) {
         app.globalData.roomAutoResumed = true;
-        return wx.reLaunch({ url: '/pages/wolf/wolf' });
+        return wx.reLaunch({ url: '/pages/wolf/wolf?resume=1' });
       }
     }
   },
@@ -128,9 +128,9 @@ Page({
     const jb = app.getSession && app.getSession();
     if (jb && jb.roomId) return wx.reLaunch({ url: `/pages/room/room?roomId=${jb.roomId}&roomCode=${jb.roomCode}` });
     const sp = app.getSpySession && app.getSpySession();
-    if (sp && sp.roomId) return wx.navigateTo({ url: '/pages/spy/spy' });
+    if (sp && sp.roomId) return wx.navigateTo({ url: '/pages/spy/spy?resume=1' });
     const wf = app.getWolfSession && app.getWolfSession();
-    if (wf && wf.roomId) return wx.navigateTo({ url: '/pages/wolf/wolf' });
+    if (wf && wf.roomId) return wx.navigateTo({ url: '/pages/wolf/wolf?resume=1' });
     this.setData({ showQuickJoin: true, quickCode: '' });
   },
   hideQuickJoin() { this.setData({ showQuickJoin: false }); },

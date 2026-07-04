@@ -8,6 +8,7 @@ Page({
   data: {
     mode: 'lobby',      // lobby=大厅 | room=已在房间
     showJoin: false, joinInput: '',
+    resumeId: '', resumeCode: '',   // 有未退出的房间时，大厅显示回去横幅
     roomId: '', roomCode: '', openid: '',
     // 房间态（来自 watch）
     status: 'waiting', round: 0, players: [],
@@ -29,8 +30,14 @@ Page({
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     if (query && query.joinCode) return this._join(query.joinCode);
     const s = app.getWolfSession();
-    if (s && s.roomId) return this._enterRoom(s.roomId, s.roomCode);
+    if (s && s.roomId) {
+      // 悬浮钮/启动续房（带 resume=1）→ 直达房间；普通进入 → 停在大厅，显示"回去"横幅
+      if (query && query.resume) return this._enterRoom(s.roomId, s.roomCode);
+      this.setData({ resumeId: s.roomId, resumeCode: s.roomCode });
+    }
   },
+
+  resumeRoom() { if (this.data.resumeId) this._enterRoom(this.data.resumeId, this.data.resumeCode); },
 
   onShow() {
     if (this.data.mode === 'room' && this.data.roomId) {
@@ -42,22 +49,14 @@ Page({
   onUnload() { this._closeWatch(); },
 
   // ── 大厅 ──
+  // 不再弹框要名字：有昵称直接用；没有就发个代号并记住（资料页随时可改）
   _getNick() {
-    const nick = wx.getStorageSync('nick');
-    if (nick) return Promise.resolve(nick);
-    return new Promise((resolve) => {
-      wx.showModal({
-        title: '起个名字',
-        placeholderText: '群友们怎么称呼你？',
-        editable: true,
-        success: (r) => {
-          const v = (r.confirm && r.content || '').trim();
-          if (v) wx.setStorageSync('nick', v);
-          resolve(v || '玩家');
-        },
-        fail: () => resolve('玩家'),
-      });
-    });
+    let nick = wx.getStorageSync('nick');
+    if (!nick) {
+      nick = '玩家' + Math.floor(10 + Math.random() * 90);
+      wx.setStorageSync('nick', nick);
+    }
+    return Promise.resolve(nick);
   },
 
   async createRoom() {

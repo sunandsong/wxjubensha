@@ -6,6 +6,7 @@ Page({
     mode: 'lobby',      // lobby=大厅 | room=已在房间
     spyCountSel: 1,     // 建房选项：卧底人数
     showJoin: false,    // 加入弹框
+    resumeId: '', resumeCode: '',   // 有未退出的房间时，大厅显示回去横幅
     joinInput: '',
     // 房间态（来自 watch）
     roomId: '', roomCode: '', openid: '',
@@ -25,10 +26,15 @@ Page({
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     // 分享链接直接进房
     if (query && query.joinCode) return this._join(query.joinCode);
-    // 已在某个房间（没点退出）→ 直接回到房间
     const s = app.getSpySession();
-    if (s && s.roomId) return this._enterRoom(s.roomId, s.roomCode);
+    if (s && s.roomId) {
+      // 悬浮钮/启动续房（带 resume=1）→ 直达房间；普通进入 → 停在大厅，显示"回去"横幅
+      if (query && query.resume) return this._enterRoom(s.roomId, s.roomCode);
+      this.setData({ resumeId: s.roomId, resumeCode: s.roomCode });
+    }
   },
+
+  resumeRoom() { if (this.data.resumeId) this._enterRoom(this.data.resumeId, this.data.resumeCode); },
 
   onShow() {
     if (this.data.mode === 'room' && this.data.roomId) {

@@ -5,6 +5,10 @@
     <view class="title">狼人杀 🐺</view>
     <view class="subtitle">6–12 人 · 无上帝自动主持：夜晚在这里行动，白天回微信群讨论</view>
 
+    <view class="resume-bar" wx:if="{{resumeId}}" bindtap="resumeRoom">
+      🔔 你有一局还没结束 · 房间 {{resumeCode}}<text class="rb-go">回去 ›</text>
+    </view>
+
     <view class="card">
       <view class="sec-title">板子（按人数自动配置）</view>
       <view class="board-line">6–9 人：2 狼人 + 预言家 + 女巫 + 平民</view>

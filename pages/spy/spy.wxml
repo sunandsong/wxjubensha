@@ -5,6 +5,10 @@
     <view class="title">谁是卧底 🎩</view>
     <view class="subtitle">相近的两个词，轮流描述找出卧底；卧底自己也不知道自己是卧底</view>
 
+    <view class="resume-bar" wx:if="{{resumeId}}" bindtap="resumeRoom">
+      🔔 你有一局还没结束 · 房间 {{resumeCode}}<text class="rb-go">回去 ›</text>
+    </view>
+
     <view class="card">
       <view class="sec-title">卧底人数</view>
       <view class="opts">

@@ -103,3 +103,11 @@
 .rev-v { font-size: 34rpx; font-weight: 700; color: #fff; }
 .rev-me { margin-top: 20rpx; padding-top: 24rpx; border-top: 1rpx dashed rgba(255,255,255,0.15);
   font-size: 28rpx; font-weight: 600; color: #ffb347; text-align: center; }
+
+/* 未结束对局的回去横幅（大厅顶部） */
+.resume-bar {
+  display: flex; align-items: center; margin: 0 0 20rpx; padding: 20rpx 26rpx;
+  border-radius: 20rpx; font-size: 26rpx; color: #ffe3a0;
+  background: rgba(255,206,84,0.1); border: 1rpx solid rgba(255,206,84,0.32);
+}
+.rb-go { margin-left: auto; font-weight: 700; color: #ffce54; }

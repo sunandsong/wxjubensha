@@ -352,6 +352,7 @@ Page({
   },
 
   async createRoom(scriptId) {
+    if (app.blockIfInRoom()) return;
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
     const gender = this.data.gender;
@@ -373,6 +374,7 @@ Page({
   },
 
   async joinRoom(code) {
+    if (app.blockIfInRoom()) return;
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
     const gender = this.data.gender;

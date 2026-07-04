@@ -60,6 +60,7 @@ Page({
   },
 
   async createRoom() {
+    if (app.blockIfInRoom()) return;
     const nick = await this._getNick();
     let res;
     try {
@@ -85,6 +86,7 @@ Page({
   },
 
   async _join(code) {
+    if (app.blockIfInRoom()) return;
     const nick = await this._getNick();
     let res;
     try {

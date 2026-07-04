@@ -96,6 +96,27 @@ App({
     wx.setStorageSync('openid', openid);
   },
 
+  // ── 全局单房间守门：已在任一对局（剧本杀/卧底/狼人杀）中，就不能再建/进新房 ──
+  // 在创建/加入入口处调用：返回 true = 已拦截（弹窗引导回原房间），调用方直接 return
+  blockIfInRoom() {
+    const jb = this.getSession();
+    const sp = this.getSpySession();
+    const wf = this.getWolfSession();
+    const cur =
+      (jb && jb.roomId && { name: '剧本杀', code: jb.roomCode, go: () => wx.reLaunch({ url: `/pages/room/room?roomId=${jb.roomId}&roomCode=${jb.roomCode}` }) }) ||
+      (sp && sp.roomId && { name: '谁是卧底', code: sp.roomCode, go: () => wx.reLaunch({ url: '/pages/spy/spy?resume=1' }) }) ||
+      (wf && wf.roomId && { name: '狼人杀', code: wf.roomCode, go: () => wx.reLaunch({ url: '/pages/wolf/wolf?resume=1' }) });
+    if (!cur) return false;
+    wx.showModal({
+      title: '已有进行中的对局',
+      content: `你还在「${cur.name}」房间${cur.code ? ' ' + cur.code : ''}里。同一时间只能在一个房间，先回去退出那局，再开新局。`,
+      confirmText: '回到那局',
+      cancelText: '取消',
+      success: (r) => { if (r.confirm) cur.go(); },
+    });
+    return true;
+  },
+
   // ── 会话：按身份隔离，记住「当前所在的对局」，切屏/重启/切身份后续上 ──
   _sessionKey() {
     return 'session' + (this.globalData.testUid ? '_' + this.globalData.testUid : '');

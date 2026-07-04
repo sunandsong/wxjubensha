@@ -144,6 +144,7 @@ Page({
   },
   // 按房间类型分流：卧底 → spy 页；剧本杀 → room 页
   async _quickJoin(code) {
+    if (app.blockIfInRoom()) return;
     const nick = wx.getStorageSync('nick') || '玩家';
     let res;
     try {

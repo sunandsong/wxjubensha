@@ -12,7 +12,7 @@ const gth = (name) => `/assets/games/th_${name}`;
 // 原始 fileID 常量（data 里的 img 会被缓存路径替换，取图时以这些为准）
 const BG_FID = gimg('hero_bg.jpg');
 const MAN_FID = gimg('hero_man.png');
-const GAME_FIDS = [gimg('chain.jpg'), gimg('spy.jpg'), gimg('soup.jpg'), gimg('bomb.jpg')];
+const GAME_FIDS = [gimg('chain.jpg'), gimg('spy.jpg'), gimg('soup.jpg'), gimg('bomb_fire.jpg')];
 
 Page({
   data: {
@@ -27,7 +27,7 @@ Page({
       { id: 'spy',  name: '谁是卧底', ico: '🎩', d1: '隐藏身份', d2: '智胜全场', count: '8.7k', c: '#ff5c8a', img: gimg('chain.jpg'), th: gth('chain.jpg'), ok: false },
       { id: 'wolf', name: '狼人杀',   ico: '🐺', d1: '天黑闭眼', d2: '揪出狼人', count: '5.2k', c: '#ff7a45', img: gimg('spy.jpg'), th: gth('spy.jpg'), ok: false },
       { id: 'soup', name: '海龟汤',   ico: '🥣', d1: '脑洞提问', d2: '神奇汤面', count: '6.3k', c: '#4db8ff', img: gimg('soup.jpg'), th: gth('soup.jpg'), ok: false },
-      { id: 'bomb', name: '数字炸弹', ico: '💣', d1: '猜数字',   d2: '别踩雷',   count: '9.1k', c: '#ffce54', img: gimg('bomb.jpg'), th: gth('bomb.jpg'), ok: false },
+      { id: 'bomb', name: '数字炸弹', ico: '💣', d1: '猜数字',   d2: '别踩雷',   count: '9.1k', c: '#ffce54', img: gimg('bomb_fire.jpg'), th: gth('bomb_fire.jpg'), ok: false },
     ],
   },
 

@@ -38,7 +38,7 @@
 
   <block wx:if="{{isHost}}">
     <view wx:if="{{realCount >= needPlayers && !allReady}}" class="muted center warn ready-hint">等待玩家准备：{{readyCount}}/{{realCount}} 已准备</view>
-    <button class="btn start-btn" bindtap="startGame" disabled="{{!canStart || starting}}">开始游戏</button>
+    <button class="btn start-btn {{(!canStart || starting) ? 'btn-dim' : ''}}" bindtap="startGame">开始游戏</button>
     <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
   </block>
   <block wx:else>

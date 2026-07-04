@@ -43,3 +43,6 @@
 /* 开始 / 结束游戏：整宽，和上方卡片对齐 */
 .btn { width: 100% !important; box-sizing: border-box; margin-left: 0; margin-right: 0; }
 .start-btn { margin-top: 32rpx; }
+
+/* 开始按钮不可用态：仍可点击，点击会提示差什么（disabled 会吞掉点击导致无反馈） */
+.btn-dim { opacity: 0.55; }

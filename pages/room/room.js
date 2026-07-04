@@ -138,8 +138,10 @@ Page({
   },
 
   async startGame() {
-    if (this.data.realCount < this.data.needPlayers) return wx.showToast({ title: `需要 ${this.data.needPlayers} 名玩家才能开始（房主不参与）`, icon: 'none' });
-    if (!this.data.allReady) return wx.showToast({ title: '等所有玩家点了「准备好了」再开始', icon: 'none' });
+    if (this.data.starting) return;
+    if (this.data.realCount < this.data.needPlayers) return wx.showToast({ title: `还差 ${this.data.needPlayers - this.data.realCount} 名玩家（需 ${this.data.needPlayers} 人，房主不参与）`, icon: 'none' });
+    if (this.data.realCount > this.data.needPlayers) return wx.showToast({ title: `该本最多 ${this.data.needPlayers} 名玩家，现在多了 ${this.data.realCount - this.data.needPlayers} 人`, icon: 'none' });
+    if (!this.data.allReady) return wx.showToast({ title: `还有 ${this.data.realCount - this.data.readyCount} 人未点「准备好了」`, icon: 'none' });
     wx.vibrateShort && wx.vibrateShort({ type: 'medium' });
     this.setData({ starting: true });
     let res;

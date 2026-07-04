@@ -1,0 +1,383 @@
+<title>剧本杀 · 案卷风视觉方案</title>
+<style>
+  :root {
+    --bg: #1e1830; --page: #14101f;
+    --ink: #ece8f5; --muted: #b3a6cc;
+    --card: rgba(255,255,255,0.06); --card-bd: rgba(255,255,255,0.1);
+    --parch: #ece0c8; --parch2: #e3d4b4; --parch-ink: #3a2d1d; --parch-mut: #8a765a;
+    --kraft: #c9a86a; --kraft2: #b6934f;
+    --seal: #c0392b; --seal2: #e74c3c;
+    --purp: #8b5cff; --purp2: #c44dff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: #f0b8a2;
+    border: 1px solid rgba(231,110,80,0.45); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted); font-size: 14px; max-width: 66ch; margin: 0 0 36px; }
+  .lede b { color: var(--ink); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, var(--seal), #ff8a65); border-radius: 2px; }
+  .sub { color: var(--muted); font-size: 13.5px; max-width: 70ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink); font-weight: 600; }
+  ul.pl { color: var(--muted); font-size: 13.5px; padding-left: 20px; }
+  ul.pl li { margin: 6px 0; }
+
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 640px; padding: 22px 15px 26px; overflow: hidden;
+    background: radial-gradient(85% 45% at 50% 0%, rgba(150,110,220,0.14), transparent 62%), var(--bg); }
+  .vig { position: absolute; inset: 0; pointer-events: none; z-index: 7;
+    background: radial-gradient(120% 85% at 50% 30%, transparent 55%, rgba(10,6,20,0.5) 100%); }
+
+  /* ══ 委托书 / 信纸：米黄纸 + 纸纹 + 毛边 ══ */
+  .paper { position: relative; z-index: 3; border-radius: 6px; padding: 16px 15px 14px; text-align: left;
+    color: var(--parch-ink);
+    background:
+      repeating-linear-gradient(0deg, transparent 0 26px, rgba(120,90,50,0.09) 26px 27px),
+      radial-gradient(120% 90% at 20% 0%, rgba(255,255,255,0.5), transparent 50%),
+      linear-gradient(160deg, var(--parch), var(--parch2));
+    box-shadow: 0 10px 26px rgba(0,0,0,0.45), inset 0 0 40px rgba(140,100,50,0.14); }
+  .paper::before { content: ""; position: absolute; inset: 5px; pointer-events: none;
+    border: 1px dashed rgba(120,90,50,0.35); border-radius: 4px; }
+  .p-label { font-size: 10.5px; letter-spacing: 4px; color: var(--parch-mut); }
+  .p-caseno { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 11px;
+    color: var(--seal); border: 1px solid rgba(192,57,43,0.55); padding: 1px 7px; border-radius: 3px; transform: rotate(4deg); }
+  .p-tit { font-size: 20px; font-weight: 800; letter-spacing: 2px; margin-top: 2px; }
+  .p-sub { font-size: 11.5px; color: var(--parch-mut); margin-top: 2px; }
+  .p-meta { display: flex; gap: 12px; font-size: 11px; color: var(--parch-mut); margin-top: 8px; }
+  .p-body { font-size: 12.5px; margin-top: 8px; line-height: 26px; }
+  .p-body .hl { background: linear-gradient(transparent 62%, rgba(231,76,60,0.35) 62%); font-weight: 600; }
+
+  /* ══ 侦探团签到（候场） ══ */
+  .team { position: relative; z-index: 3; margin-top: 14px; text-align: left; }
+  .t-tit { font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+  .t-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .seats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+  .seat { position: relative; text-align: center; cursor: pointer; }
+  .s-av { width: 52px; height: 52px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); transition: all .3s; }
+  .seat.host .s-av { border-color: rgba(255,206,84,0.6); box-shadow: 0 0 14px rgba(255,206,84,0.25); }
+  .s-name { font-size: 10.5px; color: var(--muted); margin-top: 5px; }
+  .s-badge { font-size: 9px; letter-spacing: 1px; color: #ffce54; }
+  /* 红手印 = 已准备 */
+  .print { position: absolute; top: -4px; right: 2px; font-size: 20px; line-height: 1; transform: rotate(-18deg) scale(0);
+    filter: sepia(1) saturate(8) hue-rotate(-30deg) brightness(0.85); opacity: 0; transition: none; pointer-events: none; }
+  .seat.ready .print { animation: stampIn .38s cubic-bezier(.2,1.8,.4,1) forwards; }
+  .seat.ready .s-av { border-color: rgba(231,76,60,0.65); }
+  @keyframes stampIn { 0% { transform: rotate(-40deg) scale(2.4); opacity: 0; }
+    60% { transform: rotate(-18deg) scale(0.92); opacity: 1; } 100% { transform: rotate(-18deg) scale(1); opacity: 1; } }
+  .hint { position: relative; z-index: 3; font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+
+  /* 主按钮 */
+  .btn { position: relative; z-index: 3; margin: 14px auto 0; width: 82%; height: 44px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; font-size: 14.5px; font-weight: 700; color: #fff;
+    letter-spacing: 3px; cursor: pointer; background: linear-gradient(135deg, var(--purp), var(--purp2));
+    box-shadow: 0 8px 22px rgba(150,80,255,0.4); }
+  .btn.red { background: linear-gradient(135deg, #e05540, var(--seal)); box-shadow: 0 8px 22px rgba(200,70,50,0.4); letter-spacing: 2px; }
+
+  /* ══ 幕过场：卷宗盖章 ══ */
+  .act-ov { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center;
+    background: rgba(12,8,22,0.9); opacity: 0; pointer-events: none; transition: opacity .4s; }
+  .act-ov.show { opacity: 1; }
+  .act-card { text-align: center; }
+  .ac-label { font-size: 11px; letter-spacing: 6px; color: var(--muted); }
+  .ac-tit { font-size: 26px; font-weight: 800; letter-spacing: 4px; margin-top: 6px;
+    background: linear-gradient(95deg, #fff, #ffb8d9, #c99aff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .ac-stamp { margin: 18px auto 0; width: 92px; height: 92px; border-radius: 50%; border: 3.5px solid var(--seal2);
+    color: var(--seal2); display: flex; align-items: center; justify-content: center; flex-direction: column;
+    font-weight: 800; letter-spacing: 2px; transform: rotate(-12deg) scale(3); opacity: 0; }
+  .act-ov.show .ac-stamp { animation: sealSlam .5s cubic-bezier(.2,1.5,.35,1) .35s forwards; }
+  .ac-stamp b { font-size: 22px; } .ac-stamp i { font-size: 9px; font-style: normal; letter-spacing: 3px; }
+  @keyframes sealSlam { 0% { transform: rotate(-30deg) scale(3); opacity: 0; }
+    70% { transform: rotate(-12deg) scale(0.94); opacity: 1; } 100% { transform: rotate(-12deg) scale(1); opacity: 0.95; } }
+
+  /* ══ 证物袋搜证 ══ */
+  .sec-t { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: baseline; margin: 16px 2px 0; }
+  .sec-t b { font-size: 13.5px; letter-spacing: 1px; }
+  .sec-t span { font-size: 10.5px; color: var(--muted); }
+  .bags { position: relative; z-index: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .bag { position: relative; border-radius: 8px; min-height: 108px; padding: 12px 10px 10px; cursor: pointer; overflow: hidden;
+    text-align: center; color: #3d2f18;
+    background: repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0 8px, transparent 8px 16px),
+      linear-gradient(165deg, var(--kraft), var(--kraft2));
+    border: 1px solid rgba(60,40,10,0.35); box-shadow: 0 6px 16px rgba(0,0,0,0.4); transition: transform .15s; }
+  .bag:active { transform: scale(0.97); }
+  .bag .b-place { font-size: 12.5px; font-weight: 700; margin-top: 26px; }
+  .bag .b-tip { font-size: 10px; color: rgba(60,40,10,0.6); margin-top: 3px; }
+  /* 封条 */
+  .tape { position: absolute; top: 14px; left: -12%; width: 124%; padding: 3px 0; font-size: 10px; letter-spacing: 6px;
+    color: #fff; background: var(--seal); transform: rotate(-6deg); box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    transition: transform .5s cubic-bezier(.5,-0.3,.6,1), opacity .45s; }
+  .bag.open .tape { transform: rotate(24deg) translate(40%, 90px); opacity: 0; }
+  .bag .b-res { position: absolute; inset: 0; padding: 12px 10px; opacity: 0; transform: translateY(10px); transition: all .4s .18s;
+    background: linear-gradient(165deg, #efe4cd, #e6d7ba); text-align: left; }
+  .bag.open .b-res { opacity: 1; transform: none; }
+  .b-res .r-name { font-size: 12px; font-weight: 800; color: var(--parch-ink); }
+  .b-res .r-text { font-size: 10.5px; line-height: 1.65; color: #5c4a30; margin-top: 4px; }
+  .b-res .r-who { position: absolute; right: 8px; bottom: 6px; font-size: 9px; color: rgba(90,70,40,0.65); }
+
+  /* ══ 拍立得线索本 ══ */
+  .board { position: relative; z-index: 3; margin-top: 10px; border-radius: 10px; padding: 12px 10px;
+    background: repeating-linear-gradient(35deg, rgba(0,0,0,0.05) 0 6px, transparent 6px 12px), linear-gradient(160deg, #7a5a38, #64472a);
+    border: 4px solid #4a3018; box-shadow: inset 0 0 24px rgba(0,0,0,0.5); display: flex; gap: 10px; }
+  .pola { flex: 1; background: #f5f0e6; padding: 7px 7px 6px; border-radius: 2px; box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    transform: rotate(-2.5deg); position: relative; }
+  .pola + .pola { transform: rotate(2deg); }
+  .pola::before { content: "📌"; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); font-size: 13px; }
+  .pola .ph { height: 52px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 26px;
+    background: linear-gradient(160deg, #2c2440, #1c1830); }
+  .pola .cap { font-size: 10px; color: #4a3c28; margin-top: 5px; text-align: center; line-height: 1.5; }
+
+  /* ══ 指认板：通缉照 + 红线 ══ */
+  .accuse { position: relative; z-index: 3; margin-top: 12px; border-radius: 10px; padding: 14px 12px 60px;
+    background: repeating-linear-gradient(35deg, rgba(0,0,0,0.05) 0 6px, transparent 6px 12px), linear-gradient(160deg, #7a5a38, #64472a);
+    border: 4px solid #4a3018; box-shadow: inset 0 0 24px rgba(0,0,0,0.5); }
+  .a-tit { text-align: center; font-size: 12px; letter-spacing: 4px; color: #f0e2c2; }
+  .mugs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+  .mug { position: relative; background: #f5f0e6; border-radius: 3px; padding: 7px 7px 6px; cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.4); transition: transform .15s; }
+  .mug:nth-child(1) { transform: rotate(-2deg); } .mug:nth-child(2) { transform: rotate(1.5deg); }
+  .mug:nth-child(3) { transform: rotate(1deg); } .mug:nth-child(4) { transform: rotate(-1.5deg); }
+  .mug .ph { height: 56px; display: flex; align-items: center; justify-content: center; font-size: 28px;
+    background: linear-gradient(160deg, #2c2440, #1c1830); border-radius: 2px; }
+  .mug .nm { font-size: 11px; font-weight: 700; color: #3a2d1d; text-align: center; margin-top: 4px; }
+  .mug .rl { font-size: 9px; color: #8a765a; text-align: center; }
+  .mug .pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%) scale(0); font-size: 15px; transition: transform .25s cubic-bezier(.2,1.8,.4,1); }
+  .mug.on { outline: 2px solid var(--seal2); }
+  .mug.on .pin { transform: translateX(-50%) scale(1); }
+  .a-node { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 11px; letter-spacing: 2px;
+    color: #fff; background: var(--seal); border-radius: 999px; padding: 4px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .strings { position: absolute; inset: 0; pointer-events: none; }
+  .strings line { stroke: var(--seal2); stroke-width: 2; opacity: 0; transition: opacity .3s; }
+  .strings line.on { opacity: 0.85; }
+
+  /* ══ 结案章 + 结果 ══ */
+  .verdict-zone { position: relative; z-index: 3; margin-top: 14px; min-height: 150px; }
+  .final-stamp { position: absolute; left: 50%; top: 8px; margin-left: -57px; width: 114px; height: 114px; border-radius: 50%;
+    border: 4px solid var(--seal2); color: var(--seal2); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 800; transform: rotate(-14deg) scale(3); opacity: 0; z-index: 5; }
+  .final-stamp b { font-size: 30px; letter-spacing: 6px; } .final-stamp i { font-size: 9px; font-style: normal; letter-spacing: 3px; margin-top: 2px; }
+  .verdict-zone.done .final-stamp { animation: sealSlam .55s cubic-bezier(.2,1.5,.35,1) forwards; }
+  .tally { position: relative; z-index: 3; margin-top: 8px; text-align: left; }
+  .t-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 8px;
+    background: var(--card); border: 1px solid var(--card-bd); margin-top: 6px; font-size: 12px; }
+  .t-row .who b { font-weight: 700; }
+  .t-row .who span { color: var(--muted); font-size: 10.5px; margin-left: 6px; }
+  .t-row .killer { color: var(--seal2); font-weight: 800; font-size: 10px; border: 1px solid rgba(231,76,60,0.5);
+    border-radius: 3px; padding: 0 5px; margin-left: 6px; letter-spacing: 1px; }
+  .t-row .cnt { color: #ffce54; font-weight: 700; }
+  /* 撒花 */
+  .confetti { position: absolute; inset: 0; pointer-events: none; z-index: 8; overflow: hidden; }
+  .confetti i { position: absolute; top: -10px; width: 7px; height: 11px; opacity: 0; }
+  .verdict-zone.done ~ .confetti i { animation: fall 2.6s linear forwards; }
+  @keyframes fall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(660px) rotate(560deg); opacity: 0.4; } }
+
+  /* 素材卡 */
+  .assets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .asset { background: var(--card); border: 1px solid var(--card-bd); border-radius: 14px; padding: 16px 18px; }
+  .asset h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .asset .use { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .asset pre { white-space: pre-wrap; font-size: 12px; line-height: 1.7; color: #d8ceec; background: rgba(0,0,0,0.3);
+    border-radius: 8px; padding: 10px 12px; margin: 0; font-family: inherit; }
+  .note { font-size: 12px; color: var(--muted); border-left: 3px solid var(--seal); padding-left: 12px; margin-top: 18px; }
+</style>
+
+<div class="wrap">
+  <h1>剧本杀 · 案卷风方案 <span class="tag">功能全不动</span></h1>
+  <p class="lede">一条母题贯穿全流程：<b>开一局 = 打开一份案件档案</b>。候场是「委托书 + 侦探团按手印」，每幕是「卷宗盖章翻页」，搜证是「撕封条开证物袋」，指认是「软木板钉红线」，公布真相是「啪的一声盖下结案章」。全部纯 CSS + emoji 可落地，仅 3 张可选 AI 底图。三台手机都可以点。</p>
+
+  <h2>三个画面（①②③全部可交互）</h2>
+  <p class="sub">① 点玩家席位试试<b>红手印准备</b> ② 点「重放过场」看<b>卷宗盖章</b>，点证物袋<b>撕封条</b> ③ 点通缉照<b>钉红线</b>，点「公布真相」看<b>结案章 + 撒花</b></p>
+  <div class="stage">
+
+    <!-- ① 房间候场：委托书 -->
+    <div class="slot">
+      <div class="slot-label">① 候场 · 委托书 + 侦探团签到</div>
+      <div class="phone"><div class="scr">
+        <div class="paper">
+          <div class="p-caseno">案件编号 No.4721</div>
+          <div class="p-label">委 托 书</div>
+          <div class="p-tit">时光照相馆</div>
+          <div class="p-sub">一张不该存在的照片 · 一桩尘封的旧案</div>
+          <div class="p-meta"><span>👥 5-7人</span><span>⏱ 约15分钟</span><span>🎭 情感·悬疑</span></div>
+        </div>
+        <div class="team">
+          <div class="t-tit">🕵️ 侦探团 · 按手印集结</div>
+          <div class="t-sub">点席位模拟「准备」→ 盖红手印（真实端由玩家自己点准备）</div>
+          <div class="seats" id="seats">
+            <div class="seat host"><div class="s-av">🎩</div><div class="s-name">老张</div><div class="s-badge">主持人</div></div>
+            <div class="seat ready"><div class="s-av">😼</div><div class="s-name">阿茶</div><div class="print">🖐</div></div>
+            <div class="seat"><div class="s-av">🦊</div><div class="s-name">大飞</div><div class="print">🖐</div></div>
+            <div class="seat"><div class="s-av">🐰</div><div class="s-name">米米</div><div class="print">🖐</div></div>
+            <div class="seat"><div class="s-av">🐻</div><div class="s-name">壮壮</div><div class="print">🖐</div></div>
+            <div class="seat"><div class="s-av">🐱</div><div class="s-name">小婉</div><div class="print">🖐</div></div>
+            <div class="seat"><div class="s-av">🦉</div><div class="s-name">教授</div><div class="print">🖐</div></div>
+            <div class="seat"><div class="s-av">➕</div><div class="s-name">分享邀请</div></div>
+          </div>
+          <div class="hint" id="ready-hint">已按手印 1/6 · 全员按印后主持人可开案</div>
+        </div>
+        <div class="btn red">🔍 开 案</div>
+        <div class="vig"></div>
+      </div></div>
+    </div>
+
+    <!-- ② 游戏中：卷宗 + 手记 + 证物袋 -->
+    <div class="slot">
+      <div class="slot-label">② 分幕 · 手记信纸 + 证物袋搜证</div>
+      <div class="phone"><div class="scr">
+        <div class="paper">
+          <div class="p-caseno">卷宗 第贰章</div>
+          <div class="p-label">我 的 手 记</div>
+          <div class="p-tit" style="font-size:16px;">第二幕 · 暗房里的脚步声</div>
+          <div class="p-body">深夜十一点，我借口取相纸回到暗房。<span class="hl">显影液里浮出的那张脸，根本不是照片上的人</span>。我把它塞进围裙口袋——身后忽然传来木地板的吱呀声…</div>
+        </div>
+        <div class="sec-t"><b>🔍 搜证 · 本幕搜查点</b><span>剩余 1/2 次 · 点袋撕封条</span></div>
+        <div class="bags">
+          <div class="bag" onclick="this.classList.add('open')">
+            <div class="tape">FORENSIC&nbsp;SEALED</div>
+            <div class="b-place">📷 暗房水槽</div><div class="b-tip">点击搜查</div>
+            <div class="b-res"><div class="r-name">🧪 半瓶显影液</div><div class="r-text">瓶身标签被撕去一角，残留的批号与照相馆进货单对不上。</div><div class="r-who">🫆 你 · 米米</div></div>
+          </div>
+          <div class="bag" onclick="this.classList.add('open')">
+            <div class="tape">FORENSIC&nbsp;SEALED</div>
+            <div class="b-place">🗄 前台抽屉</div><div class="b-tip">点击搜查</div>
+            <div class="b-res"><div class="r-name">📄 一张当票</div><div class="r-text">三天前，有人当掉了一枚刻着「LW」的银戒指。</div><div class="r-who">🫆 你</div></div>
+          </div>
+        </div>
+        <div class="sec-t"><b>🗂 我的线索本</b><span>仅你可见 · 跨幕累积</span></div>
+        <div class="board">
+          <div class="pola"><div class="ph">🧪</div><div class="cap">半瓶显影液<br>批号对不上</div></div>
+          <div class="pola"><div class="ph">🎞</div><div class="cap">一格缺失的底片<br>第一幕搜获</div></div>
+        </div>
+        <div class="btn" onclick="playAct(this)">🎬 重放「进入第二幕」过场</div>
+        <div class="act-ov" id="actov">
+          <div class="act-card">
+            <div class="ac-label">卷 宗 · 第 贰 章</div>
+            <div class="ac-tit">暗房里的脚步声</div>
+            <div class="ac-stamp"><b>启封</b><i>CASE 4721</i></div>
+          </div>
+        </div>
+        <div class="vig"></div>
+      </div></div>
+    </div>
+
+    <!-- ③ 指认 + 结案 -->
+    <div class="slot">
+      <div class="slot-label">③ 指认红线板 + 结案章</div>
+      <div class="phone"><div class="scr">
+        <div class="accuse" id="accuse">
+          <div class="a-tit">— 指 认 真 凶 —</div>
+          <svg class="strings" id="strings" viewBox="0 0 300 260" preserveAspectRatio="none">
+            <line x1="78"  y1="96"  x2="150" y2="238"></line>
+            <line x1="222" y1="96"  x2="150" y2="238"></line>
+            <line x1="78"  y1="196" x2="150" y2="238"></line>
+            <line x1="222" y1="196" x2="150" y2="238"></line>
+          </svg>
+          <div class="mugs">
+            <div class="mug" onclick="pick(0)"><div class="pin">📍</div><div class="ph">🧑‍🎨</div><div class="nm">周曼 · 阿茶</div><div class="rl">照相馆学徒</div></div>
+            <div class="mug" onclick="pick(1)"><div class="pin">📍</div><div class="ph">👨‍💼</div><div class="nm">吴先生 · 大飞</div><div class="rl">常客 · 当铺老板</div></div>
+            <div class="mug" onclick="pick(2)"><div class="pin">📍</div><div class="ph">👩‍🏫</div><div class="nm">林婉 · 米米</div><div class="rl">馆主遗孀</div></div>
+            <div class="mug" onclick="pick(3)"><div class="pin">📍</div><div class="ph">🧓</div><div class="nm">陈伯 · 教授</div><div class="rl">守夜人</div></div>
+          </div>
+          <div class="a-node">真凶 ?</div>
+        </div>
+        <div class="verdict-zone" id="vz">
+          <div class="final-stamp"><b>结案</b><i>CASE CLOSED · No.4721</i></div>
+          <div class="tally">
+            <div class="t-row"><div class="who"><b>林婉</b><span>馆主遗孀 · 米米</span><span class="killer">真凶</span></div><div class="cnt">4 票</div></div>
+            <div class="t-row"><div class="who"><b>吴先生</b><span>当铺老板 · 大飞</span></div><div class="cnt">2 票</div></div>
+          </div>
+        </div>
+        <div class="btn red" onclick="closeCase()">⚖️ 公布真相 · 盖章结案</div>
+        <div class="confetti" id="conf"></div>
+        <div class="vig"></div>
+      </div></div>
+    </div>
+
+  </div>
+
+  <h2>案卷五要素 → 页面映射</h2>
+  <ul class="pl">
+    <li><b>委托书（候场 room）</b>：白卡片换米黄纸纹 + 虚线毛边；房间号 → 右上角红框「案件编号」；准备 = 席位盖<b>红手印</b>；开始按钮 → 「开案」。</li>
+    <li><b>卷宗过场（game 分幕切换）</b>：现有淡入淡出升级为「卷宗·第 N 章」+ <b>「启封」红章砸落</b>（纯 CSS 动画，逻辑不变）。</li>
+    <li><b>手记信纸（我的剧情）</b>：pre 文本装进信纸卡，横线纸纹 + 高亮句改<b>红笔划线</b>（现有 hl 分段数据直接复用）。</li>
+    <li><b>证物袋（搜证）</b>：搜查点 = 牛皮纸证物袋 + FORENSIC 封条；点「搜查」= <b>撕封条</b>开袋；「已搜:XX」→ 🫆 指纹小标。线索本 = 软木板 + 拍立得。</li>
+    <li><b>指认与结案（投票 / result）</b>：投票列表 → 软木板<b>通缉照 + 📍红图钉 + 红线</b>牵到「真凶?」；主持人公布 = <b>「结案」大红章</b>砸落，抓对保留撒花。玩家等待页也换「卷宗封存中…」文案。</li>
+  </ul>
+
+  <h2>图片素材（可选 3 张，全 CSS 也能跑）</h2>
+  <p class="sub">mockup 里的纸纹/软木/封条全是 CSS 渐变模拟，直接落地零素材。想要更真的质感再生这 3 张，替换对应背景即可。</p>
+  <div class="assets">
+    <div class="asset">
+      <h3>① 软木钉板底纹（三处共用）</h3>
+      <div class="use">搜证区 / 线索本 / 指认板的容器背景，平铺即可</div>
+      <pre>Seamless tileable cork board texture, warm brown, fine grain, slightly darkened edges, flat lighting, no objects, photorealistic, 1024x1024</pre>
+    </div>
+    <div class="asset">
+      <h3>② 米黄旧纸纹理（委托书/手记/结案报告）</h3>
+      <div class="use">paper 卡片的背景图，代替 CSS 渐变纸纹</div>
+      <pre>Old cream paper texture with subtle fibers and light coffee stains at corners, vintage case file document, soft top light, no text, flat, 1024x1024</pre>
+    </div>
+    <div class="asset">
+      <h3>③「结案」印章 PNG（透明底）</h3>
+      <div class="use">结算页盖章动画的主角；也可裁「启封」小章给过场用</div>
+      <pre>Chinese red ink rubber stamp, round seal with the characters "结案", distressed ink edges, slightly uneven print, isolated on transparent background, PNG</pre>
+    </div>
+  </div>
+
+  <h2>落地</h2>
+  <ul class="pl">
+    <li><b>只动 wxss + wxml 包装层</b>：room / game / result 的数据流、云函数、主持人复制发群逻辑一行不改。</li>
+    <li>顺序建议：②手记信纸+证物袋（游戏页最常看）→ ③指认板+结案章（高光时刻）→ ①委托书候场。</li>
+    <li>撕封条 / 盖章 / 手印均为 CSS transition + keyframes，与数字炸弹页的爆炸动效同量级，无性能压力。</li>
+    <li>指认红线：小程序端用 4 条预置角度的 view 细条即可（mockup 里是 SVG），不必引入 canvas。</li>
+  </ul>
+  <p class="note">口径提醒：对外文案沿用「推理」系说法（推理开局/侦探团/案件），与个人主体备案口径一致，不出现敏感词。</p>
+</div>
+
+<script>
+  // ① 席位按手印
+  document.querySelectorAll('#seats .seat').forEach((s, i) => {
+    if (s.classList.contains('host') || !s.querySelector('.print')) return;
+    s.addEventListener('click', () => {
+      s.classList.toggle('ready');
+      const n = document.querySelectorAll('#seats .seat.ready').length;
+      document.getElementById('ready-hint').textContent = `已按手印 ${n}/6 · 全员按印后主持人可开案`;
+    });
+  });
+  // ② 幕过场重放
+  function playAct(btn) {
+    const ov = document.getElementById('actov');
+    ov.classList.remove('show'); void ov.offsetWidth;
+    ov.classList.add('show');
+    setTimeout(() => ov.classList.remove('show'), 2100);
+  }
+  // ③ 指认钉红线
+  function pick(i) {
+    document.querySelectorAll('#accuse .mug').forEach((m, j) => m.classList.toggle('on', i === j));
+    document.querySelectorAll('#strings line').forEach((l, j) => l.classList.toggle('on', i === j));
+  }
+  // ③ 结案章 + 撒花
+  function closeCase() {
+    const vz = document.getElementById('vz');
+    vz.classList.remove('done'); void vz.offsetWidth;
+    const conf = document.getElementById('conf');
+    conf.innerHTML = '';
+    const colors = ['#ffce54','#ff5c8a','#8b5cff','#4db8ff','#7bd88f'];
+    for (let k = 0; k < 26; k++) {
+      const p = document.createElement('i');
+      p.style.left = Math.random() * 100 + '%';
+      p.style.background = colors[k % colors.length];
+      p.style.animationDelay = (Math.random() * 0.5) + 's';
+      conf.appendChild(p);
+    }
+    vz.classList.add('done');
+  }
+</script>

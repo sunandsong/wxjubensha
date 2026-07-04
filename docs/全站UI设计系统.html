@@ -1,0 +1,600 @@
+<title>群本杀 · 夜幕紫设计系统</title>
+<style>
+  /* ═══════════ 文档色板（深夜紫单主题：App 本身是暗色世界，文档随之） ═══════════ */
+  :root {
+    --page: #131020; --doc-ink: #ece8f5; --doc-mut: #a89bc4; --doc-dim: #6f639a;
+    --doc-card: rgba(255,255,255,0.045); --doc-bd: rgba(255,255,255,0.09);
+    /* ── App tokens（正文展示的就是这套） ── */
+    --bg0: #1a1626;            /* 导航栏/最深底 */
+    --bg1: #2b2436;            /* 页面底 */
+    --glass: rgba(255,255,255,0.06);
+    --glass-bd: rgba(255,255,255,0.14);
+    --ink1: #ffffff; --ink2: rgba(236,232,245,0.88); --ink3: #b9a7e6; --ink4: rgba(255,255,255,0.45);
+    --brand1: #8b5cff; --brand2: #c44dff;
+    --ok: #7bd88f; --warn: #ffce54; --bad: #ff5c6a;
+    /* 游戏光谱 */
+    --g-script: #8b5cff; --g-spy: #ff5c8a; --g-wolf: #ff7a45; --g-soup: #4db8ff; --g-bomb: #ffce54;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--doc-ink);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 52px 26px 90px; line-height: 1.75; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+
+  /* 文档骨架 */
+  .masthead { margin-bottom: 8px; }
+  .masthead .kicker { font-size: 11px; letter-spacing: 6px; color: var(--doc-dim); }
+  h1 { font-size: 30px; letter-spacing: 2px; margin: 6px 0 10px; font-weight: 800; }
+  h1 em { font-style: normal; background: linear-gradient(95deg, #fff, #ffb8d9, #c99aff);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { color: var(--doc-mut); font-size: 14px; max-width: 72ch; margin: 0 0 8px; }
+  .lede b { color: var(--doc-ink); }
+  h2 { font-size: 18px; margin: 60px 0 4px; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+  h2 .no { font-size: 10px; letter-spacing: 2px; color: var(--doc-dim); border: 1px solid var(--doc-bd);
+    border-radius: 999px; padding: 2px 10px; font-weight: 400; }
+  .sub { color: var(--doc-mut); font-size: 13.5px; max-width: 76ch; margin: 2px 0 20px; }
+  .sub b { color: var(--doc-ink); }
+  ul.pl { color: var(--doc-mut); font-size: 13.5px; padding-left: 20px; max-width: 80ch; }
+  ul.pl li { margin: 7px 0; } ul.pl b { color: var(--doc-ink); }
+  table.spec { border-collapse: collapse; font-size: 13px; color: var(--doc-mut); }
+  table.spec th, table.spec td { border: 1px solid var(--doc-bd); padding: 8px 15px; text-align: left; }
+  table.spec th { color: var(--doc-ink); background: rgba(255,255,255,0.03); font-weight: 600; }
+
+  /* ═══════════ Tokens 展示 ═══════════ */
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .sw { width: 132px; border-radius: 12px; overflow: hidden; border: 1px solid var(--doc-bd); background: var(--doc-card); }
+  .sw .chip-c { height: 56px; }
+  .sw .meta { padding: 8px 11px 9px; }
+  .sw .nm { font-size: 12px; font-weight: 700; }
+  .sw .hex { font-size: 10.5px; color: var(--doc-dim); font-family: ui-monospace, monospace; }
+  .sw .use { font-size: 10px; color: var(--doc-mut); margin-top: 2px; line-height: 1.5; }
+
+  .typerow { display: flex; align-items: baseline; gap: 22px; border-bottom: 1px dashed var(--doc-bd); padding: 10px 2px; }
+  .typerow .demo { color: var(--ink1); }
+  .typerow .meta { font-size: 11px; color: var(--doc-dim); font-family: ui-monospace, monospace; white-space: nowrap; }
+  .typerow .role { font-size: 12px; color: var(--doc-mut); min-width: 130px; }
+
+  /* ═══════════ App 组件基元（供组件区与手机屏共用） ═══════════ */
+  .ui { font-size: 13px; }
+  .u-card { background: var(--glass); border: 1px solid var(--glass-bd); border-radius: 16px; padding: 13px 13px; }
+  .u-btn { --ac: var(--brand1); --ac2: var(--brand2); height: 42px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+    font-size: 13.5px; font-weight: 800; color: #fff; letter-spacing: 2px; cursor: pointer;
+    background: linear-gradient(135deg, var(--ac), var(--ac2)); box-shadow: 0 5px 16px color-mix(in srgb, var(--ac) 40%, transparent); }
+  .u-btn.ghost { background: var(--glass); color: var(--ink3); box-shadow: none; border: 1px solid var(--glass-bd); font-weight: 600; }
+  .u-btn.dim { opacity: 0.55; }
+  .u-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 3px 11px; border-radius: 999px;
+    color: var(--ink3); background: var(--glass); border: 1px solid var(--glass-bd); }
+  .u-chip.on { color: #fff; background: color-mix(in srgb, var(--brand1) 30%, transparent); border-color: color-mix(in srgb, var(--brand1) 60%, transparent); }
+  .u-input { height: 42px; border-radius: 12px; padding: 0 14px; display: flex; align-items: center; font-size: 12.5px; color: var(--ink4);
+    background: var(--glass); border: 1px solid var(--glass-bd); }
+  .u-row { display: flex; justify-content: space-between; align-items: center; background: var(--glass);
+    border: 1px solid var(--glass-bd); border-radius: 12px; padding: 9px 12px; font-size: 12px; }
+  .u-row b { color: var(--ink1); } .u-row .mut { color: var(--ink3); font-size: 10.5px; }
+  .u-toast { display: inline-flex; align-items: center; gap: 8px; background: rgba(10,6,20,0.92); color: var(--ink2);
+    border-radius: 12px; padding: 10px 18px; font-size: 12px; border: 1px solid var(--glass-bd); }
+  /* 席位 */
+  .u-seat { position: relative; text-align: center; width: 64px; cursor: pointer; }
+  .u-seat .av { width: 50px; height: 50px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.16); transition: all .3s;
+    filter: saturate(.5) brightness(.6); }
+  .u-seat .lamp { position: absolute; top: -4px; right: 6px; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--warn); box-shadow: 0 0 9px var(--warn); transform: scale(0); transition: transform .3s cubic-bezier(.2,2,.4,1); }
+  .u-seat.ready .lamp { transform: scale(1); }
+  .u-seat.ready .av { filter: none; border-color: var(--warn); box-shadow: 0 0 12px rgba(255,206,84,0.25); }
+  .u-seat.host .av { filter: none; border-color: var(--brand1); }
+  .u-seat .nm { font-size: 10px; color: var(--ink3); margin-top: 4px; }
+  .u-seat .rl { font-size: 8.5px; color: #c9b0ff; letter-spacing: 1px; }
+
+  /* 组件陈列台 */
+  .bench { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+  .case { background: var(--doc-card); border: 1px solid var(--doc-bd); border-radius: 14px; padding: 15px 16px; }
+  .case .cap { font-size: 11px; letter-spacing: 2px; color: var(--doc-dim); margin-bottom: 12px; }
+  .case .demo-col { display: flex; flex-direction: column; gap: 10px; }
+  .case .demo-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  /* ═══════════ 手机屏 ═══════════ */
+  .module-label { font-size: 12px; letter-spacing: 4px; color: var(--doc-dim); margin: 26px 0 14px; display: flex; align-items: center; gap: 12px; }
+  .module-label::after { content: ""; flex: 1; height: 1px; background: var(--doc-bd); }
+  .screens { display: flex; gap: 20px; flex-wrap: wrap; }
+  .slot { display: flex; flex-direction: column; gap: 8px; }
+  .slot-label { text-align: center; font-size: 11px; letter-spacing: 2px; color: var(--doc-mut); }
+  .phone { width: 262px; border-radius: 22px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.13); box-shadow: 0 18px 46px rgba(0,0,0,0.5); }
+  .scr { position: relative; min-height: 520px; padding: 16px 13px 18px; overflow: hidden; background: var(--bg1); color: var(--ink2); font-size: 12px; }
+  .scr .navbar { margin: -16px -13px 12px; padding: 10px 14px 9px; font-size: 12.5px; font-weight: 700; letter-spacing: 1px;
+    color: #fff; background: var(--bg0); text-align: center; }
+  /* 游戏主题：一屏一个 --ac */
+  .t-script { --ac: var(--g-script); --ac2: #c44dff; }
+  .t-spy   { --ac: var(--g-spy);   --ac2: #ff8fb0; }
+  .t-wolf  { --ac: var(--g-wolf);  --ac2: #ffab55; }
+  .t-soup  { --ac: var(--g-soup);  --ac2: #7fd0ff; }
+  .t-bomb  { --ac: var(--g-bomb);  --ac2: #ffe08a; }
+  .scr .u-btn { margin-top: 12px; height: 40px; font-size: 12.5px; }
+  .scr .u-card { padding: 12px; }
+  .scr .sec-t { display: flex; justify-content: space-between; align-items: baseline; margin: 12px 1px 7px; }
+  .scr .sec-t b { font-size: 12px; letter-spacing: 1px; color: var(--ink1); }
+  .scr .sec-t span { font-size: 9.5px; color: var(--ink3); }
+  .acbar { height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--ac), transparent); margin: 2px 0 10px; }
+
+  /* hub */
+  .hb-hero { position: relative; border-radius: 16px; padding: 16px 14px 14px; overflow: hidden; margin-bottom: 10px;
+    background: linear-gradient(120deg, rgba(139,92,255,0.3), rgba(196,77,255,0.12)); border: 1px solid rgba(255,255,255,0.18); }
+  .hb-hero .t { font-size: 17px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(95deg, #fff, #ffb8d9, #c99aff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hb-hero .s { font-size: 9.5px; color: var(--ink3); margin-top: 3px; }
+  .hb-hero .join { display: inline-block; margin-top: 10px; font-size: 10.5px; font-weight: 700; color: #fff; padding: 7px 18px;
+    border-radius: 999px; background: linear-gradient(135deg, var(--brand1), var(--brand2)); }
+  .hb-man { position: absolute; right: -6px; bottom: -10px; font-size: 58px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)); }
+  .hb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .hb-card { --ac: #fff; position: relative; border-radius: 14px; height: 92px; padding: 10px 11px; overflow: hidden;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--ac) 26%, #241d33), #1d1730);
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 0 14px color-mix(in srgb, var(--ac) 22%, transparent); }
+  .hb-card .ico { font-size: 17px; }
+  .hb-card .nm { font-size: 13px; font-weight: 800; color: #fff; margin-top: 2px; }
+  .hb-card .d { font-size: 9px; color: var(--ink3); margin-top: 2px; }
+  .hb-card .go { position: absolute; right: 9px; bottom: 9px; width: 20px; height: 20px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #1c1428; background: var(--ac); }
+  .tabbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; padding: 8px 0 10px; background: rgba(20,13,34,0.96);
+    border-top: 1px solid rgba(255,255,255,0.07); }
+  .tab { flex: 1; text-align: center; font-size: 9px; color: #7c6fa0; }
+  .tab .i { font-size: 16px; display: block; }
+  .tab.on { color: #fff; }
+
+  /* 列表/详情 */
+  .sc-card { display: flex; gap: 10px; background: var(--glass); border: 1px solid var(--glass-bd); border-radius: 14px; padding: 9px; margin-top: 8px; }
+  .sc-cover { width: 62px; height: 78px; border-radius: 10px; flex: none; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; }
+  .sc-info { flex: 1; min-width: 0; }
+  .sc-info .t { font-size: 13px; font-weight: 800; color: var(--ink1); }
+  .sc-info .s { font-size: 9.5px; color: var(--ink3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-meta { display: flex; gap: 5px; margin-top: 7px; }
+  .dt-cover { border-radius: 16px; height: 128px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(150deg, #4a3070, #241d38); border: 1px solid var(--glass-bd); }
+  .dt-cover .e { font-size: 44px; } .dt-cover .t { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 2px; margin-top: 4px; }
+
+  /* 资料页 */
+  .pf-av { position: relative; width: 92px; height: 92px; margin: 8px auto 0; }
+  .pf-av .img { width: 92px; height: 92px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px;
+    background: rgba(255,255,255,0.08); box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+  .pf-av .edit { position: absolute; right: 0; bottom: 2px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; color: #fff; background: linear-gradient(135deg, var(--brand1), var(--brand2)); border: 2px solid var(--bg1); }
+  .pf-tip { text-align: center; font-size: 10px; color: var(--ink3); margin-top: 8px; }
+  .g-opts { display: flex; gap: 8px; }
+  .g-opt { flex: 1; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 12px;
+    color: var(--ink3); background: var(--glass); border: 1px solid var(--glass-bd); }
+  .g-opt.on { color: #fff; font-weight: 700; background: color-mix(in srgb, var(--brand1) 34%, transparent); border-color: color-mix(in srgb, var(--brand1) 65%, transparent); }
+
+  /* 对局 */
+  .story-card { background: rgba(255,255,255,0.075); border: 1px solid var(--glass-bd); border-radius: 14px; padding: 13px 12px; }
+  .story-card .t { font-size: 13.5px; font-weight: 800; color: #fff; }
+  .story-card .b { font-size: 12px; line-height: 2; margin-top: 6px; color: var(--ink2); }
+  .story-card .hl { background: linear-gradient(transparent 60%, color-mix(in srgb, var(--ac) 40%, transparent) 60%); font-weight: 700; color: #fff; }
+  .vote-item { position: relative; }
+  .vote-item.on .u-row { border-color: var(--ac); box-shadow: 0 0 12px color-mix(in srgb, var(--ac) 30%, transparent); }
+  .vote-item.on .u-row::after { content: "✓ 已选"; font-size: 10px; color: var(--ac); font-weight: 800; }
+  .verdict-ico { text-align: center; font-size: 44px; margin-top: 6px; }
+  .verdict-t { text-align: center; font-size: 15px; font-weight: 900; letter-spacing: 3px; margin-top: 4px;
+    background: linear-gradient(95deg, #fff, var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .killer-tag { font-size: 9px; color: #ff9daa; background: rgba(255,92,138,0.14); border: 1px solid rgba(255,92,138,0.4);
+    border-radius: 999px; padding: 1px 7px; margin-left: 5px; font-weight: 800; }
+
+  /* 卧底词卡 */
+  .word-zone { position: relative; margin-top: 10px; height: 84px; border-radius: 12px; overflow: hidden;
+    border: 1.5px dashed color-mix(in srgb, var(--ac) 45%, transparent); }
+  .word-zone .w { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 900; letter-spacing: 5px; color: #fff; opacity: 0; filter: blur(8px); transition: all .3s; }
+  .word-zone .w small { font-size: 9px; color: var(--ink3); letter-spacing: 2px; font-weight: 400; margin-top: 3px; }
+  .word-zone .cover { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: color-mix(in srgb, var(--ac) 14%, #221b33); cursor: pointer; transition: opacity .3s; user-select: none; }
+  .word-zone .cover .lk { font-size: 16px; }
+  .word-zone .cover .tp { font-size: 9.5px; color: var(--ink3); }
+  .word-zone.peek .cover { opacity: 0; pointer-events: none; }
+  .word-zone.peek .w { opacity: 1; filter: blur(0); }
+
+  /* 狼人夜晚 */
+  .night-band { border-radius: 14px; padding: 14px 12px; text-align: center;
+    background: linear-gradient(180deg, #1c1733, #151027); border: 1px solid var(--glass-bd); }
+  .night-band .m { font-size: 30px; } .night-band .t { font-size: 13px; font-weight: 800; color: #fff; margin-top: 4px; letter-spacing: 2px; }
+  .night-band .s { font-size: 9.5px; color: var(--ink3); margin-top: 3px; }
+  .role-card { margin-top: 10px; border-radius: 14px; padding: 13px; text-align: center;
+    background: color-mix(in srgb, var(--ac) 12%, #221b33); border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent); }
+  .role-card .e { font-size: 32px; } .role-card .r { font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 3px; margin-top: 3px; }
+  .role-card .d { font-size: 9.5px; color: var(--ink3); margin-top: 3px; }
+
+  /* 炸弹 */
+  .num-box { margin-top: 10px; border-radius: 18px; padding: 22px 0 18px; text-align: center;
+    background: color-mix(in srgb, var(--ac) 9%, transparent); border: 1px solid color-mix(in srgb, var(--ac) 35%, transparent); }
+  .num-box .n { font-size: 62px; font-weight: 900; line-height: 1; color: var(--ac); text-shadow: 0 4px 18px color-mix(in srgb, var(--ac) 45%, transparent); }
+  .num-box .meta { font-size: 9px; color: var(--ink4); margin-top: 8px; line-height: 1.7; }
+  .num-box .code { color: #8be0c9; font-weight: 700; letter-spacing: 1px; }
+
+  /* 海龟汤 */
+  .soup-q { margin-top: 10px; border-radius: 14px; padding: 13px; background: color-mix(in srgb, var(--ac) 10%, #221b33);
+    border: 1px solid color-mix(in srgb, var(--ac) 35%, transparent); }
+  .soup-q .tag { font-size: 9px; color: var(--ac2); letter-spacing: 2px; }
+  .soup-q .q { font-size: 12.5px; line-height: 1.9; color: var(--ink2); margin-top: 5px; }
+  .ans-chips { display: flex; gap: 7px; margin-top: 10px; }
+  .ans { flex: 1; height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+    background: var(--glass); border: 1px solid var(--glass-bd); color: var(--ink2); }
+  .ans.y { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
+  .ans.n { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+
+  .note { font-size: 12px; color: var(--doc-mut); border-left: 3px solid var(--brand1); padding-left: 12px; margin-top: 18px; max-width: 80ch; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="kicker">DESIGN SYSTEM · V1</div>
+    <h1><em>夜幕紫</em> 设计系统 · 全功能一套 UI</h1>
+    <p class="lede">一句话定位：<b>一座深夜的游戏厅——底盘永远是夜幕紫，每个游戏占一种光色</b>。不做强主题（剧场/古堡都会在某类本子上出戏），沉浸感交给三样东西：剧本自己的封面与文案、每个游戏的主题光、以及少量「仪式时刻」动效。四条铁律贯穿所有页面：<b>读字区素颜 · 花活只在过场 · 一屏一个主按钮 · 状态必有反馈</b>。</p>
+  </div>
+
+  <h2><span class="no">01</span>色彩 Tokens</h2>
+  <p class="sub">底与玻璃永远不变；<b>游戏光谱</b>是唯一随场景变化的东西——进入哪个游戏，哪个色就是那一屏的 <code>--ac</code>（按钮、座灯、选中态、高亮划线全跟它走）。语义色独立于光谱，不挪用。</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip-c" style="background:#1a1626;"></div><div class="meta"><div class="nm">bg0 最深底</div><div class="hex">#1A1626</div><div class="use">导航栏 / tabbar / 弹层遮罩下</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#2b2436;"></div><div class="meta"><div class="nm">bg1 页面底</div><div class="hex">#2B2436</div><div class="use">所有页面的 page 背景</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.14);"></div><div class="meta"><div class="nm">glass 玻璃卡</div><div class="hex">FFF 6% + 14%描边</div><div class="use">一切卡片容器</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:linear-gradient(135deg,#8b5cff,#c44dff);"></div><div class="meta"><div class="nm">brand 品牌渐变</div><div class="hex">#8B5CFF→#C44DFF</div><div class="use">全局主按钮 / 品牌标题字</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#b9a7e6;"></div><div class="meta"><div class="nm">ink3 次要文字</div><div class="hex">#B9A7E6</div><div class="use">说明 / 标签（ink1 白 ink2 88%白）</div></div></div>
+  </div>
+  <p class="sub" style="margin-top:20px;"><b>游戏光谱</b>（沿用 hub 卡片既有的五色，不新造）：</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip-c" style="background:#8b5cff;"></div><div class="meta"><div class="nm">剧本杀 · 紫</div><div class="hex">#8B5CFF</div><div class="use">与品牌同色 = 主玩法</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#ff5c8a;"></div><div class="meta"><div class="nm">谁是卧底 · 粉</div><div class="hex">#FF5C8A</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#ff7a45;"></div><div class="meta"><div class="nm">狼人杀 · 橙</div><div class="hex">#FF7A45</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#4db8ff;"></div><div class="meta"><div class="nm">海龟汤 · 蓝</div><div class="hex">#4DB8FF</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#ffce54;"></div><div class="meta"><div class="nm">数字炸弹 · 金</div><div class="hex">#FFCE54</div></div></div>
+  </div>
+  <p class="sub" style="margin-top:20px;"><b>语义色</b>：成功 <code style="color:#7bd88f;">#7BD88F</code> · 警示 <code style="color:#ffce54;">#FFCE54</code> · 危险/真凶 <code style="color:#ff5c6a;">#FF5C6A</code>——真凶标签永远用危险红，不用游戏色。</p>
+
+  <h2><span class="no">02</span>字阶与形状</h2>
+  <p class="sub">系统字体（PingFang SC），靠<b>字重与字号</b>做层级，不引入花字体。数字场景（房间号/票数/倒计时）统一 <code>tabular-nums</code> 等宽数字。</p>
+  <div style="background:var(--doc-card); border:1px solid var(--doc-bd); border-radius:14px; padding:6px 18px 10px; max-width:680px;">
+    <div class="typerow"><span class="role">巨号 · 抽数/房间号</span><span class="demo" style="font-size:40px; font-weight:900; font-variant-numeric:tabular-nums;">4721</span><span class="meta">80rpx / 900</span></div>
+    <div class="typerow"><span class="role">大标题 · 页面主题</span><span class="demo" style="font-size:22px; font-weight:900; letter-spacing:2px;">夜幕降临</span><span class="meta">44rpx / 900 · 渐变字仅品牌处</span></div>
+    <div class="typerow"><span class="role">卡片标题</span><span class="demo" style="font-size:16px; font-weight:800;">暗房里的脚步声</span><span class="meta">32rpx / 800</span></div>
+    <div class="typerow"><span class="role">正文 · 剧情</span><span class="demo" style="font-size:14.5px; line-height:2;">深夜十一点，我借口取相纸回到暗房…</span><span class="meta">29rpx / 400 / 行高 2.0</span></div>
+    <div class="typerow"><span class="role">说明/标签</span><span class="demo" style="font-size:11.5px; color:var(--ink3);">主持人只推进流程 · 不参与角色</span><span class="meta">23rpx / ink3</span></div>
+  </div>
+  <ul class="pl" style="margin-top:14px;">
+    <li><b>圆角三档</b>：容器卡 16px（32rpx）· 小控件 12px（24rpx）· 按钮/胶囊 999px。不再出现第四种圆角。</li>
+    <li><b>间距节奏</b>：卡片间 12px、卡片内 13px、区块间 20px（24/26/40rpx）——全站统一,别每页手调。</li>
+    <li><b>动效两速</b>：交互反馈 0.25~0.35s（选中/点亮），仪式时刻 0.6~1.2s（过场/揭晓）。除此之外不动。</li>
+  </ul>
+
+  <h2><span class="no">03</span>核心组件</h2>
+  <p class="sub">全站十来个组件走天下。注意主按钮吃当前屏的 <code>--ac</code>：在剧本杀里是紫、卧底里是粉——<b>不可用态不再用 disabled，半透明但可点，点了告诉你差什么</b>（这次开局 bug 的教训固化成规范）。</p>
+  <div class="bench ui">
+    <div class="case"><div class="cap">按钮 BUTTON</div>
+      <div class="demo-col">
+        <div class="u-btn">开 始 游 戏</div>
+        <div class="u-btn dim">开 始 游 戏（未满足 · 可点击查因）</div>
+        <div class="u-btn ghost">退 出 房 间</div>
+        <div class="u-btn" style="--ac:#ff5c8a; --ac2:#ff8fb0;">卧底屏的主按钮（吃 --ac）</div>
+      </div>
+    </div>
+    <div class="case"><div class="cap">玻璃卡 / 筛选 CHIP / 输入框</div>
+      <div class="demo-col">
+        <div class="u-card"><b style="color:var(--ink1); font-size:12.5px;">玻璃卡容器</b><div style="font-size:10.5px; color:var(--ink3); margin-top:3px;">FFF 6% 底 + 14% 描边 + 16px 圆角</div></div>
+        <div class="demo-row"><span class="u-chip on">全部</span><span class="u-chip">悬疑</span><span class="u-chip">欢乐</span><span class="u-chip">1942</span></div>
+        <div class="u-input">🔍 搜索剧本名 / 标签…</div>
+      </div>
+    </div>
+    <div class="case"><div class="cap">席位 SEAT（点右侧两个试试）</div>
+      <div class="demo-row" id="bench-seats" style="gap:14px;">
+        <div class="u-seat host"><div class="av">🎩</div><div class="nm">老张</div><div class="rl">主持</div></div>
+        <div class="u-seat ready"><div class="lamp"></div><div class="av">🦊</div><div class="nm">阿茶</div></div>
+        <div class="u-seat"><div class="lamp"></div><div class="av">🐰</div><div class="nm">大飞</div></div>
+        <div class="u-seat"><div class="lamp"></div><div class="av">🐻</div><div class="nm">米米</div></div>
+      </div>
+      <div style="font-size:10px; color:var(--doc-dim); margin-top:10px;">未就位 = 压暗去色；就位 = 金色座灯点亮 + 头像亮起（全游戏通用：准备/入座/觉醒都是这一个组件）</div>
+    </div>
+    <div class="case"><div class="cap">列表行 / 提示 TOAST</div>
+      <div class="demo-col">
+        <div class="u-row"><span><b>林婉</b> <span class="mut">馆主遗孀 · 米米</span><span class="killer-tag">真凶</span></span><b style="color:var(--warn); font-variant-numeric:tabular-nums;">4 票</b></div>
+        <div class="u-toast">💡 还有 2 人未点「准备好了」</div>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="no">04</span>全功能页面</h2>
+  <p class="sub">十三屏覆盖现有全部功能。每屏顶部导航条 = bg0；主按钮与点缀吃该游戏的 <code>--ac</code>；剧情/词卡等读字区永远素颜。带交互的屏：<b>候场点席位、投票点嫌疑人、卧底按住看词</b>。</p>
+
+  <div class="module-label">框 架 · HUB / 列表 / 详情 / 资料</div>
+  <div class="screens">
+    <div class="slot"><div class="slot-label">大厅 hub</div>
+      <div class="phone"><div class="scr t-script">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:15px;">🐱</div>
+          <div style="font-size:11.5px;color:var(--ink2);font-weight:600;">Hi，阿茶 👋</div>
+        </div>
+        <div class="hb-hero">
+          <div class="t">夜幕降临<br/>推理开始</div>
+          <div class="s">谁是隐藏在黑暗中的真相？</div>
+          <div class="join">快速加入 ›</div>
+          <div class="hb-man">🕵️</div>
+        </div>
+        <div class="hb-grid">
+          <div class="hb-card" style="--ac:var(--g-spy);"><span class="ico">🎩</span><div class="nm">谁是卧底</div><div class="d">隐藏身份 · 智胜全场</div><div class="go">›</div></div>
+          <div class="hb-card" style="--ac:var(--g-wolf);"><span class="ico">🐺</span><div class="nm">狼人杀</div><div class="d">天黑闭眼 · 揪出狼人</div><div class="go">›</div></div>
+          <div class="hb-card" style="--ac:var(--g-soup);"><span class="ico">🥣</span><div class="nm">海龟汤</div><div class="d">脑洞提问 · 神奇汤面</div><div class="go">›</div></div>
+          <div class="hb-card" style="--ac:var(--g-bomb);"><span class="ico">💣</span><div class="nm">数字炸弹</div><div class="d">猜数字 · 别踩雷</div><div class="go">›</div></div>
+        </div>
+        <div class="tabbar"><div class="tab on"><span class="i">🏠</span>大厅</div><div class="tab"><span class="i">📖</span>剧本</div><div class="tab"><span class="i">👤</span>我的</div></div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">剧本列表 index</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">推理剧本</div>
+        <div class="u-input">🔍 搜索剧本名 / 标签…</div>
+        <div style="display:flex; gap:6px; margin-top:9px;"><span class="u-chip on">全部</span><span class="u-chip">悬疑</span><span class="u-chip">欢乐</span></div>
+        <div class="sc-card"><div class="sc-cover" style="background:linear-gradient(150deg,#4a3070,#2b2144);">☕</div>
+          <div class="sc-info"><div class="t">巷往咖啡馆</div><div class="s">打烊后的咖啡馆，有人没走</div>
+          <div class="sc-meta"><span class="u-chip">3-4人</span><span class="u-chip">15分钟</span></div></div></div>
+        <div class="sc-card"><div class="sc-cover" style="background:linear-gradient(150deg,#245a4e,#1b3a34);">⛰</div>
+          <div class="sc-info"><div class="t">浪浪山·巡山日志</div><div class="s">大王的烤鸡少了一只</div>
+          <div class="sc-meta"><span class="u-chip">3-4人</span><span class="u-chip">欢乐</span></div></div></div>
+        <div class="sc-card"><div class="sc-cover" style="background:linear-gradient(150deg,#5a2438,#38182a);">🍚</div>
+          <div class="sc-info"><div class="t">1942·一袋米</div><div class="s">乱世里，一袋米就是一条命</div>
+          <div class="sc-meta"><span class="u-chip">3-4人</span><span class="u-chip">抗战</span></div></div></div>
+        <div class="u-btn ghost" style="margin-top:14px;">🔑 输入房间号加入</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">剧本详情（开本）</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">巷往咖啡馆</div>
+        <div class="dt-cover"><span class="e">☕</span><div class="t">巷往咖啡馆</div></div>
+        <div style="display:flex; gap:6px; margin-top:10px;"><span class="u-chip">👥 3-4人</span><span class="u-chip">⏱ 约15分钟</span><span class="u-chip">🎭 悬疑·人性</span></div>
+        <div class="u-card" style="margin-top:10px;">
+          <b style="color:var(--ink1); font-size:12px;">故事引子</b>
+          <div style="font-size:11.5px; line-height:1.9; color:var(--ink2); margin-top:4px;">打烊前最后一杯手冲端出去之后，店里就只剩四个人。卷帘门落下一半，储物间传来了响动——有人没走。</div>
+        </div>
+        <div class="u-card" style="margin-top:8px;">
+          <b style="color:var(--ink1); font-size:12px;">角色（3）</b>
+          <div style="font-size:11px; color:var(--ink3); margin-top:4px; line-height:1.8;">店长 阿澈 · 常客 老周 · 兼职生 小夏</div>
+        </div>
+        <div class="u-btn">🎬 开这本（我当主持）</div>
+        <div class="u-btn ghost">分享给群友</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">个人资料 profile</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">个人资料</div>
+        <div class="pf-av"><div class="img">🐱</div><div class="edit">✎</div></div>
+        <div class="pf-tip">点击更换头像</div>
+        <div class="sec-t"><b>昵称</b></div>
+        <div class="u-input" style="color:var(--ink1);">阿茶</div>
+        <div class="sec-t"><b>性别</b><span>决定剧本里的角色形象</span></div>
+        <div class="g-opts"><div class="g-opt on">♂ 男</div><div class="g-opt">♀ 女</div></div>
+        <div class="u-btn" style="margin-top:22px;">保 存</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="module-label">剧 本 杀 · 候场 → 对局 → 投票 → 结算</div>
+  <div class="screens">
+    <div class="slot"><div class="slot-label">房间候场 room（点席位试试）</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">房间 4721</div>
+        <div class="u-card" style="display:flex; justify-content:space-between; align-items:center;">
+          <div><div style="font-size:9.5px; color:var(--ink3);">本局剧本</div><b style="color:var(--ink1); font-size:13px;">巷往咖啡馆</b></div>
+          <div class="u-chip on">分享链接</div>
+        </div>
+        <div class="sec-t"><b>玩家 3 人</b><span id="rm-hint">已准备 1/3</span></div>
+        <div class="u-card">
+          <div style="display:flex; gap:12px; flex-wrap:wrap;" id="rm-seats">
+            <div class="u-seat host"><div class="av">🎩</div><div class="nm">老张</div><div class="rl">主持</div></div>
+            <div class="u-seat ready"><div class="lamp"></div><div class="av">🦊</div><div class="nm">阿茶</div></div>
+            <div class="u-seat"><div class="lamp"></div><div class="av">🐰</div><div class="nm">大飞</div></div>
+            <div class="u-seat"><div class="lamp"></div><div class="av">🐻</div><div class="nm">米米</div></div>
+          </div>
+          <div style="font-size:9.5px; color:var(--ink3); margin-top:9px;">主持人只推进流程 · 角色由系统发牌</div>
+        </div>
+        <div class="u-btn dim" id="rm-start">开 始 游 戏</div>
+        <div class="u-btn ghost">结束游戏</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">对局 · 玩家视角 game</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">巷往咖啡馆 · 进行中</div>
+        <span class="u-chip on">🎭 你的角色 · 阿澈（店长）</span>
+        <div class="acbar" style="margin-top:8px;"></div>
+        <div class="story-card">
+          <div class="t">你的故事 · 仅你可见</div>
+          <div class="b">打烊前最后一杯手冲，是老周点的。<span class="hl">杯底沉着一枚不属于店里的银纽扣</span>。卷帘门拉下一半时，储物间传来了响动…</div>
+        </div>
+        <div style="font-size:9.5px; color:var(--ink4); margin-top:8px; text-align:center;">读完去群里 · 用角色口吻自我介绍</div>
+        <div class="u-btn ghost" style="margin-top:16px;">退出房间</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">对局 · 主持人视角</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">巷往咖啡馆 · 主持台</div>
+        <div class="u-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b style="color:var(--ink1); font-size:12px;">📋 发群内容</b><span class="u-chip on">一键复制全部</span>
+          </div>
+          <div style="font-size:10.5px; color:var(--ink3); line-height:1.8; margin-top:6px;">【开场白】各位客人，欢迎光临巷往咖啡馆…【群活动】每人用角色口吻自我介绍…【线索】① 一枚银纽扣 ② 未打卡的考勤表…</div>
+        </div>
+        <div class="u-card" style="margin-top:8px;">
+          <b style="color:var(--ink1); font-size:12px;">🎬 流程提示</b>
+          <div style="font-size:10.5px; color:var(--ink3); line-height:1.9; margin-top:4px;">大家读各自剧情 → 念出线索 → 每人轮流发言一次 → 点底部进入投票</div>
+        </div>
+        <div class="u-card" style="margin-top:8px;">
+          <b style="color:var(--ink1); font-size:12px;">💬 冷场救急</b>
+          <div style="font-size:10.5px; color:var(--ink3); line-height:1.9; margin-top:4px;">「小夏，考勤表上你的名字为什么没打卡？」</div>
+        </div>
+        <div class="u-btn">进入投票 →</div>
+        <div class="u-btn ghost">结束游戏</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">投票指认（点嫌疑人试试）</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">指认真凶</div>
+        <span class="u-chip on">已投 2/3 · 可改票</span>
+        <div class="acbar" style="margin-top:8px;"></div>
+        <div id="vote-list" style="display:flex; flex-direction:column; gap:8px;">
+          <div class="vote-item"><div class="u-row"><span><b>阿澈</b> <span class="mut">咖啡馆店长 · 阿茶</span></span></div></div>
+          <div class="vote-item"><div class="u-row"><span><b>老周</b> <span class="mut">十年常客 · 大飞</span></span></div></div>
+          <div class="vote-item"><div class="u-row"><span><b>小夏</b> <span class="mut">兼职生 · 米米</span></span></div></div>
+        </div>
+        <div style="font-size:9.5px; color:var(--ink4); margin-top:10px; text-align:center;">回群里说完怀疑理由再投 · 投满主持人揭晓</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">结算 result（主持人）</div>
+      <div class="phone"><div class="scr t-script">
+        <div class="navbar">真相</div>
+        <div class="verdict-ico">🎉</div>
+        <div class="verdict-t">真凶落网！</div>
+        <div style="display:flex; flex-direction:column; gap:7px; margin-top:12px;">
+          <div class="u-row"><span><b>小夏</b> <span class="mut">兼职生 · 米米</span><span class="killer-tag">真凶</span></span><b style="color:var(--warn);">2 票</b></div>
+          <div class="u-row"><span><b>老周</b> <span class="mut">十年常客 · 大飞</span></span><b style="color:var(--warn);">1 票</b></div>
+        </div>
+        <div class="u-card" style="margin-top:10px;">
+          <div style="font-size:10.5px; color:var(--ink3); line-height:1.8;"><b style="color:#ff9daa;">其他玩家看不到这页</b>——点「一键复制」把结果+真相信发到群里公布。</div>
+        </div>
+        <div class="u-btn">一键复制 · 发群公布</div>
+        <div class="u-btn ghost">结束游戏</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="module-label">派 对 游 戏 · 卧底 / 狼人 / 海龟汤 / 炸弹</div>
+  <div class="screens">
+    <div class="slot"><div class="slot-label">谁是卧底（按住词卡试试）</div>
+      <div class="phone"><div class="scr t-spy">
+        <div class="navbar">谁是卧底 · 房间 8253</div>
+        <span class="u-chip on" style="border-color:color-mix(in srgb,var(--ac) 60%,transparent); background:color-mix(in srgb,var(--ac) 26%,transparent);">游戏中 · 去群里轮流描述</span>
+        <div class="sec-t"><b>我的词</b><span>只有你看得到</span></div>
+        <div class="word-zone" id="spy-word">
+          <div class="w">美人鱼<small>描述它 · 别说出它</small></div>
+          <div class="cover"><span class="lk">🔒</span><span class="tp">按住看词 · 松手盖回</span></div>
+        </div>
+        <div style="font-size:10px; color:var(--ink4); margin-top:9px; line-height:1.8;">注意：有人拿到的词和你不一样。描述太像放跑卧底，太不像——被票出去的就是你。</div>
+        <div class="u-btn">📣 揭晓（公布卧底）</div>
+        <div class="u-btn ghost">退出房间</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">狼人杀 · 夜晚身份</div>
+      <div class="phone"><div class="scr t-wolf">
+        <div class="navbar">狼人杀 · 第 1 夜</div>
+        <div class="night-band"><div class="m">🌙</div><div class="t">天黑请闭眼</div><div class="s">你的身份已发放 · 按提示行动</div></div>
+        <div class="role-card"><div class="e">🔮</div><div class="r">预 言 家</div><div class="d">每晚查验一名玩家的真实身份</div></div>
+        <div class="sec-t"><b>今夜查验</b><span>选择一名玩家</span></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <div class="u-seat"><div class="av" style="filter:none;">🐰</div><div class="nm">大飞</div></div>
+          <div class="u-seat"><div class="av" style="filter:none;">🐻</div><div class="nm">米米</div></div>
+          <div class="u-seat"><div class="av" style="filter:none;">😼</div><div class="nm">壮壮</div></div>
+        </div>
+        <div class="u-btn">确认查验</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">海龟汤 · 主持出题</div>
+      <div class="phone"><div class="scr t-soup">
+        <div class="navbar">海龟汤 · 第 3 碗</div>
+        <div class="soup-q">
+          <div class="tag">🥣 汤 面 · 念给大家听</div>
+          <div class="q">深夜的便利店，男人买了一瓶水却要了两个杯子。店员看了一眼窗外，立刻报了警。为什么？</div>
+        </div>
+        <div class="sec-t"><b>群友提问后 · 你只答三种</b></div>
+        <div class="ans-chips"><div class="ans y">是</div><div class="ans n">不是</div><div class="ans">无关</div></div>
+        <div class="u-card" style="margin-top:10px;">
+          <b style="color:var(--ink1); font-size:11.5px;">🔑 汤底（仅主持可见）</b>
+          <div style="font-size:10.5px; color:var(--ink3); line-height:1.8; margin-top:4px;">长按查看 · 谜底揭晓后一键复制发群</div>
+        </div>
+        <div class="u-btn">换一碗汤</div>
+      </div></div>
+    </div>
+
+    <div class="slot"><div class="slot-label">数字炸弹 · 抽数器</div>
+      <div class="phone"><div class="scr t-bomb">
+        <div class="navbar">数字炸弹</div>
+        <div style="text-align:center; font-size:34px; margin-top:6px;">💣</div>
+        <div style="text-align:center; font-size:10.5px; color:var(--ink3); margin-top:4px; line-height:1.8;">暗抽一颗 1~100 的炸弹数<br/>群里轮流报数 · 报中爆炸</div>
+        <div class="num-box">
+          <div class="n" style="font-variant-numeric:tabular-nums;">67</div>
+          <div class="meta">2026-07-04 21:33:05<br/><span class="code">防伪码 1KX9Q2M</span></div>
+        </div>
+        <div class="u-btn" style="color:#3a2408;">重新生成</div>
+        <div class="u-btn ghost">保存为图片 🖼️</div>
+        <div style="font-size:9px; color:var(--ink4); text-align:center; margin-top:8px;">图片带时间+防伪码 · 改图对不上号，赖不掉～</div>
+      </div></div>
+    </div>
+  </div>
+
+  <h2><span class="no">05</span>主题色应用规则</h2>
+  <table class="spec">
+    <tr><th>元素</th><th>用什么色</th><th>说明</th></tr>
+    <tr><td>页面底 / 导航栏 / 玻璃卡</td><td>bg1 / bg0 / glass（固定）</td><td>任何游戏都不许改底色——统一感的根</td></tr>
+    <tr><td>主按钮 / 选中态 / 高亮划线 / 进度</td><td>当前游戏 --ac</td><td>一屏只有一个渐变主按钮</td></tr>
+    <tr><td>席位就位灯</td><td>warn 金（全游戏统一）</td><td>「准备好」是跨游戏的同一动作，色不随游戏变</td></tr>
+    <tr><td>真凶 / 出局 / 危险</td><td>bad 红（固定）</td><td>语义色不挪用游戏色</td></tr>
+    <tr><td>剧本详情 / 对局的氛围点缀</td><td>剧本 cover.gradient</td><td>剧本自己的颜色只出现在剧本杀内页</td></tr>
+  </table>
+
+  <h2><span class="no">06</span>仪式时刻（唯一允许的花活）</h2>
+  <ul class="pl">
+    <li><b>剧本杀 · 开演</b>：全屏过场——剧本封面渐显 + 剧名 +「故事开始」，1.2s 收场（现有 transShow 换皮）。</li>
+    <li><b>卧底 · 揭晓</b>：卧底头像 0.8s 变色翻转 + 词对亮出；<b>狼人 · 天亮</b>：夜幕带一次月落日升的明暗过渡。</li>
+    <li><b>炸弹 · 爆炸</b>：已有的全屏地震 + 💥 保留——它就是规范本身。</li>
+    <li><b>结算通用</b>：结果行逐行升起（0.45s 阶梯延迟），抓对撒花、抓错安静——喜怒有别。</li>
+    <li>以上之外<b>不加动效</b>。读字区（剧情卡/词卡/汤面）永远静止。</li>
+  </ul>
+
+  <h2><span class="no">07</span>落地清单（与现状的差距）</h2>
+  <ul class="pl">
+    <li><b>零改动就达标</b>：hub、数字炸弹（本来就是规范来源）。</li>
+    <li><b>只调 wxss</b>：profile（已达标 95%）、剧本列表/详情（卡片圆角与 chip 统一）、room（席位组件化 + 开始按钮 dim 态——刚已修）。</li>
+    <li><b>wxss + 少量 wxml</b>：game/result（剧情卡素颜化、结果行升起动效）、spy（词卡 + 粉色 --ac）、wolf（夜晚带 + 角色卡 + 橙色）、soup（汤面卡 + 蓝色）。</li>
+    <li><b>建议顺序</b>：① room/game/result（主链路）→ ② spy/wolf/soup 配色统一 → ③ 仪式时刻逐个补。</li>
+    <li>所有页面共用一份 <code>styles/tokens.wxss</code>（色值 + 按钮 + 卡 + 席位），新页面 import 即得。</li>
+  </ul>
+  <p class="note">单主题说明：App 是「深夜游戏厅」，暗色是身份不是缺省——不做浅色模式；对外文案口径照旧（推理/派对，不带敏感词）。</p>
+</div>
+
+<script>
+  // 组件台 + 候场：席位点亮
+  function bindSeats(rootId, hintId, total) {
+    const root = document.getElementById(rootId);
+    if (!root) return;
+    root.querySelectorAll('.u-seat').forEach((s) => {
+      if (s.classList.contains('host') || !s.querySelector('.lamp')) return;
+      s.addEventListener('click', () => {
+        s.classList.toggle('ready');
+        if (!hintId) return;
+        const n = root.querySelectorAll('.u-seat.ready').length;
+        document.getElementById(hintId).textContent = `已准备 ${n}/${total}`;
+        const btn = document.getElementById('rm-start');
+        if (btn) btn.classList.toggle('dim', n < total);
+      });
+    });
+  }
+  bindSeats('bench-seats', null, 0);
+  bindSeats('rm-seats', 'rm-hint', 3);
+  // 投票选中
+  document.querySelectorAll('#vote-list .vote-item').forEach((v) => {
+    v.addEventListener('click', () => {
+      document.querySelectorAll('#vote-list .vote-item').forEach((x) => x.classList.toggle('on', x === v));
+    });
+  });
+  // 卧底按住看词
+  const wz = document.getElementById('spy-word');
+  if (wz) {
+    const cover = wz.querySelector('.cover');
+    const on = (e) => { e.preventDefault(); wz.classList.add('peek'); };
+    const off = () => wz.classList.remove('peek');
+    cover.addEventListener('mousedown', on);
+    cover.addEventListener('touchstart', on, { passive: false });
+    ['mouseup', 'touchend', 'touchcancel'].forEach((ev) => document.addEventListener(ev, off));
+  }
+</script>

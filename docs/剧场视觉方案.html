@@ -1,0 +1,466 @@
+<title>剧场框架 · 空舞台+剧本当布景</title>
+<style>
+  :root {
+    --page: #14101f; --ink-doc: #ece8f5; --muted-doc: #b3a6cc;
+    --card-doc: rgba(255,255,255,0.06); --card-bd-doc: rgba(255,255,255,0.1);
+    --bg: #2b2436; --ink: #ece8f5; --mut: #9d8fbe;
+    --card: rgba(255,255,255,0.055); --card-bd: rgba(255,255,255,0.13);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink-doc);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: #d9b8ff;
+    border: 1px solid rgba(196,140,255,0.45); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted-doc); font-size: 14px; max-width: 66ch; margin: 0 0 28px; }
+  .lede b { color: var(--ink-doc); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, #8b5cff, #ffce54); border-radius: 2px; }
+  .sub { color: var(--muted-doc); font-size: 13.5px; max-width: 70ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink-doc); font-weight: 600; }
+  ul.pl { color: var(--muted-doc); font-size: 13.5px; padding-left: 20px; }
+  ul.pl li { margin: 6px 0; }
+  table.map { border-collapse: collapse; font-size: 13px; color: var(--muted-doc); }
+  table.map th, table.map td { border: 1px solid rgba(255,255,255,0.12); padding: 7px 14px; text-align: left; }
+  table.map th { color: var(--ink-doc); background: rgba(255,255,255,0.04); }
+
+  /* 剧目切换器 */
+  .switcher { display: flex; gap: 12px; justify-content: center; margin: 4px 0 26px; }
+  .sw { padding: 9px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; cursor: pointer;
+    color: var(--muted-doc); background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.14); transition: all .25s; }
+  .sw.on { color: #fff; border-color: transparent; }
+  .sw.sg.on { background: linear-gradient(135deg, #8b5cff, #4d7cff); box-shadow: 0 6px 18px rgba(120,100,255,0.4); }
+  .sw.ll.on { background: linear-gradient(135deg, #ff9a45, #ffce54); box-shadow: 0 6px 18px rgba(255,170,70,0.4); color: #4a2c08; }
+
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted-doc); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 640px; padding: 20px 15px 24px; overflow: hidden;
+    background: radial-gradient(85% 40% at 50% 0%, var(--tint), transparent 60%), var(--bg); color: var(--ink);
+    transition: background .5s; }
+  /* ═══ 剧目主题变量：sg=巷往咖啡馆(悬疑) ll=浪浪山(欢乐)，真实端来自 cover.gradient + tag ═══ */
+  .scr.sg { --ac: #8b5cff; --ac2: #4d7cff; --acg: linear-gradient(135deg, #8b5cff, #4d7cff);
+    --tint: rgba(120,100,255,0.13); --cur: #40306a; --cur2: #36285c;
+    --spot: rgba(205,220,255,0.9); --hl: rgba(139,92,255,0.32); }
+  .scr.ll { --ac: #ff9a45; --ac2: #ffce54; --acg: linear-gradient(135deg, #ff9a45, #ffce54);
+    --tint: rgba(255,170,70,0.12); --cur: #a8452e; --cur2: #93392a;
+    --spot: rgba(255,225,140,0.9); --hl: rgba(255,206,84,0.35); }
+
+  /* ═══ 常驻台口：顶部幕帘 + 左右幕布边 —— 每一屏都"在剧场里" ═══ */
+  .valance { position: absolute; top: 0; left: 0; right: 0; height: 26px; z-index: 8; pointer-events: none;
+    background: repeating-linear-gradient(90deg, var(--cur) 0 22px, var(--cur2) 22px 44px);
+    -webkit-mask: radial-gradient(14px at 22px 100%, transparent 13px, #000 14px) -22px 0 / 44px 100%;
+    mask: radial-gradient(14px at 22px 100%, transparent 13px, #000 14px) -22px 0 / 44px 100%;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4)); transition: background .5s; }
+  .wing { position: absolute; top: 0; bottom: 0; width: 14px; z-index: 8; pointer-events: none;
+    background: repeating-linear-gradient(90deg, var(--cur) 0 5px, var(--cur2) 5px 10px); transition: background .5s; }
+  .wing.l { left: 0; box-shadow: 6px 0 12px rgba(0,0,0,0.35); }
+  .wing.r { right: 0; box-shadow: -6px 0 12px rgba(0,0,0,0.35); }
+  .stagefloor { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; z-index: 8; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.5)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 40px, rgba(255,255,255,0.02) 40px 80px); }
+  .scr { padding-top: 40px; padding-left: 26px; padding-right: 26px; }
+
+  /* 台口：一排小灯泡（随主题色呼吸） */
+  .marquee { position: relative; margin: -18px -12px 8px; padding: 14px 0 10px; text-align: center;
+    background: rgba(0,0,0,0.22); border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .bulbs { display: flex; justify-content: center; gap: 10px; margin-bottom: 7px; }
+  .bulbs s { width: 6px; height: 6px; border-radius: 50%; background: var(--ac); box-shadow: 0 0 8px var(--ac);
+    animation: blink 1.6s ease-in-out infinite; }
+  .bulbs s:nth-child(even) { animation-delay: .8s; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  .mq-label { font-size: 10px; letter-spacing: 5px; color: var(--mut); }
+  .mq-title { font-size: 19px; font-weight: 900; letter-spacing: 2px; margin-top: 2px;
+    background: linear-gradient(95deg, #fff, var(--ac2)); -webkit-background-clip: text; background-clip: text; color: transparent;
+    transition: all .4s; }
+  .mq-sub { font-size: 10.5px; color: var(--mut); margin-top: 2px; }
+
+  .h-row { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 2px 8px; }
+  .h-row b { font-size: 13.5px; letter-spacing: 1px; color: var(--ink); }
+  .h-row span { font-size: 10.5px; color: var(--mut); }
+  .wcard { position: relative; z-index: 3; background: var(--card); border-radius: 16px; padding: 15px 14px; text-align: left;
+    border: 1px solid var(--card-bd); }
+  .chips { display: flex; gap: 6px; margin-top: 2px; justify-content: center; }
+  .chip { font-size: 10.5px; padding: 3px 10px; border-radius: 999px; font-weight: 600;
+    color: var(--ac2); background: rgba(255,255,255,0.06); border: 1px solid var(--card-bd); }
+
+  /* ① 演员就座：亮座灯 */
+  .seats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 4px; }
+  .seat { position: relative; text-align: center; cursor: pointer; }
+  .s-av { width: 54px; height: 54px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; background: rgba(255,255,255,0.07); border: 2.5px solid rgba(255,255,255,0.15); transition: all .3s;
+    filter: saturate(.5) brightness(.65); }
+  .seat.host .s-av { border-color: var(--ac); filter: none; }
+  .s-name { font-size: 10.5px; color: var(--mut); margin-top: 5px; }
+  .s-role { font-size: 9px; color: var(--ac2); letter-spacing: 1px; }
+  .s-lamp { position: absolute; top: -5px; right: 4px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--ac); box-shadow: 0 0 10px var(--ac); transform: scale(0); transition: transform .3s cubic-bezier(.2,2,.4,1); }
+  .seat.ready .s-lamp { transform: scale(1); }
+  .seat.ready .s-av { border-color: var(--ac); filter: none; box-shadow: 0 0 14px color-mix(in srgb, var(--ac) 45%, transparent); }
+  .hint { position: relative; z-index: 3; font-size: 11px; color: var(--mut); margin-top: 12px; text-align: center; }
+
+  .btn { position: relative; z-index: 7; margin: 16px auto 0; width: 84%; height: 46px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; font-size: 14.5px; font-weight: 800; color: #fff;
+    letter-spacing: 2px; cursor: pointer; background: var(--acg); box-shadow: 0 6px 20px color-mix(in srgb, var(--ac) 45%, transparent);
+    transition: background .4s; }
+  .scr.ll .btn { color: #4a2c08; }
+  .btn.ghost-btn { background: rgba(255,255,255,0.06); color: var(--mut); box-shadow: none;
+    border: 1.5px solid rgba(255,255,255,0.16); font-weight: 600; }
+
+  /* ② 剧情：素颜玻璃卡（划线色随主题） */
+  .act-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--ac2);
+    background: rgba(255,255,255,0.06); border: 1px solid var(--card-bd); border-radius: 999px; padding: 4px 14px; letter-spacing: 1px; }
+  .story { margin-top: 10px; background: rgba(255,255,255,0.075); }
+  .st-tit { font-size: 16.5px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+  .st-body { font-size: 14.5px; line-height: 2.05; margin-top: 8px; color: rgba(236,232,245,0.88); }
+  .st-body .hl { background: linear-gradient(transparent 60%, var(--hl) 60%); font-weight: 700; color: #fff; }
+  .hostcard { margin-top: 12px; }
+  .hc-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .hc-tit b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .hc-copy { flex: none; white-space: nowrap; font-size: 10px; color: var(--ac2); border: 1px solid var(--card-bd); border-radius: 999px; padding: 2px 10px; }
+  .hc-body { font-size: 10.5px; color: var(--mut); line-height: 1.8; margin-top: 6px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ② 开演大幕：幕布色 = 剧本主题色 */
+  .cur-ov { position: absolute; inset: 0; z-index: 9; pointer-events: none; }
+  .cur { position: absolute; top: 0; bottom: 0; width: 52%; transition: transform .75s cubic-bezier(.6,0,.3,1);
+    background: repeating-linear-gradient(90deg, var(--cur) 0 26px, var(--cur2) 26px 52px); }
+  .cur.l { left: 0; transform: translateX(-102%); } .cur.r { right: 0; transform: translateX(102%); }
+  .cur-ov.show .cur { transform: translateX(0); }
+  .cur-tit { position: absolute; left: 0; right: 0; top: 40%; text-align: center; z-index: 2; opacity: 0; transition: opacity .3s .65s; }
+  .cur-ov.show .cur-tit { opacity: 1; }
+  .cur-emoji { font-size: 44px; }
+  .cur-tit .c1 { font-size: 12px; letter-spacing: 6px; color: rgba(255,255,255,0.75); margin-top: 6px; }
+  .cur-tit .c2 { font-size: 23px; font-weight: 900; letter-spacing: 2px; margin-top: 4px; color: #fff;
+    text-shadow: 0 0 22px color-mix(in srgb, var(--ac) 70%, transparent); }
+  .cur-tit .c3 { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 6px; letter-spacing: 2px; }
+
+  /* ③ 舞台指认：追光灯 */
+  .stagebox { position: relative; z-index: 3; border-radius: 18px; padding: 58px 10px 14px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(0,0,0,0.34), rgba(0,0,0,0.18)); border: 1px solid var(--card-bd); }
+  .stage-tit { position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-size: 11px; letter-spacing: 5px; color: var(--mut); }
+  .sus-row { position: relative; display: flex; justify-content: space-around; }
+  .sus { position: relative; text-align: center; cursor: pointer; width: 64px; padding-top: 42px; transition: opacity .3s; }
+  .sus .beam { position: absolute; top: -16px; left: 50%; width: 78px; height: 94px; transform: translateX(-50%); opacity: 0; transition: opacity .3s;
+    background: linear-gradient(180deg, var(--spot), transparent 92%); clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%); }
+  .sus .f { position: relative; width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.14); transition: all .3s; }
+  .sus .n { position: relative; font-size: 9.5px; color: var(--mut); margin-top: 5px; }
+  .stagebox.picked .sus { opacity: .3; }
+  .stagebox.picked .sus.on { opacity: 1; }
+  .sus.on .beam { opacity: 1; }
+  .sus.on .f { border-color: var(--ac); box-shadow: 0 0 18px color-mix(in srgb, var(--ac) 55%, transparent); }
+  .sus.on .n { color: #fff; font-weight: 700; }
+  /* 舞台地板反光 */
+  .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
+    background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--ac) 18%, transparent)); }
+
+  /* ③ 谢幕：演员表逐行升起 */
+  .verdict { position: relative; z-index: 3; margin-top: 14px; min-height: 190px; }
+  .v-line { text-align: center; font-size: 14px; font-weight: 900; letter-spacing: 6px; padding-top: 8px;
+    opacity: 0; transition: opacity .4s .1s; color: var(--ac2); }
+  .verdict.done .v-line { opacity: 1; }
+  .cast { margin-top: 10px; }
+  .cast-row { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--card-bd);
+    border-radius: 12px; padding: 8px 12px; margin-top: 6px; font-size: 12px;
+    opacity: 0; transform: translateY(14px); transition: all .45s; }
+  .verdict.done .cast-row { opacity: 1; transform: none; }
+  .verdict.done .cast-row:nth-child(1) { transition-delay: .25s; }
+  .verdict.done .cast-row:nth-child(2) { transition-delay: .45s; }
+  .verdict.done .cast-row:nth-child(3) { transition-delay: .65s; }
+  .cast-row .who b { font-weight: 800; color: var(--ink); }
+  .cast-row .who span { color: var(--mut); font-size: 10.5px; margin-left: 6px; }
+  .cast-row .killer { color: #ff9daa; font-weight: 800; font-size: 10px; background: rgba(255,92,138,0.14);
+    border: 1px solid rgba(255,92,138,0.4); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+  .cast-row .cnt { color: var(--ac2); font-weight: 800; }
+  .v-note { text-align: center; font-size: 10px; color: var(--mut); margin-top: 10px; opacity: 0; transition: opacity .4s .9s; }
+  .verdict.done .v-note { opacity: 1; }
+  /* 欢乐本谢幕撒花 */
+  .fw { position: absolute; inset: 0; pointer-events: none; z-index: 8; overflow: hidden; }
+  .fw i { position: absolute; top: -10px; width: 7px; height: 11px; opacity: 0; animation: fall 2.4s linear forwards; }
+  @keyframes fall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(660px) rotate(520deg); opacity: .35; } }
+
+  .assets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .asset { background: var(--card-doc); border: 1px solid var(--card-bd-doc); border-radius: 14px; padding: 16px 18px; }
+  .asset h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .asset .use { font-size: 12px; color: var(--muted-doc); margin-bottom: 10px; }
+  .asset pre { white-space: pre-wrap; font-size: 12px; line-height: 1.7; color: #d8ceec; background: rgba(0,0,0,0.3);
+    border-radius: 8px; padding: 10px 12px; margin: 0; font-family: inherit; }
+  .note { font-size: 12px; color: var(--muted-doc); border-left: 3px solid #ffce54; padding-left: 12px; margin-top: 18px; }
+</style>
+
+<div class="wrap">
+  <h1>剧场框架 <span class="tag">空舞台 · 剧本当布景 · 一套通吃</span></h1>
+  <p class="lede">UI 只是一座干净的剧场（就是现在的夜幕紫），<b>味道全部由剧本自己带进来</b>：主题色取自 cover.gradient、开演过场用封面 emoji/图、文案与彩蛋强度按 tag（欢乐/悬疑）分档。<b>点下面的剧目切换，看同一套界面换戏</b>——这就是它不会在任何本子上出戏的原因。</p>
+
+  <div class="switcher">
+    <div class="sw sg on" onclick="setShow('sg')">☕ 巷往咖啡馆 · 悬疑</div>
+    <div class="sw ll" onclick="setShow('ll')">⛰ 浪浪山 · 欢乐</div>
+  </div>
+
+  <div class="stage">
+
+    <!-- ① 候场：演员就座 -->
+    <div class="slot">
+      <div class="slot-label">① 候场 · 今夜上演 + 演员就座（room）</div>
+      <div class="phone"><div class="scr sg">
+        <div class="valance"></div><div class="wing l"></div><div class="wing r"></div><div class="stagefloor"></div>
+        <div class="marquee">
+          <div class="bulbs"><s></s><s></s><s></s><s></s><s></s><s></s><s></s><s></s></div>
+          <div class="mq-label">今 夜 上 演</div>
+          <div class="mq-title" data-k="title">巷往咖啡馆</div>
+          <div class="mq-sub" data-k="sub">打烊后的咖啡馆，有人没走 · 场次 No.4721</div>
+        </div>
+        <div class="chips"><span class="chip">👥 5-7人</span><span class="chip">⏱ 约15分钟</span><span class="chip" data-k="tag">🎭 悬疑 · 人性</span></div>
+        <div class="h-row"><b>🎭 今晚的演员</b><span>点席位试试「入座」</span></div>
+        <div class="wcard">
+          <div class="seats" id="seats">
+            <div class="seat host"><div class="s-av">🎩</div><div class="s-name">老张</div><div class="s-role">导演·主持</div></div>
+            <div class="seat ready"><div class="s-av">🦊</div><div class="s-name">阿茶</div><div class="s-lamp"></div></div>
+            <div class="seat"><div class="s-av">🐰</div><div class="s-name">大飞</div><div class="s-lamp"></div></div>
+            <div class="seat"><div class="s-av">🐻</div><div class="s-name">米米</div><div class="s-lamp"></div></div>
+            <div class="seat"><div class="s-av">😼</div><div class="s-name">壮壮</div><div class="s-lamp"></div></div>
+            <div class="seat"><div class="s-av">🐨</div><div class="s-name">小婉</div><div class="s-lamp"></div></div>
+            <div class="seat"><div class="s-av">🦉</div><div class="s-name">教授</div><div class="s-lamp"></div></div>
+            <div class="seat"><div class="s-av">➕</div><div class="s-name">邀请</div></div>
+          </div>
+          <div class="hint" id="ready-hint">💡 1/6 位演员已入座 · 全员入座后导演开演</div>
+        </div>
+        <div class="btn">🎬 开 演</div>
+        <div class="btn ghost-btn">退出剧场</div>
+      </div></div>
+    </div>
+
+    <!-- ② 剧情 + 开演大幕 -->
+    <div class="slot">
+      <div class="slot-label">② 素颜剧情卡 + 开演大幕（game·单幕）</div>
+      <div class="phone"><div class="scr sg">
+        <div class="valance"></div><div class="wing l"></div><div class="wing r"></div><div class="stagefloor"></div>
+        <span class="act-chip" data-k="role">🎭 你的角色 · 阿澈（咖啡馆店长）</span>
+        <div class="wcard story">
+          <div class="st-tit" data-k="stTit">巷往咖啡馆 · 你的故事</div>
+          <div class="st-body" data-k="stBody">打烊前最后一杯手冲，是老周点的。<span class="hl">可我分明看见，杯底沉着一枚不属于店里的银纽扣</span>。卷帘门拉下一半时，储物间传来了响动…</div>
+        </div>
+        <div class="wcard hostcard">
+          <div class="hc-tit"><b>📋 发群内容（仅主持人可见）</b><span class="hc-copy">一键复制全部</span></div>
+          <div class="hc-body" data-k="hcBody">【开场白】各位客人，欢迎光临巷往咖啡馆……【群活动】请每人用角色口吻自我介绍……【线索】① 一枚银纽扣…② 未打卡的考勤表…</div>
+        </div>
+        <div class="btn" onclick="playCurtain()">🎬 重放「开演」大幕</div>
+        <div class="btn ghost-btn">退出房间</div>
+        <div class="cur-ov" id="curov">
+          <div class="cur l"></div><div class="cur r"></div>
+          <div class="cur-tit">
+            <div class="cur-emoji" data-k="emoji">☕</div>
+            <div class="c1">第 4721 场 · 开 演</div>
+            <div class="c2" data-k="curTit">《巷往咖啡馆》</div>
+            <div class="c3" data-k="curLine">大幕拉开 · 谜底藏在其中</div>
+          </div>
+          <div class="fw" id="curfw"></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ③ 追光指认 + 谢幕 -->
+    <div class="slot">
+      <div class="slot-label">③ 追光指认（voting）+ 谢幕演员表（result）</div>
+      <div class="phone"><div class="scr sg">
+        <div class="valance"></div><div class="wing l"></div><div class="wing r"></div><div class="stagefloor"></div>
+        <span class="act-chip">⚖️ 指认真凶 · 已投 4/6 · 可改票</span>
+        <div class="stagebox" id="stagebox" style="margin-top:10px;">
+          <div class="stage-tit">追 光 灯 下 · 谁 是 真 凶</div>
+          <div class="sus-row">
+            <div class="sus" onclick="spot(this)"><div class="beam"></div><div class="f">🧑‍🎨</div><div class="n" data-k="n1">阿澈 · 阿茶</div></div>
+            <div class="sus" onclick="spot(this)"><div class="beam"></div><div class="f">👨‍💼</div><div class="n" data-k="n2">老周 · 大飞</div></div>
+            <div class="sus" onclick="spot(this)"><div class="beam"></div><div class="f">👩‍🏫</div><div class="n" data-k="n3">小夏 · 米米</div></div>
+            <div class="sus" onclick="spot(this)"><div class="beam"></div><div class="f">🧓</div><div class="n" data-k="n4">陈叔 · 教授</div></div>
+          </div>
+          <div class="floor"></div>
+        </div>
+        <div class="verdict" id="vd">
+          <div class="v-line">— 本 剧 谢 幕 —</div>
+          <div class="cast">
+            <div class="cast-row"><div class="who"><b data-k="c1">小夏</b><span data-k="c1s">兼职生 · 米米</span><span class="killer">真凶</span></div><div class="cnt">4 票</div></div>
+            <div class="cast-row"><div class="who"><b data-k="c2">老周</b><span data-k="c2s">十年常客 · 大飞</span></div><div class="cnt">2 票</div></div>
+            <div class="cast-row"><div class="who"><b data-k="c3">阿澈</b><span data-k="c3s">咖啡馆店长 · 阿茶</span></div><div class="cnt">0 票</div></div>
+          </div>
+          <div class="v-note">其他玩家看不到结果 · 点「一键复制」发群公布</div>
+        </div>
+        <div class="btn" onclick="closeCase()">⚖️ 公布真相 · 谢幕</div>
+        <div class="fw" id="fw"></div>
+      </div></div>
+    </div>
+
+  </div>
+
+  <h2>换本 = 换戏，UI 一行不改</h2>
+  <table class="map">
+    <tr><th>随剧本自动变</th><th>数据来源</th><th>示例（照相馆 → 浪浪山）</th></tr>
+    <tr><td>主题色（按钮/座灯/追光/划线/幕布）</td><td>cover.gradient（已有字段）</td><td>紫蓝冷色 → 橙金暖色</td></tr>
+    <tr><td>开演过场（emoji/剧名/氛围词）</td><td>cover.emoji + title + tag</td><td>「谜底藏在其中」→「全体入戏，不许笑场！」</td></tr>
+    <tr><td>彩蛋强度</td><td>tag 含「欢乐」/「悬疑」</td><td>悬疑：压暗克制 → 欢乐：开演即撒花</td></tr>
+    <tr><td>恐怖特效包（可选）</td><td>tag 含「恐怖」</td><td>叠加幽影古堡的红眼/雷闪/烛光呼吸</td></tr>
+  </table>
+
+  <h2>剧场语言 → 真实流程逐页对应</h2>
+  <ul class="pl">
+    <li><b>room 候场</b>：剧本卡→「今夜上演」牌匾（小灯泡随主题色呼吸）；准备 = <b>入座亮座灯</b>；开始 = 「开演」。玩家在剧场语境里是<b>演员</b>——和剧本杀"扮演"的本质严丝合缝。</li>
+    <li><b>game 剧情</b>：开局播一次<b>大幕拉开</b>（幕布染主题色，欢乐本落彩带）；玩家屏 = 素颜剧情卡（划线色随主题）；主持人多「发群内容」暗卡，一键复制照旧。</li>
+    <li><b>voting 投票</b>：roster → 舞台追光：点谁追光打谁、其余暗下去（悬疑冷白光/欢乐暖黄光）；可改票、已投进度照旧。</li>
+    <li><b>result 结算</b>：<b>谢幕</b>——「本剧谢幕」+ 演员表逐行升起（角色 · 玩家 · 得票，真凶标红），欢乐本撒花；玩家端等待页 = 「幕间休息，等导演揭晓真相…」。</li>
+  </ul>
+
+  <h2>图片素材（完整版 10 张 · 按页面分组）</h2>
+  <p class="sub">全部生成后传云存储 games/theater/，走缩略图占位+云图淡入管线。<b>中性色素材 + 代码叠主题色滤镜</b>（tint/hue-rotate），一套图六个本共用不用重生。带 ⭐ 的是每屏的主角图。</p>
+
+  <p class="sub" style="margin-bottom:8px;"><b>—— 通用框架（三屏共用）——</b></p>
+  <div class="assets">
+    <div class="asset">
+      <h3>① 幕帘上沿 PNG（顶部常驻）⭐</h3>
+      <div class="use">替换 CSS 扇贝幕帘；透明底，含金色流苏收边，宽图三屏共用</div>
+      <pre>Theater curtain valance, dark neutral velvet swag with scalloped bottom edge and golden fringe tassels, soft top light, isolated on transparent background, PNG, wide 1536x300, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>② 侧幕布条 PNG（左右常驻）</h3>
+      <div class="use">左右 14px 的竖幕布边；一张竖图水平翻转两用</div>
+      <pre>Vertical theater side curtain, dark neutral velvet with deep vertical folds, slightly gathered by a golden rope tieback, isolated on transparent background, PNG, tall 300x1600, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>③ 开演大幕（过场双幕）⭐</h3>
+      <div class="use">开演过场的主角；一张整幕左右各裁一半做开合动画</div>
+      <pre>Grand theater main curtain fully closed, dark neutral heavy velvet with dramatic vertical folds, subtle spotlight glow from center top, symmetrical front view, cinematic, 1280x1600, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>④ 舞台木地板（底部常驻 + 指认区）</h3>
+      <div class="use">底部地板条与指认舞台的地面；带一点聚光反光</div>
+      <pre>Dark polished wooden theater stage floor planks with soft spotlight reflection pool, viewed straight on from the front row, neutral dark tone, 1536x400, no text</pre>
+    </div>
+  </div>
+
+  <p class="sub" style="margin:18px 0 8px;"><b>—— ① 候场页（准备/就座）——</b></p>
+  <div class="assets">
+    <div class="asset">
+      <h3>⑤ 红丝绒剧院座椅 PNG ⭐</h3>
+      <div class="use">席位主角：每个玩家一把椅子，头像坐进椅背上方；「准备」= 椅子亮起（代码叠主题色辉光）。空椅 = 未入座，暗椅 = 黑影感</div>
+      <pre>Single vintage theater seat, dark red velvet cushion with carved wooden armrests and gold trim, front view, slightly worn, isolated on transparent background, PNG, 512x640, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>⑥ 剧院牌匾灯框 PNG</h3>
+      <div class="use">「今夜上演」牌匾的边框：一圈小圆灯泡的金属框，中间镂空放剧名（灯泡亮灭由代码控制也行，框是图）</div>
+      <pre>Vintage theater marquee sign frame with a border of small round light bulbs, dark brass metal, empty center, isolated on transparent background, PNG, wide 1024x400, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>⑦ 剧院大厅氛围底图</h3>
+      <div class="use">候场页背景：观众席虚影+包厢+暗金装饰，压暗后垫在夜幕紫下面，比纯色底厚很多</div>
+      <pre>Grand theater auditorium interior at night, rows of empty seats fading into darkness, ornate balcony boxes, warm dim lights, deep purple-black tone, blurred background style, 1024x1600, no people, no text</pre>
+    </div>
+  </div>
+
+  <p class="sub" style="margin:18px 0 8px;"><b>—— ③ 指认页（投票灯光）——</b></p>
+  <div class="assets">
+    <div class="asset">
+      <h3>⑧ 聚光灯光束 PNG ⭐</h3>
+      <div class="use">指认的灵魂：真实的锥形追光（带灰尘颗粒的体积光），透明底；点谁就把光束定位到谁头上，代码叠冷白/暖黄滤镜区分悬疑/欢乐</div>
+      <pre>Theatrical spotlight beam cone, volumetric light with visible dust particles, bright at top fading to soft pool at bottom, neutral white light, isolated on transparent background, PNG, 600x900, no fixture, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>⑨ 舞台射灯灯具 PNG</h3>
+      <div class="use">挂在指认区顶部横杆上的 3-4 盏舞台灯（未选中时灯是灭的，选中后接⑧的光束），横杆+灯具一张图</div>
+      <pre>Row of four stage spotlight fixtures mounted on a black metal truss bar, theater lighting rig, front view, lights off, matte black metal with subtle highlights, isolated on transparent background, PNG, wide 1200x300, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>⑩ 幕后剪影背景（指认区底）</h3>
+      <div class="use">指认舞台的背景墙：后台绳索、沙袋、布景板的暗剪影，营造"审判后台"的纵深</div>
+      <pre>Dark theater backstage silhouette, ropes, sandbags and scenery flats in deep shadow, faint blue working light from one side, very dark and moody, 1024x600, no people, no text</pre>
+    </div>
+  </div>
+
+  <p class="sub" style="margin-top:14px;">落地顺序建议：⑧聚光灯光束 → ⑤剧院座椅 → ③开演大幕（三张主角图先出效果），再补①②④⑥⑦⑨⑩。生成后发我，我压缩+传云+做缩略图占位接入。</p>
+
+  <h2>落地</h2>
+  <ul class="pl">
+    <li>照旧只动 wxml/wxss + 一个<b>主题解析函数</b>（读 cover.gradient/tag → 输出 CSS 变量，约 20 行 js），对局逻辑零改动。</li>
+    <li>顺序：②大幕+剧情卡 → ③追光+谢幕 → ①牌匾候场。恐怖特效包最后做，按 tag 挂载。</li>
+    <li>以后上新本：填好封面渐变和 tag 就自动有自己的"戏"，<b>零适配成本</b>——这是这版相对强主题方案的决定性优势。</li>
+  </ul>
+  <p class="note">口径提醒：对外文案走「推理剧场/今夜上演」，中性且有记忆点，不涉敏感词，与备案口径一致。</p>
+</div>
+
+<script>
+  const SHOWS = {
+    sg: {
+      title: '巷往咖啡馆', sub: '打烊后的咖啡馆，有人没走 · 场次 No.4721', tag: '🎭 悬疑 · 人性',
+      role: '🎭 你的角色 · 阿澈（咖啡馆店长）', stTit: '巷往咖啡馆 · 你的故事',
+      stBody: '打烊前最后一杯手冲，是老周点的。<span class="hl">可我分明看见，杯底沉着一枚不属于店里的银纽扣</span>。卷帘门拉下一半时，储物间传来了响动…',
+      hcBody: '【开场白】各位客人，欢迎光临巷往咖啡馆……【群活动】请每人用角色口吻自我介绍……【线索】① 一枚银纽扣…② 未打卡的考勤表…',
+      emoji: '☕', curTit: '《巷往咖啡馆》', curLine: '大幕拉开 · 谜底藏在其中',
+      n1: '阿澈 · 阿茶', n2: '老周 · 大飞', n3: '小夏 · 米米', n4: '陈叔 · 教授',
+      c1: '小夏', c1s: '兼职生 · 米米', c2: '老周', c2s: '十年常客 · 大飞', c3: '阿澈', c3s: '咖啡馆店长 · 阿茶',
+      confetti: false,
+    },
+    ll: {
+      title: '浪浪山·巡山日志', sub: '大王的烤鸡少了一只 · 场次 No.4722', tag: '🎭 欢乐 · 西游',
+      role: '🎭 你的角色 · 小猪妖（巡山小队长）', stTit: '浪浪山 · 你的故事',
+      stBody: '今天轮到我看守烤鸡。我就打了个盹儿，<span class="hl">醒来的时候鸡没了，地上只剩三根鸡毛和一串可疑的蹄印</span>。大王要是知道了，我这个月的窝窝头就没了…',
+      hcBody: '【开场白】各位妖怪，浪浪山出大事了……【群活动】请每只妖用角色口吻汇报昨晚在哪……【线索】① 三根鸡毛…② 一串蹄印…',
+      emoji: '⛰', curTit: '《浪浪山·巡山日志》', curLine: '全体入戏 · 不许笑场！',
+      n1: '小猪妖 · 阿茶', n2: '乌鸦精 · 大飞', n3: '蛤蟆精 · 米米', n4: '狼大人 · 教授',
+      c1: '蛤蟆精', c1s: '伙房总管 · 米米', c2: '乌鸦精', c2s: '情报头子 · 大飞', c3: '小猪妖', c3s: '巡山队长 · 阿茶',
+      confetti: true,
+    },
+  };
+  let cur = 'sg';
+  function setShow(k) {
+    cur = k;
+    document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', s.classList.contains(k)));
+    document.querySelectorAll('.scr').forEach((s) => { s.classList.remove('sg', 'll'); s.classList.add(k); });
+    const d = SHOWS[k];
+    document.querySelectorAll('[data-k]').forEach((el) => {
+      const v = d[el.dataset.k];
+      if (v == null) return;
+      if (el.dataset.k === 'stBody') el.innerHTML = v; else el.textContent = v;
+    });
+  }
+  document.querySelectorAll('#seats .seat').forEach((s) => {
+    if (s.classList.contains('host') || !s.querySelector('.s-lamp')) return;
+    s.addEventListener('click', () => {
+      s.classList.toggle('ready');
+      const n = document.querySelectorAll('#seats .seat.ready').length;
+      document.getElementById('ready-hint').textContent = `💡 ${n}/6 位演员已入座 · 全员入座后导演开演`;
+    });
+  });
+  function dropConfetti(box) {
+    box.innerHTML = '';
+    const colors = ['#ffce54', '#ff9a45', '#ff5c8a', '#8b5cff', '#7bd88f'];
+    for (let i = 0; i < 24; i++) {
+      const p = document.createElement('i');
+      p.style.left = Math.random() * 100 + '%';
+      p.style.background = colors[i % colors.length];
+      p.style.animationDelay = (Math.random() * 0.5) + 's';
+      box.appendChild(p);
+    }
+  }
+  function playCurtain() {
+    const ov = document.getElementById('curov');
+    ov.classList.remove('show'); void ov.offsetWidth;
+    ov.classList.add('show');
+    if (SHOWS[cur].confetti) setTimeout(() => dropConfetti(document.getElementById('curfw')), 700);
+    else document.getElementById('curfw').innerHTML = '';
+    setTimeout(() => ov.classList.remove('show'), 2300);
+  }
+  function spot(el) {
+    const box = document.getElementById('stagebox');
+    box.classList.add('picked');
+    box.querySelectorAll('.sus').forEach((s) => s.classList.toggle('on', s === el));
+  }
+  function closeCase() {
+    const vd = document.getElementById('vd');
+    vd.classList.remove('done'); void vd.offsetWidth;
+    vd.classList.add('done');
+    if (SHOWS[cur].confetti) dropConfetti(document.getElementById('fw'));
+    else document.getElementById('fw').innerHTML = '';
+  }
+</script>

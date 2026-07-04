@@ -1,0 +1,365 @@
+<title>光影·一根线 · 抽象视觉方案</title>
+<style>
+  :root {
+    --page: #14101f; --ink-doc: #ece8f5; --muted-doc: #b3a6cc;
+    --card-doc: rgba(255,255,255,0.06); --card-bd-doc: rgba(255,255,255,0.1);
+    --bg: #17121f; --ink: #ece8f5; --mut: #8d81a8;
+    --card-bd: rgba(255,255,255,0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink-doc);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: #e8e0ff;
+    border: 1px solid rgba(220,210,255,0.35); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted-doc); font-size: 14px; max-width: 66ch; margin: 0 0 28px; }
+  .lede b { color: var(--ink-doc); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, #8b5cff, #fff); border-radius: 2px; }
+  .sub { color: var(--muted-doc); font-size: 13.5px; max-width: 70ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink-doc); font-weight: 600; }
+  ul.pl { color: var(--muted-doc); font-size: 13.5px; padding-left: 20px; }
+  ul.pl li { margin: 6px 0; }
+
+  /* 冷暖光切换（真实端由 cover.gradient / tag 决定） */
+  .switcher { display: flex; gap: 12px; justify-content: center; margin: 4px 0 26px; }
+  .sw { padding: 9px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; cursor: pointer;
+    color: var(--muted-doc); background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.14); transition: all .25s; }
+  .sw.on { color: #fff; border-color: transparent; }
+  .sw.cold.on { background: linear-gradient(135deg, #8b5cff, #5a7cff); box-shadow: 0 6px 18px rgba(120,100,255,0.4); }
+  .sw.warm.on { background: linear-gradient(135deg, #ffb054, #ffd97a); box-shadow: 0 6px 18px rgba(255,180,80,0.4); color: #4a2c08; }
+
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted-doc); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 640px; padding: 24px 18px; overflow: hidden;
+    background: var(--bg); color: var(--ink); transition: background 1.2s; }
+  /* 光色主题：cold=悬疑冷光 warm=欢乐暖光 */
+  .scr.cold { --ac: #a58bff; --line: #cabdff; --pool: rgba(150,130,255,0.10); }
+  .scr.warm { --ac: #ffc86a; --line: #ffe1a8; --pool: rgba(255,200,110,0.10); }
+
+  .h-row { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 2px 8px; }
+  .h-row b { font-size: 13.5px; letter-spacing: 1px; color: var(--ink); }
+  .h-row span { font-size: 10.5px; color: var(--mut); }
+
+  /* 页首：只有一行字 + 一根线划过 */
+  .head { position: relative; text-align: center; padding: 8px 0 16px; }
+  .head .t { font-size: 19px; font-weight: 900; letter-spacing: 3px; color: #fff; }
+  .head .s { font-size: 10.5px; color: var(--mut); margin-top: 4px; letter-spacing: 1px; }
+  .head svg { position: absolute; left: 10%; right: 10%; bottom: 2px; width: 80%; height: 14px; }
+  .head path { fill: none; stroke: var(--line); stroke-width: 1.5; opacity: .85;
+    stroke-dasharray: 300; stroke-dashoffset: 300; animation: draw 1.6s ease .3s forwards; filter: drop-shadow(0 0 4px var(--ac)); }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* ① 候场：暗影席位 + 线穿过打结 */
+  .seatzone { position: relative; padding: 8px 2px; }
+  .seatzone > svg.thread { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .thread path { fill: none; stroke: var(--line); stroke-width: 1.2; opacity: .3;
+    stroke-dasharray: 900; stroke-dashoffset: 900; animation: draw 2.6s ease .2s forwards; }
+  .seats { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 10px; }
+  .seat { position: relative; text-align: center; cursor: pointer; }
+  .s-av { width: 54px; height: 54px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; background: rgba(255,255,255,0.04); transition: all .45s;
+    filter: brightness(0.3) saturate(0.2); }
+  .seat .glow { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%;
+    background: radial-gradient(circle, var(--pool), transparent 70%); opacity: 0; transition: opacity .5s; }
+  .knot { position: absolute; top: -4px; left: 50%; width: 62px; height: 62px; margin-left: -31px; pointer-events: none; }
+  .knot circle { fill: none; stroke: var(--line); stroke-width: 1.4; opacity: 0;
+    stroke-dasharray: 190; stroke-dashoffset: 190; filter: drop-shadow(0 0 5px var(--ac)); }
+  .seat.ready .knot circle { opacity: .9; animation: draw .7s ease forwards; }
+  .seat.ready .s-av { filter: none; background: rgba(255,255,255,0.08); }
+  .seat.ready .glow { opacity: 1; }
+  .seat.host .s-av { filter: none; background: rgba(255,255,255,0.08); box-shadow: 0 0 20px var(--pool); }
+  .s-name { font-size: 10.5px; color: var(--mut); margin-top: 6px; }
+  .s-role { font-size: 9px; color: var(--ac); letter-spacing: 1px; }
+  .hint { position: relative; z-index: 3; font-size: 11px; color: var(--mut); margin-top: 14px; text-align: center; }
+
+  .btn { position: relative; z-index: 7; margin: 18px auto 0; width: 84%; height: 46px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;
+    letter-spacing: 3px; cursor: pointer; color: #16101f; background: linear-gradient(135deg, #fff, var(--line));
+    box-shadow: 0 0 26px var(--pool), 0 6px 18px rgba(0,0,0,0.4); transition: all .4s; }
+  .btn.ghost-btn { background: transparent; color: var(--mut); box-shadow: none; border: 1px solid rgba(255,255,255,0.14); font-weight: 600; }
+
+  /* ② 剧情：一块被照亮的区域（外面全是暗） */
+  .story-wrap { position: relative; margin-top: 12px; }
+  .story { position: relative; z-index: 3; border-radius: 18px; padding: 18px 16px; text-align: left;
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 9999px rgba(5,2,12,0.55), 0 0 60px var(--pool); }
+  .st-tit { font-size: 16.5px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+  .st-body { font-size: 14.5px; line-height: 2.05; margin-top: 8px; color: rgba(236,232,245,0.9); }
+  .st-body .hl { position: relative; font-weight: 700; color: #fff; white-space: normal; }
+  .st-body .hl::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1.5px;
+    background: var(--line); box-shadow: 0 0 6px var(--ac); transform: scaleX(0); transform-origin: left;
+    animation: underline 1.2s ease 1.2s forwards; }
+  @keyframes underline { to { transform: scaleX(1); } }
+  .hostcard { position: relative; z-index: 3; margin-top: 12px; background: rgba(255,255,255,0.045); border-radius: 14px;
+    padding: 12px 14px; border: 1px solid var(--card-bd); }
+  .hc-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .hc-tit b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .hc-copy { flex: none; white-space: nowrap; font-size: 10px; color: var(--ac); border: 1px solid var(--card-bd);
+    border-radius: 999px; padding: 2px 10px; }
+  .hc-body { font-size: 10.5px; color: var(--mut); line-height: 1.8; margin-top: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ② 开场过场：一道光扫过 + 线写出剧名 */
+  .open-ov { position: absolute; inset: 0; z-index: 9; pointer-events: none; background: #0a0612; opacity: 0; transition: opacity .35s; }
+  .open-ov.show { opacity: 1; }
+  .sweep { position: absolute; top: -20%; bottom: -20%; width: 90px; left: -140px; transform: rotate(14deg);
+    background: linear-gradient(90deg, transparent, var(--pool), rgba(255,255,255,0.16), var(--pool), transparent); }
+  .open-ov.show .sweep { animation: sweep 1.5s ease .25s; }
+  @keyframes sweep { to { left: 120%; } }
+  .open-tit { position: absolute; left: 0; right: 0; top: 42%; text-align: center; opacity: 0; }
+  .open-ov.show .open-tit { animation: fadein .8s ease 1.1s forwards; }
+  @keyframes fadein { to { opacity: 1; } }
+  .open-tit .o1 { font-size: 11px; letter-spacing: 8px; color: var(--mut); }
+  .open-tit .o2 { font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #fff; margin-top: 8px;
+    text-shadow: 0 0 26px var(--ac); }
+  .open-tit svg { width: 200px; height: 16px; margin-top: 8px; }
+  .open-tit path { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 240; stroke-dashoffset: 240;
+    filter: drop-shadow(0 0 5px var(--ac)); }
+  .open-ov.show .open-tit path { animation: draw 1.1s ease 1.5s forwards; }
+
+  /* ③ 指认：阴影收缩 + 万线归一 */
+  .lineup-zone { position: relative; margin-top: 12px; border-radius: 18px; padding: 30px 8px 22px; overflow: hidden;
+    background: rgba(0,0,0,0.3); }
+  .lz-tit { text-align: center; font-size: 11px; letter-spacing: 6px; color: var(--mut); margin-bottom: 20px; }
+  .lineup { position: relative; display: flex; justify-content: space-around; }
+  .man { position: relative; z-index: 2; text-align: center; cursor: pointer; width: 62px; transition: all .5s; }
+  .man .pool-glow { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); width: 84px; height: 84px; border-radius: 50%;
+    background: radial-gradient(circle, var(--pool), transparent 68%); opacity: 0; transition: opacity .5s; }
+  .man .f { position: relative; width: 48px; height: 48px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; background: rgba(255,255,255,0.05); transition: all .5s; filter: brightness(.45) saturate(.3); }
+  .man .n { position: relative; font-size: 9.5px; color: var(--mut); margin-top: 6px; transition: opacity .5s; }
+  .lineup-zone.picked .man { opacity: .28; }
+  .lineup-zone.picked .man.on { opacity: 1; }
+  .man.on .f { filter: none; background: rgba(255,255,255,0.1); box-shadow: 0 0 24px var(--pool); }
+  .man.on .pool-glow { opacity: 1; }
+  .man.on .n { color: #fff; font-weight: 700; }
+  svg.converge { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  .converge line { stroke: var(--line); stroke-width: 1.2; opacity: 0; filter: drop-shadow(0 0 4px var(--ac));
+    stroke-dasharray: 320; stroke-dashoffset: 320; }
+  .converge line.on { opacity: .85; animation: draw .8s ease forwards; }
+
+  /* ③ 真相 = 破晓 */
+  .scr.dawn { background: linear-gradient(180deg, var(--bg) 0%, #241c38 55%, #3a2c54 100%); }
+  .verdict { position: relative; z-index: 3; margin-top: 14px; min-height: 150px; }
+  .v-line { text-align: center; font-size: 13px; font-weight: 900; letter-spacing: 8px; padding-top: 8px;
+    opacity: 0; transition: opacity .5s .3s; color: #fff; text-shadow: 0 0 20px var(--ac); }
+  .verdict.done .v-line { opacity: 1; }
+  .cast { margin-top: 10px; }
+  .cast-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--card-bd); border-radius: 12px; padding: 8px 12px; margin-top: 6px; font-size: 12px;
+    opacity: 0; transform: translateY(14px); transition: all .45s; }
+  .verdict.done .cast-row { opacity: 1; transform: none; }
+  .verdict.done .cast-row:nth-child(1) { transition-delay: .4s; }
+  .verdict.done .cast-row:nth-child(2) { transition-delay: .6s; }
+  .cast-row .who b { font-weight: 800; color: var(--ink); }
+  .cast-row .who span { color: var(--mut); font-size: 10.5px; margin-left: 6px; }
+  .cast-row .killer { color: #fff; font-weight: 800; font-size: 10px; background: rgba(255,255,255,0.1);
+    border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; margin-left: 6px; text-shadow: 0 0 8px var(--ac); }
+  .cast-row .cnt { color: var(--ac); font-weight: 800; }
+  .v-note { text-align: center; font-size: 10px; color: var(--mut); margin-top: 10px; opacity: 0; transition: opacity .4s .9s; }
+  .verdict.done .v-note { opacity: 1; }
+
+  .assets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .asset { background: var(--card-doc); border: 1px solid var(--card-bd-doc); border-radius: 14px; padding: 16px 18px; }
+  .asset h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .asset .use { font-size: 12px; color: var(--muted-doc); margin-bottom: 10px; }
+  .asset pre { white-space: pre-wrap; font-size: 12px; line-height: 1.7; color: #d8ceec; background: rgba(0,0,0,0.3);
+    border-radius: 8px; padding: 10px 12px; margin: 0; font-family: inherit; }
+  .note { font-size: 12px; color: var(--muted-doc); border-left: 3px solid #cabdff; padding-left: 12px; margin-top: 18px; }
+</style>
+
+<div class="wrap">
+  <h1>光影 · 一根线 <span class="tag">抽象 · 零场景 · 一套通吃</span></h1>
+  <p class="lede">不扮演任何地方——没有剧场、没有古堡、没有桌子。整个 UI 只剩两种元素：<b>光（照亮哪里）和一根线（连起什么）</b>。光负责氛围与聚焦：读字的地方被照亮、其余沉在暗里；线负责仪式与语义：准备是「系上」、投票是「牵向」、真相是「收网」。抽象到极致，所以任何本子都不会出戏。冷暖光随剧本自动切换（真实端读 cover.gradient / tag）。</p>
+
+  <div class="switcher">
+    <div class="sw cold on" onclick="setLight('cold')">🌙 冷光 · 悬疑本</div>
+    <div class="sw warm" onclick="setLight('warm')">☀️ 暖光 · 欢乐本</div>
+  </div>
+
+  <div class="stage">
+
+    <!-- ① 候场：线穿过席位打结 -->
+    <div class="slot">
+      <div class="slot-label">① 候场 · 线穿过席位，就位打结（room）</div>
+      <div class="phone"><div class="scr cold">
+        <div class="head">
+          <div class="t">巷往咖啡馆</div>
+          <div class="s">打烊后的咖啡馆，有人没走 · No.4721</div>
+          <svg viewBox="0 0 300 14"><path d="M4 8 C 60 2, 120 13, 170 7 S 270 4, 296 8"/></svg>
+        </div>
+        <div class="h-row"><b>就位的人，线会记住</b><span>点席位试试</span></div>
+        <div class="seatzone">
+          <svg class="thread" viewBox="0 0 300 170" preserveAspectRatio="none">
+            <path d="M-10 40 C 40 20, 60 55, 110 38 S 200 18, 250 40 S 310 50, 340 35 M-10 120 C 50 100, 90 140, 150 118 S 250 100, 340 122"/>
+          </svg>
+          <div class="seats" id="seats">
+            <div class="seat host"><div class="glow"></div><div class="s-av">🎩</div><div class="s-name">老张</div><div class="s-role">主持</div></div>
+            <div class="seat ready"><div class="glow"></div><svg class="knot" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29"/></svg><div class="s-av">🦊</div><div class="s-name">阿茶</div></div>
+            <div class="seat"><div class="glow"></div><svg class="knot" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29"/></svg><div class="s-av">🐰</div><div class="s-name">大飞</div></div>
+            <div class="seat"><div class="glow"></div><svg class="knot" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29"/></svg><div class="s-av">🐻</div><div class="s-name">米米</div></div>
+            <div class="seat"><div class="glow"></div><svg class="knot" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29"/></svg><div class="s-av">😼</div><div class="s-name">壮壮</div></div>
+            <div class="seat"><div class="glow"></div><svg class="knot" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29"/></svg><div class="s-av">🐨</div><div class="s-name">小婉</div></div>
+            <div class="seat"><div class="glow"></div><svg class="knot" viewBox="0 0 62 62"><circle cx="31" cy="31" r="29"/></svg><div class="s-av">🦉</div><div class="s-name">教授</div></div>
+            <div class="seat"><div class="glow"></div><div class="s-av">➕</div><div class="s-name">邀请</div></div>
+          </div>
+        </div>
+        <div class="hint" id="ready-hint">已系上 1/6 · 线连齐了，故事才开始</div>
+        <div class="btn">开 始</div>
+        <div class="btn ghost-btn">离 开</div>
+      </div></div>
+    </div>
+
+    <!-- ② 剧情：被照亮的一块 -->
+    <div class="slot">
+      <div class="slot-label">② 剧情 · 只照亮你的故事（game·单幕）</div>
+      <div class="phone"><div class="scr cold">
+        <div class="head">
+          <div class="t" style="font-size:13px; letter-spacing:2px;">你的角色 · 阿澈（店长）</div>
+          <svg viewBox="0 0 300 14"><path d="M40 8 C 100 3, 180 12, 260 7"/></svg>
+        </div>
+        <div class="story-wrap">
+          <div class="story">
+            <div class="st-tit">巷往咖啡馆 · 你的故事</div>
+            <div class="st-body">打烊前最后一杯手冲，是老周点的。<span class="hl">可我分明看见，杯底沉着一枚不属于店里的银纽扣</span>。卷帘门拉下一半时，储物间传来了响动…</div>
+          </div>
+        </div>
+        <div class="hostcard">
+          <div class="hc-tit"><b>📋 发群内容（仅主持人）</b><span class="hc-copy">一键复制全部</span></div>
+          <div class="hc-body">【开场白】各位客人，欢迎光临巷往咖啡馆……【线索】① 一枚银纽扣…② 未打卡的考勤表…</div>
+        </div>
+        <div class="btn" onclick="playOpen()">重放「开场」光影</div>
+        <div class="btn ghost-btn">退出房间</div>
+        <div class="open-ov" id="openov">
+          <div class="sweep"></div>
+          <div class="open-tit">
+            <div class="o1">故 事 开 始</div>
+            <div class="o2">巷往咖啡馆</div>
+            <svg viewBox="0 0 200 16"><path d="M6 10 C 50 2, 90 14, 130 8 S 180 4, 194 9"/></svg>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ③ 指认：万线归一 + 破晓 -->
+    <div class="slot">
+      <div class="slot-label">③ 指认 · 万线归一（voting）→ 破晓（result）</div>
+      <div class="phone"><div class="scr cold" id="scr3">
+        <div class="head">
+          <div class="t" style="font-size:13px; letter-spacing:2px;">指认真凶 · 已投 4/6</div>
+          <svg viewBox="0 0 300 14"><path d="M40 8 C 100 3, 180 12, 260 7"/></svg>
+        </div>
+        <div class="lineup-zone" id="lz">
+          <div class="lz-tit">线 会 指 向 谁</div>
+          <svg class="converge" id="cvg" viewBox="0 0 300 150" preserveAspectRatio="none"></svg>
+          <div class="lineup" id="lineup">
+            <div class="man" onclick="pick(0)"><div class="pool-glow"></div><div class="f">🧑‍🎨</div><div class="n">阿澈 · 阿茶</div></div>
+            <div class="man" onclick="pick(1)"><div class="pool-glow"></div><div class="f">👨‍💼</div><div class="n">老周 · 大飞</div></div>
+            <div class="man" onclick="pick(2)"><div class="pool-glow"></div><div class="f">👩‍🏫</div><div class="n">小夏 · 米米</div></div>
+            <div class="man" onclick="pick(3)"><div class="pool-glow"></div><div class="f">🧓</div><div class="n">陈叔 · 教授</div></div>
+          </div>
+        </div>
+        <div class="verdict" id="vd">
+          <div class="v-line">真 相 大 白</div>
+          <div class="cast">
+            <div class="cast-row"><div class="who"><b>小夏</b><span>兼职生 · 米米</span><span class="killer">真凶</span></div><div class="cnt">4 票</div></div>
+            <div class="cast-row"><div class="who"><b>老周</b><span>十年常客 · 大飞</span></div><div class="cnt">2 票</div></div>
+          </div>
+          <div class="v-note">其他玩家看不到结果 · 一键复制发群公布</div>
+        </div>
+        <div class="btn" onclick="closeCase()">公布真相 · 破晓</div>
+      </div></div>
+    </div>
+
+  </div>
+
+  <h2>两种元素，四个动作</h2>
+  <ul class="pl">
+    <li><b>光——照亮哪里，注意力就在哪里</b>：候场只有就位的人亮；剧情页全屏只照亮你的故事那一块（外面压暗 55%）；指认时光只留在被指认的人身上；公布真相 = <b>破晓</b>，整屏从深夜渐变成黎明。</li>
+    <li><b>线——推理的具象</b>：候场的线穿过所有席位，就位 = 在你头像上<b>绕一圈打结</b>；关键句下的划线是线自己长出来的；投票 = 其余人的线<b>一起牵向</b>你选的人；真相 = 万线归一。</li>
+    <li>光的冷暖随本切换（顶部开关试试）：悬疑本冷紫月光，欢乐本暖金阳光——同构不同温。tag 含「恐怖」可以再压暗 + 线变细颤动。</li>
+    <li>零 emoji 装饰、零场景道具、零拟物——这版的克制本身就是风格。</li>
+  </ul>
+
+  <h2>与真实流程逐页对应</h2>
+  <ul class="pl">
+    <li><b>room</b>：准备 = 线打结（ready 字段驱动 SVG 描边动画）；「全员就位」文案改为「线连齐了，故事才开始」。</li>
+    <li><b>game</b>：开局播一次「光扫过 + 线写出剧本名」过场（现有 transShow 钩子换皮）；玩家屏 = 被照亮的故事卡（box-shadow 一行实现外部压暗）；主持人发群暗卡照旧。</li>
+    <li><b>voting</b>：点谁 = 其余人的线牵向谁 + 光聚到谁（roster 位置已知，4~7 条 line 的 SVG 即可）；可改票 = 线重新牵。</li>
+    <li><b>result</b>：主持人「公布真相」→ 破晓渐亮 + 结果行升起；玩家等待页 = 一行字「天快亮了，等主持人揭晓…」。</li>
+  </ul>
+
+  <h2>图片素材（0 张必需，2 张可选）</h2>
+  <div class="assets">
+    <div class="asset">
+      <h3>① 体积光束 PNG（可选增强）</h3>
+      <div class="use">指认时打在人身上的光可以从 CSS 径向渐变升级为真实体积光（带尘埃颗粒）</div>
+      <pre>Soft volumetric light beam from above, visible dust particles, neutral white, gentle falloff, isolated on transparent background, PNG, 600x900, no fixture, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>② 微尘粒子平铺图（可选增强）</h3>
+      <div class="use">全屏叠一层极淡的浮尘（screen 混合模式），暗部会更有空气感</div>
+      <pre>Subtle floating dust particles on pure black background, tiny soft bokeh dots, sparse, seamless tileable, 1024x1024, no text</pre>
+    </div>
+  </div>
+
+  <h2>落地</h2>
+  <ul class="pl">
+    <li>核心技术就三样：<b>SVG 描边动画</b>（线）、<b>box-shadow 外部压暗</b>（光斑）、<b>背景渐变过渡</b>(破晓)——小程序全支持，性能压力小于剧场版。</li>
+    <li>照旧只动 wxml/wxss + 20 行主题函数（冷暖光/线色 ← cover.gradient、tag）。</li>
+    <li>顺序：②照亮的故事卡 + 开场光影 → ③万线归一 + 破晓 → ①线穿席位。</li>
+  </ul>
+  <p class="note">口径提醒：对外文案走「推理/真相大白」，抽象风没有任何敏感意象，备案口径最安全的一版。</p>
+</div>
+
+<script>
+  function setLight(k) {
+    document.querySelectorAll('.sw').forEach((s) => s.classList.toggle('on', s.classList.contains(k)));
+    document.querySelectorAll('.scr').forEach((s) => { s.classList.remove('cold', 'warm'); s.classList.add(k); });
+  }
+  document.querySelectorAll('#seats .seat').forEach((s) => {
+    if (s.classList.contains('host') || !s.querySelector('.knot')) return;
+    s.addEventListener('click', () => {
+      s.classList.toggle('ready');
+      const n = document.querySelectorAll('#seats .seat.ready').length;
+      document.getElementById('ready-hint').textContent = `已系上 ${n}/6 · 线连齐了，故事才开始`;
+    });
+  });
+  function playOpen() {
+    const ov = document.getElementById('openov');
+    ov.classList.remove('show'); void ov.offsetWidth;
+    ov.classList.add('show');
+    setTimeout(() => ov.classList.remove('show'), 3100);
+  }
+  // 指认：其余人的线牵向被选中者
+  function pick(idx) {
+    const lz = document.getElementById('lz');
+    const svg = document.getElementById('cvg');
+    const men = [...document.querySelectorAll('#lineup .man')];
+    lz.classList.add('picked');
+    men.forEach((m, i) => m.classList.toggle('on', i === idx));
+    // 四个头像在 viewBox(300x150) 里的近似坐标（与 flex 均分一致）
+    const xs = [37.5, 112.5, 187.5, 262.5], headY = 52;
+    svg.innerHTML = '';
+    men.forEach((m, i) => {
+      if (i === idx) return;
+      const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      ln.setAttribute('x1', xs[i]); ln.setAttribute('y1', headY);
+      ln.setAttribute('x2', xs[idx]); ln.setAttribute('y2', headY - 14);
+      svg.appendChild(ln);
+      requestAnimationFrame(() => ln.classList.add('on'));
+    });
+  }
+  function closeCase() {
+    document.getElementById('scr3').classList.add('dawn');
+    const vd = document.getElementById('vd');
+    vd.classList.remove('done'); void vd.offsetWidth;
+    vd.classList.add('done');
+  }
+</script>

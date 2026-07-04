@@ -27,6 +27,7 @@ Page({
 
   // 每次进入都重新请求最新数据（不依赖缓存）
   async onShow() {
+    this._hidden = false;
     this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
@@ -35,7 +36,7 @@ Page({
     await this.load();
     this.watchReset();
   },
-  onHide() { this.closeWatch(); },
+  onHide() { this._hidden = true; this.closeWatch(); },
 
   // 主持人：一键复制「投票结果 + 真相 + 那封信」文本，发到群里
   copyTruthLetter() {
@@ -183,12 +184,18 @@ Page({
           wx.redirectTo({ url: `/pages/room/room?roomId=${this.data.roomId}&roomCode=${this.data.roomCode}` });
         }
       },
-      onError: () => {},
+      onError: () => {
+        // 监听断了：稍后重建（本页 watch 只为感知解散/重开，无需手动拉取）
+        this.closeWatch();
+        setTimeout(() => {
+          if (!this._hidden && this.data.roomId && !this.watcher) this.watchReset();
+        }, 2000);
+      },
     });
   },
 
   closeWatch() {
-    if (this.watcher) { this.watcher.close(); this.watcher = null; }
+    if (this.watcher) { try { this.watcher.close(); } catch (e) {} this.watcher = null; }
   },
 
   async replay() {

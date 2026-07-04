@@ -47,6 +47,7 @@ Page({
   },
 
   async onShow() {
+    this._hidden = false;
     this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '' });
     try {
       this.setData({ openid: await app.ensureLogin() });
@@ -68,7 +69,7 @@ Page({
     this.startWatch();
   },
 
-  onHide() { this.closeWatch(); },
+  onHide() { this._hidden = true; this.closeWatch(); },
 
 
   // 主持人：复制文字（提示/问题/线索）到剪贴板，粘到群里
@@ -215,12 +216,22 @@ Page({
         if (!room) { this.onDissolved(); return; } // 主持人结束了游戏
         this.render(room);
       },
-      onError: (e) => console.error(e),
+      onError: (e) => {
+        // 监听断了（网络/超时）：先手动拉一次兜底，稍后重建监听
+        console.error('watch error', e);
+        this.closeWatch();
+        db.collection('rooms').where({ _id: this.data.roomId }).get()
+          .then((res) => { const room = res.data[0]; if (room) this.render(room); })
+          .catch(() => {});
+        setTimeout(() => {
+          if (!this._hidden && this.data.roomId && !this.watcher) this.startWatch();
+        }, 2000);
+      },
     });
   },
 
   closeWatch() {
-    if (this.watcher) { this.watcher.close(); this.watcher = null; }
+    if (this.watcher) { try { this.watcher.close(); } catch (e) {} this.watcher = null; }
   },
 
   render(room) {

@@ -28,6 +28,7 @@ Page({
 
   // 每次回到前台都确保身份就绪并重连监听（切屏后 watch 会断开）
   async onShow() {
+    this._hidden = false;
     this.setData({ testTag: app.getTestUid() ? wx.getStorageSync('nick') : '', isDev: app.testEnabled() });
     try {
       this.setData({ openid: await app.ensureLogin() });
@@ -47,7 +48,7 @@ Page({
     this.startWatch();
   },
 
-  onHide() { this.closeWatch(); },
+  onHide() { this._hidden = true; this.closeWatch(); },
 
 
   // 分享小程序卡片到群：群友点卡片 → 打开小程序 → 自动加入本房间
@@ -119,12 +120,21 @@ Page({
     if (this.watcher) return;
     this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
       onChange: (snap) => this.renderRoom(snap.docs && snap.docs[0]),
-      onError: (e) => console.error('watch error', e),
+      onError: (e) => {
+        // 监听断了（网络/超时）：先手动拉一次兜底，稍后重建监听
+        console.error('watch error', e);
+        this.closeWatch();
+        db.collection('rooms').where({ _id: this.data.roomId }).get()
+          .then((res) => this.renderRoom(res.data[0] || null)).catch(() => {});
+        setTimeout(() => {
+          if (!this._hidden && this.data.roomId && !this.watcher) this.startWatch();
+        }, 2000);
+      },
     });
   },
 
   closeWatch() {
-    if (this.watcher) { this.watcher.close(); this.watcher = null; }
+    if (this.watcher) { try { this.watcher.close(); } catch (e) {} this.watcher = null; }
   },
 
   // 玩家：准备 / 取消准备

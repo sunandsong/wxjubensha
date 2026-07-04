@@ -137,7 +137,7 @@ Page({
             const mark = `💣${num} · ${ts} · ${code}`;
 
             // 底：金边证书卡（云端图）；拿不到退回深紫渐变
-            const proof = await this._loadProofImg(canvas).catch(() => null);
+            const proof = await this._loadProofImg(canvas).catch((e) => { console.error('留证底图加载失败,用纯色兜底:', e); return null; });
             if (proof) {
               ctx.drawImage(proof, 0, 0, W, H);
             } else {

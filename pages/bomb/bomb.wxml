@@ -1,5 +1,12 @@
 <view class="page {{booming ? 'quake' : ''}}">
-  <view class="bomb-ico">💣</view>
+  <!-- 爆炸白闪：生成瞬间闪一帧 -->
+  <view class="flash {{booming ? 'on' : ''}}"></view>
+  <!-- 氛围底图：警戒机库，云端图淡入；拿不到就纯色底 -->
+  <image wx:if="{{bgUrl}}" class="scene-bg {{bgOk ? 'on' : ''}}" src="{{bgUrl}}" mode="aspectFill"
+    bindload="onBgLoad" binderror="onBgErr"></image>
+
+  <image wx:if="{{heroUrl}}" class="bomb-hero {{booming ? 'pump' : ''}}" src="{{heroUrl}}" mode="aspectFit" binderror="onHeroErr"></image>
+  <view wx:else class="bomb-ico {{booming ? 'pump' : ''}}">💣</view>
   <view class="title">数字炸弹</view>
   <view class="rule">主持人点「生成」暗抽一颗 1~100 的炸弹数，群里轮流报数，报中的人爆炸 💥</view>
 

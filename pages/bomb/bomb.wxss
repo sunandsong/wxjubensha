@@ -64,4 +64,31 @@ page { background: #2b2436; }
 .tip { margin-top: 24rpx; font-size: 22rpx; color: rgba(255,255,255,0.45); }
 
 /* 离屏画布：移出可视区，仅用于绘制留证图 */
-.proof-canvas { position: fixed; left: -9999rpx; top: 0; width: 750px; height: 1000px; }
+.proof-canvas { position: fixed; left: -9999rpx; top: 0; width: 900px; height: 1200px; }
+
+/* 氛围底图：全屏垫底，云图加载完淡入 */
+.scene-bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0;
+  opacity: 0; transition: opacity 0.5s ease; }
+.scene-bg.on { opacity: 0.32; }
+/* 内容抬到底图之上 */
+.bomb-ico, .bomb-hero, .title, .rule, .num-box, .gen-btn, .save-btn, .tip { position: relative; z-index: 1; }
+/* 炸弹立绘（替换 emoji 主视觉） */
+.bomb-hero { width: 240rpx; height: 240rpx; margin: 0 auto; display: block;
+  filter: drop-shadow(0 10rpx 24rpx rgba(255,120,60,0.3)); }
+
+/* 顶部炸弹点火泵动：生成时放大-压缩-回弹 */
+.pump { animation: bombpump 0.62s cubic-bezier(0.3, 1.4, 0.4, 1); }
+@keyframes bombpump {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.28) rotate(-4deg); }
+  55% { transform: scale(0.9) rotate(3deg); }
+  80% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* 爆炸白闪：生成瞬间全屏闪一帧 */
+.flash { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #fff;
+  opacity: 0; pointer-events: none; z-index: 9; }
+.flash.on { animation: whiteflash 0.45s ease-out; }
+@keyframes whiteflash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+

@@ -1,5 +1,12 @@
 // 谁是卧底 · 房间模式：创建/加入 → 全员准备 → 云端发词（房主也参与）→ 群里描述+口头投票 → 揭晓
 const app = getApp();
+const IMGCACHE = require('../../utils/imgCache.js');
+
+// 页面素材（云存储 games/）：聚光灯审讯室底图 / 礼帽面具立绘 / 机密卡卡面
+const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const BG_FID = GBASE + '/spy_bg.jpg';
+const HERO_FID = GBASE + '/spy_hero.png';
+const CARD_FID = GBASE + '/spy_card.jpg';
 
 Page({
   data: {
@@ -18,11 +25,13 @@ Page({
     // 我的词
     word: '', peeking: false,
     starting: false,
+    bgUrl: '', bgOk: false, heroUrl: '', cardUrl: '',   // 云端素材
   },
 
   watcher: null,
 
   async onLoad(query) {
+    this._resolveImgs();
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     // 分享链接直接进房
     if (query && query.joinCode) return this._join(query.joinCode);
@@ -35,6 +44,39 @@ Page({
   },
 
   resumeRoom() { if (this.data.resumeId) this._enterRoom(this.data.resumeId, this.data.resumeCode); },
+
+  // 云端素材：本地缓存优先,云图淡入
+  _resolveImgs() {
+    IMGCACHE.resolve([BG_FID, HERO_FID, CARD_FID], (map) => {
+      const d = {};
+      if (map[BG_FID] && map[BG_FID] !== this.data.bgUrl) d.bgUrl = map[BG_FID];
+      if (map[HERO_FID] && map[HERO_FID] !== this.data.heroUrl) d.heroUrl = map[HERO_FID];
+      if (map[CARD_FID] && map[CARD_FID] !== this.data.cardUrl) d.cardUrl = map[CARD_FID];
+      if (Object.keys(d).length) this.setData(d);
+    });
+  },
+  onBgLoad() { this.setData({ bgOk: true }); },
+  onBgErr() { IMGCACHE.invalidate(BG_FID); this.setData(this.data.bgUrl !== BG_FID ? { bgUrl: BG_FID, bgOk: false } : { bgUrl: '', bgOk: false }); },
+  onHeroErr() { IMGCACHE.invalidate(HERO_FID); this.setData({ heroUrl: this.data.heroUrl !== HERO_FID ? HERO_FID : '' }); },
+  onCardErr() { IMGCACHE.invalidate(CARD_FID); this.setData({ cardUrl: this.data.cardUrl !== CARD_FID ? CARD_FID : '' }); },
+
+  // 一次性：三张素材程序内上传（成功后删本函数/按钮/up_spy_*）
+  async uploadSpyAssets() {
+    const files = [['up_spy_bg.jpg', 'games/spy_bg.jpg'], ['up_spy_hero.png', 'games/spy_hero.png'], ['up_spy_card.jpg', 'games/spy_card.jpg']];
+    wx.showLoading({ title: '上传中…', mask: true });
+    let done = 0;
+    for (const [local, cloudPath] of files) {
+      try {
+        const info = await new Promise((res, rej) => wx.getImageInfo({ src: `/assets/games/${local}`, success: res, fail: rej }));
+        await wx.cloud.uploadFile({ cloudPath, filePath: info.path });
+        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
+        done++;
+      } catch (e) { console.error('✘', cloudPath, e); }
+    }
+    wx.hideLoading();
+    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张`, showCancel: false });
+    if (done) this._resolveImgs();
+  },
 
   onShow() {
     if (this.data.mode === 'room' && this.data.roomId) {
@@ -49,22 +91,14 @@ Page({
   pickSpyCount(e) { this.setData({ spyCountSel: Number(e.currentTarget.dataset.n) }); },
 
   // 昵称：优先用资料页存的，没有就弹框补一个
+  // 不再弹框要名字：有昵称直接用；没有就发个代号并记住（资料页随时可改）
   _getNick() {
-    const nick = wx.getStorageSync('nick');
-    if (nick) return Promise.resolve(nick);
-    return new Promise((resolve) => {
-      wx.showModal({
-        title: '起个名字',
-        placeholderText: '群友们怎么称呼你？',
-        editable: true,
-        success: (r) => {
-          const v = (r.confirm && r.content || '').trim();
-          if (v) wx.setStorageSync('nick', v);
-          resolve(v || '玩家');
-        },
-        fail: () => resolve('玩家'),
-      });
-    });
+    let nick = wx.getStorageSync('nick');
+    if (!nick) {
+      nick = '玩家' + Math.floor(10 + Math.random() * 90);
+      wx.setStorageSync('nick', nick);
+    }
+    return Promise.resolve(nick);
   },
 
   async createRoom() {

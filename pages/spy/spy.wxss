@@ -111,3 +111,35 @@
   background: rgba(255,206,84,0.1); border: 1rpx solid rgba(255,206,84,0.32);
 }
 .rb-go { margin-left: auto; font-weight: 700; color: #ffce54; }
+
+/* ── 聚光灯审讯室底图 + 内容区暗纱 ── */
+.scene-bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0;
+  opacity: 0; transition: opacity 0.6s ease; }
+.scene-bg.on { opacity: 0.2; }
+.scene-fade { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(30,24,48,0) 0%, rgba(30,24,48,0.4) 34%, rgba(30,24,48,0.8) 60%, rgba(30,24,48,0.9) 100%); }
+/* 内容抬到底图/暗纱之上（WXSS 子选择器不可靠,显式列类名） */
+.title, .subtitle, .resume-bar, .card, .btn, .center, .ready-hint,
+.secret-card, .lobby-hero, .dev-upload, .wc-tip { position: relative; z-index: 1; }
+
+/* ── 大厅立绘：礼帽面具 ── */
+.lobby-hero { display: block; width: 300rpx; height: 300rpx; margin: 0 auto -10rpx;
+  filter: drop-shadow(0 14rpx 30rpx rgba(0,0,0,0.5)); }
+
+/* ── 机密卡：档案卡面 + 按住显影 ── */
+.secret-card { position: relative; margin-top: 20rpx; border-radius: 24rpx; overflow: hidden;
+  min-height: 300rpx; border: 1rpx solid rgba(255,255,255,0.18);
+  background: linear-gradient(160deg, #2c2244, #221936);
+  box-shadow: 0 16rpx 44rpx rgba(0,0,0,0.5); }
+.sc-face { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.sc-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 40rpx 24rpx 30rpx; }
+.sc-label { font-size: 20rpx; letter-spacing: 8rpx; color: rgba(236,232,245,0.65); }
+.sc-word { font-size: 76rpx; font-weight: 900; letter-spacing: 10rpx; margin-top: 26rpx; line-height: 1.2;
+  color: transparent; text-shadow: 0 0 30rpx rgba(236,232,245,0.85); transition: all 0.4s; }
+.secret-card.open .sc-word { color: #fff; text-shadow: 0 0 36rpx rgba(255,92,138,0.55); }
+.sc-tip { margin-top: 30rpx; font-size: 20rpx; letter-spacing: 2rpx; color: rgba(236,232,245,0.55); }
+
+/* 一次性上传按钮（跑完删除） */
+.dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
+  background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }

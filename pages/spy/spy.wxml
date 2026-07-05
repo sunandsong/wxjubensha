@@ -1,7 +1,12 @@
 <view class="container">
+  <!-- 聚光灯审讯室底图：云图淡入 + 内容区暗纱 -->
+  <image wx:if="{{bgUrl}}" class="scene-bg {{bgOk ? 'on' : ''}}" src="{{bgUrl}}" mode="aspectFill"
+    bindload="onBgLoad" binderror="onBgErr"></image>
+  <view class="scene-fade"></view>
 
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">
+    <image wx:if="{{heroUrl}}" class="lobby-hero" src="{{heroUrl}}" mode="aspectFit" binderror="onHeroErr"></image>
     <view class="title">谁是卧底 🎩</view>
     <view class="subtitle">相近的两个词，轮流描述找出卧底；卧底自己也不知道自己是卧底</view>
 
@@ -89,17 +94,17 @@
 
     <!-- 游戏中：我的词卡 -->
     <block wx:if="{{status === 'playing'}}">
-      <view class="card word-card">
-        <view class="sec-title">我的词</view>
-        <view class="wc-body">
-          <view wx:if="{{peeking}}" class="wc-word">{{word}}</view>
-          <view wx:if="{{!peeking}}" class="wc-cover"
-            bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">🔒 长按看词（松手盖回）</view>
-          <view wx:if="{{peeking}}" class="wc-cover ghost"
-            bindtouchend="peekOff" bindtouchcancel="peekOff"></view>
+      <!-- 机密卡：档案卡面上按住显影 -->
+      <view class="secret-card {{peeking ? 'open' : ''}}"
+        bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">
+        <image wx:if="{{cardUrl}}" class="sc-face" src="{{cardUrl}}" mode="aspectFill" binderror="onCardErr"></image>
+        <view class="sc-inner">
+          <view class="sc-label">你 的 词</view>
+          <view class="sc-word">{{word}}</view>
+          <view class="sc-tip">{{peeking ? '松手盖回' : '🔒 按住显影 · 松手盖回'}}</view>
         </view>
-        <view class="muted wc-tip">描述它，但别说出这个词；注意别暴露，卧底可能就是你自己</view>
       </view>
+      <view class="muted wc-tip">描述它，但别说出这个词；注意别暴露，卧底可能就是你自己</view>
       <button wx:if="{{isHost}}" class="btn start-btn" bindtap="revealAll">揭晓（公布卧底）</button>
     </block>
 
@@ -117,6 +122,9 @@
 
     <button class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
   </block>
+
+  <!-- 一次性：程序内上传三张素材（成功后删除本按钮） -->
+  <button class="dev-upload" wx:if="{{mode === 'lobby'}}" bindtap="uploadSpyAssets">↑ 上传卧底素材（一次性）</button>
 </view>
 
 <id-switch />

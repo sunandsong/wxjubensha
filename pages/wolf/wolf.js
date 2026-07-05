@@ -6,11 +6,13 @@ const IMGCACHE = require('../../utils/imgCache.js');
 // 牌面素材（云存储 games/）：图腾卡背 + 四张木刻角色牌
 const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
 const BACK_FID = GBASE + '/wolf_back.jpg';
+const BGN_FID = GBASE + '/wolf_bg_n.jpg';   // 松林夜(萤火虫满月)
+const BGD_FID = GBASE + '/wolf_bg_d.jpg';   // 同一片松林的清晨
 const ROLE_FIDS = {
-  wolf: GBASE + '/wolf_r_wolf.jpg',
-  seer: GBASE + '/wolf_r_seer.jpg',
-  witch: GBASE + '/wolf_r_witch.jpg',
-  villager: GBASE + '/wolf_r_villager.jpg',
+  wolf: GBASE + '/wolf_r3_wolf.jpg',
+  seer: GBASE + '/wolf_r3_seer.jpg',
+  witch: GBASE + '/wolf_r3_witch.jpg',
+  villager: GBASE + '/wolf_r3_villager.jpg',
 };
 
 const ROLE_NAMES = { wolf: '狼人 🐺', seer: '预言家 🔮', witch: '女巫 🧪', villager: '平民 🧑‍🌾', god: '上帝 👁️' };
@@ -34,6 +36,7 @@ Page({
     reveal: null, winnerText: '',
     god: null,          // 上帝面板(仅房主):全员身份+夜晚进度
     backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
+    bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
     starting: false,
   },
 
@@ -65,8 +68,12 @@ Page({
   // ── 大厅 ──
   // 牌面素材：本地缓存优先
   _resolveImgs() {
-    IMGCACHE.resolve([BACK_FID], (m) => {
-      if (m[BACK_FID] && m[BACK_FID] !== this.data.backUrl) this.setData({ backUrl: m[BACK_FID] });
+    IMGCACHE.resolve([BACK_FID, BGN_FID, BGD_FID], (m) => {
+      const d = {};
+      if (m[BACK_FID] && m[BACK_FID] !== this.data.backUrl) d.backUrl = m[BACK_FID];
+      if (m[BGN_FID] && m[BGN_FID] !== this.data.bgN) d.bgN = m[BGN_FID];
+      if (m[BGD_FID] && m[BGD_FID] !== this.data.bgD) d.bgD = m[BGD_FID];
+      if (Object.keys(d).length) this.setData(d);
     });
   },
   _resolveRoleImg(role) {
@@ -78,11 +85,12 @@ Page({
   // 一次性：上传牌背+四张角色牌（成功后删本函数/按钮/up_wolf_*）
   async uploadWolfAssets() {
     const files = [
-      ['up_wolf_back.jpg', 'games/wolf_back.jpg'],
-      ['up_wolf_r_wolf.jpg', 'games/wolf_r_wolf.jpg'],
-      ['up_wolf_r_seer.jpg', 'games/wolf_r_seer.jpg'],
-      ['up_wolf_r_witch.jpg', 'games/wolf_r_witch.jpg'],
-      ['up_wolf_r_villager.jpg', 'games/wolf_r_villager.jpg'],
+      ['up_wolf_bg_n.jpg', 'games/wolf_bg_n.jpg'],
+      ['up_wolf_bg_d.jpg', 'games/wolf_bg_d.jpg'],
+      ['up_wolf_r3_wolf.jpg', 'games/wolf_r3_wolf.jpg'],
+      ['up_wolf_r3_seer.jpg', 'games/wolf_r3_seer.jpg'],
+      ['up_wolf_r3_witch.jpg', 'games/wolf_r3_witch.jpg'],
+      ['up_wolf_r3_villager.jpg', 'games/wolf_r3_villager.jpg'],
     ];
     wx.showLoading({ title: '上传中…', mask: true });
     let done = 0;

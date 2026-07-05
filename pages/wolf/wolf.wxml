@@ -1,4 +1,8 @@
 <view class="container">
+  <!-- 昼夜森林底图：同一片松林,天亮交叉淡入清晨版 -->
+  <image wx:if="{{bgN}}" class="scene-bg {{(mode !== 'room' || status !== 'day') ? 'on' : ''}}" src="{{bgN}}" mode="aspectFill"></image>
+  <image wx:if="{{bgD}}" class="scene-bg bg-day {{mode === 'room' && status === 'day' ? 'on' : ''}}" src="{{bgD}}" mode="aspectFill"></image>
+  <view class="scene-fade"></view>
 
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">

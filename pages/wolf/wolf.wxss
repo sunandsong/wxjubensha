@@ -203,3 +203,12 @@
 .rev-card.is-wolf { background: linear-gradient(165deg, #7a1f2e, #4a1220); border-color: #a8324e; }
 .rev-card.is-wolf .rc-role { color: #ffd9c9; }
 .rev-card.is-wolf .rc-nick { color: #d9909e; }
+
+/* ── 昼夜森林底图:双层交叉淡入(1s),天亮=同一片森林的清晨 ── */
+.scene-bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0;
+  opacity: 0; transition: opacity 1s ease; pointer-events: none; }
+.scene-bg.on { opacity: 0.42; }
+.scene-bg.bg-day.on { opacity: 0.3; }   /* 晨光图更亮,压低一点保 UI */
+.scene-fade { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(30,24,48,0.15) 0%, rgba(30,24,48,0.55) 45%, rgba(30,24,48,0.8) 100%); }
+.title, .subtitle, .resume-bar, .card, .btn, .village, .ready-hint, .center, .dev-upload { position: relative; z-index: 1; }

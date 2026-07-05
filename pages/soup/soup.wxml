@@ -16,25 +16,16 @@
 
   <!-- 口味（主持人）：点一下端汤上桌 -->
   <block wx:if="{{!isGuest}}">
-    <view class="h-row"><text class="h-b">🍶 今夜口味</text><text class="h-s">点一下，端汤上桌</text></view>
+    <view class="h-row"><text class="h-b">🍶 今夜口味</text><text class="h-s">点一下，换一碗</text></view>
     <view class="flavors">
-      <view class="fl {{served && soup.flavor === 'qing' ? 'on' : ''}}" data-f="qing" bindtap="drawFlavor">清汤 🍵</view>
-      <view class="fl hong {{served && soup.flavor === 'hong' ? 'on' : ''}}" data-f="hong" bindtap="drawFlavor">红汤 🌶️</view>
+      <view class="fl {{soup.flavor === 'qing' ? 'on' : ''}}" data-f="qing" bindtap="drawFlavor">清汤 🍵</view>
+      <view class="fl hong {{soup.flavor === 'hong' ? 'on' : ''}}" data-f="hong" bindtap="drawFlavor">红汤 🌶️</view>
       <view class="fl" data-f="all" bindtap="drawFlavor">随机 🎲</view>
     </view>
   </block>
 
-  <!-- 空碗态：点口味才端汤 -->
-  <view class="empty-state" wx:if="{{!isGuest && !served}}">
-    <view class="bowl">🍜</view>
-    <view class="t1">碗还空着</view>
-    <view class="t2">点上面的口味，酒保这就给你端一碗</view>
-    <view class="t2">清汤温和烧脑 · 红汤后劲很大</view>
-    <view wx:if="{{hasLast}}" class="resume-link" bindtap="resumeLast">↩ 回到上一碗</view>
-  </view>
-
   <!-- 端上来之后 -->
-  <block wx:if="{{soup && (served || isGuest)}}">
+  <block wx:if="{{soup}}">
     <view class="soup-zone">
       <view class="soup-card">
         <view class="sc-head">
@@ -48,18 +39,15 @@
         <view class="sc-foot">{{isGuest ? '在群里向主持人提问 · TA 只会答「是 / 不是 / 无关」' : '把汤面分享到群 · 群友提问，你只答「是 / 不是 / 无关」'}}</view>
       </view>
 
-      <!-- 汤底：主持人杯垫盖着；群友只有收到汤底卡才可见 -->
-      <block wx:if="{{!isGuest || revealed}}">
-        <view class="h-row"><text class="h-b">🥃 汤底</text><text class="h-s">{{revealed ? '真相已揭晓' : '只有你看得到'}}</text></view>
-        <view class="coaster-zone {{(peeking || revealed) ? 'peek' : ''}}">
-          <view class="ans-text">{{soup.answer}}</view>
-          <view wx:if="{{!revealed}}" class="coaster"
-            bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">
-            <view class="disc">🛸</view>
-            <view class="tp">🔒 按住杯垫偷看 · 松手盖回</view>
-          </view>
-        </view>
-      </block>
+      <!-- 汤底：主持人按住弹出真相；群友收到汤底卡时内嵌真相 -->
+      <view class="peek-pill" wx:if="{{!isGuest && !revealed}}"
+        bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">
+        <text class="pp-disc">🛸</text> 按住偷看汤底 · 松手盖回
+      </view>
+      <view class="reveal-card" wx:if="{{revealed}}">
+        <view class="rc-t">🥃 汤底 · 真相</view>
+        <view class="rc-a">{{soup.answer}}</view>
+      </view>
       <view class="guest-lock" wx:if="{{isGuest && !revealed}}"><view>🔒 汤底只有酒保知道</view><view>大胆提问，别怕问蠢问题——蠢问题排除得最快</view></view>
 
       <view class="share-row" wx:if="{{!isGuest}}">
@@ -68,6 +56,15 @@
       </view>
     </view>
   </block>
+
+  <!-- 汤底浮层：按住起雾,雾向两侧拨开,真相从迷雾里显形;松手盖回 -->
+  <view class="peek-ov" wx:if="{{peeking}}" catch:touchend="peekOff" catch:touchcancel="peekOff">
+    <view class="fog fog-l"></view>
+    <view class="fog fog-r"></view>
+    <view class="po-t">🥃 汤 底</view>
+    <scroll-view class="po-scroll" scroll-y><view class="po-a">{{soup.answer}}</view></scroll-view>
+    <view class="po-hint">松手盖回</view>
+  </view>
 </view>
 
 <id-switch />

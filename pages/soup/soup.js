@@ -17,8 +17,6 @@ Page({
     isGuest: false,    // 从分享进来的群友：完全看不到汤底
     flavorName: '',
     stars: '',
-    served: false,     // 空碗态 → 点口味才端汤
-    hasLast: false,    // 有上一碗（分享后回来可一键续上）
     bgUrl: '', bgOk: false, cupUrl: '',   // 酒馆底图 / 特调杯（云端）
   },
 
@@ -29,8 +27,10 @@ Page({
       const soup = SOUPS.find((s) => s.id === query.soupId);
       if (soup) return this._show(soup, !!query.guest, !!query.reveal);
     }
-    // 主持人正常进入：空碗态，点口味才端汤；有上一碗则给"回到上一碗"入口
-    this.setData({ hasLast: !!SOUPS.find((s) => s.id === wx.getStorageSync('soupLastId')) });
+    // 主持人正常进入：恢复上次那碗（分享出去后再进来还是原汤），没有才随机抽
+    const last = SOUPS.find((s) => s.id === wx.getStorageSync('soupLastId'));
+    if (last) return this._show(last);
+    this.draw();
   },
 
   // 酒馆素材：本地缓存优先，云图淡入
@@ -46,18 +46,12 @@ Page({
   onBgErr() { IMGCACHE.invalidate(BG_FID); this.setData(this.data.bgUrl !== BG_FID ? { bgUrl: BG_FID, bgOk: false } : { bgUrl: '', bgOk: false }); },
   onCupErr() { IMGCACHE.invalidate(CUP_FID); this.setData({ cupUrl: this.data.cupUrl !== CUP_FID ? CUP_FID : '' }); },
 
-  // 空碗态：回到上一碗（分享出去答题中途退出后续上原汤）
-  resumeLast() {
-    const last = SOUPS.find((s) => s.id === wx.getStorageSync('soupLastId'));
-    if (last) this._show(last);
-  },
 
   _show(soup, isGuest = false, revealed = false) {
     this.setData({
       soup,
       isGuest,
       revealed,
-      served: true,
       peeking: false,
       flavorName: FLAVORS[soup.flavor] || '',
       stars: '★★★'.slice(0, soup.diff) + '☆☆☆'.slice(0, 3 - soup.diff),

@@ -49,12 +49,15 @@
           <button class="btn-mini share" open-type="share">分享链接</button>
         </view>
       </view>
-      <view class="muted invite-tip">
-        {{status === 'waiting' ? '把链接发到群里，点开直接进房 · 满 6 名玩家可开始（上帝不算）' : ''}}
-        {{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼，各角色悄悄行动' : ''}}
-        {{status === 'day' ? '☀️ 第 ' + round + ' 天 · 回群里讨论，投完票上帝执行出局' : ''}}
-        {{status === 'finished' ? '本局已结束' : ''}}
-      </view>
+      <view class="muted invite-tip" wx:if="{{status === 'waiting'}}">把链接发到群里，点开直接进房 · 满 6 名玩家可开始（上帝不算）</view>
+    </view>
+
+    <!-- 阶段卡：白天/黑夜大字 + 黑夜行动说明 -->
+    <view class="card phase-card {{status === 'day' ? 'p-day' : ''}}" wx:if="{{status !== 'waiting'}}">
+      <view class="ph-big">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : status === 'day' ? '☀️ 第 ' + round + ' 天 · 天亮请睁眼' : '🃏 终局 · 请亮牌'}}</view>
+      <view class="ph-sub" wx:if="{{status === 'night'}}">现在行动：🐺 狼人选目标 · 🔮 预言家验人 · 🧪 女巫用药</view>
+      <view class="ph-sub2" wx:if="{{status === 'night'}}">三方都完成后自动天亮 · 平民请闭眼等待</view>
+      <view class="ph-sub" wx:if="{{status === 'day'}}">回群里讨论发言 · 口头投票后由上帝执行放逐</view>
     </view>
 
     <!-- 公告：死讯/出局 -->

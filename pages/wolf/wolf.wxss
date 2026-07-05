@@ -178,3 +178,11 @@
 .scene-fade { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(30,24,48,0.15) 0%, rgba(30,24,48,0.55) 45%, rgba(30,24,48,0.8) 100%); }
 .title, .subtitle, .resume-bar, .card, .btn, .ready-hint, .center, .dev-upload { position: relative; z-index: 1; }
+
+/* ── 阶段卡:白天/黑夜大字 + 行动说明 ── */
+.phase-card { text-align: center; border-color: rgba(139,92,255,0.35); }
+.phase-card.p-day { border-color: rgba(255,180,80,0.4); }
+.ph-big { font-size: 34rpx; font-weight: 900; letter-spacing: 3rpx; color: #fff; }
+.phase-card.p-day .ph-big { color: #ffd9a8; }
+.ph-sub { font-size: 23rpx; color: #b3a6cc; margin-top: 12rpx; line-height: 1.7; }
+.ph-sub2 { font-size: 21rpx; color: #8d81a8; margin-top: 6rpx; }

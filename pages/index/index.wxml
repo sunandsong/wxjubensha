@@ -162,12 +162,6 @@
     <view class="detail-sec-title">📖 剧情简介</view>
     <view class="detail-pre">{{detail.intro}}</view>
 
-    <!-- 世界观背景 -->
-    <block wx:if="{{detail.worldview}}">
-      <view class="detail-sec-title">🌍 故事背景</view>
-      <view class="detail-pre">{{detail.worldview}}</view>
-    </block>
-
     <!-- 被害人 -->
     <block wx:if="{{detail.victim}}">
       <view class="detail-sec-title">💀 「被害人」</view>
@@ -182,12 +176,6 @@
         <text class="detail-role-title">{{item.title}}</text>
       </view>
     </view>
-
-    <!-- 人物关系 -->
-    <block wx:if="{{detail.relations.length}}">
-      <view class="detail-sec-title">🔗 人物关系</view>
-      <view class="detail-rel" wx:for="{{detail.relations}}" wx:key="*this">{{item}}</view>
-    </block>
 
     <view class="detail-tip">读完简介，确认开局 → 你将成为房主（主持人）</view>
   </scroll-view>

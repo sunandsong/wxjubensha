@@ -73,3 +73,16 @@
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
   100% { transform: translateY(1150rpx) rotate(560deg); opacity: 0; }
 }
+
+/* ══ 光影·破晓:真相揭晓,黑夜退场 ══ */
+page { background: #17121f; }
+.dawn-sky { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(23,18,31,0) 0%, rgba(58,44,84,0.0) 45%, rgba(90,70,140,0.35) 100%);
+  opacity: 0; animation: dawn 1.6s ease 0.3s forwards; }
+@keyframes dawn { to { opacity: 1; } }
+.verdict, .card, .btn, .confetti { position: relative; z-index: 1; }
+.verdict { animation: riseUp 0.5s ease both; }
+.verdict-text { text-shadow: 0 0 30rpx rgba(165,139,255,0.5); }
+/* 结果行逐行升起(wxml 里按 index 阶梯延迟) */
+.tally-item { animation: riseUp 0.45s ease both; }
+@keyframes riseUp { 0% { opacity: 0; transform: translateY(24rpx); } 100% { opacity: 1; transform: none; } }

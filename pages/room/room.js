@@ -1,6 +1,11 @@
 const app = getApp();
 const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
+const IMGCACHE = require('../../utils/imgCache.js');
+
+// 光影素材（云存储 games/）：星空底图（候场=星座连线,玩家逐个就位点亮）
+const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const BG_FID = GBASE + '/room_bg.jpg';
 
 Page({
   data: {
@@ -15,11 +20,13 @@ Page({
     scriptTitle: '',
     scriptSub: '',
     shareImg: '',     // 分享卡片缩略图：当前本封面的 https 临时链接（cloud:// 不能直接当分享图）
+    bgUrl: '', bgOk: false,   // 星空底图
   },
 
   watcher: null,
 
   onLoad(query) {
+    IMGCACHE.resolve([BG_FID], (m) => { if (m[BG_FID] && m[BG_FID] !== this.data.bgUrl) this.setData({ bgUrl: m[BG_FID] }); });
     this.setData({ roomId: query.roomId, roomCode: query.roomCode });
     // 记住当前对局，切屏/重启后可在首页续上
     app.saveSession({ roomId: query.roomId, roomCode: query.roomCode });
@@ -163,6 +170,26 @@ Page({
     }
     this.setData({ starting: false });
     if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
+  },
+
+  onBgLoad() { this.setData({ bgOk: true }); },
+  onBgErr() { IMGCACHE.invalidate(BG_FID); this.setData(this.data.bgUrl !== BG_FID ? { bgUrl: BG_FID, bgOk: false } : { bgUrl: '', bgOk: false }); },
+
+  // 一次性：上传星空底图（成功后删本函数与按钮）
+  async uploadLightAssets() {
+    const files = [['up_room_bg.jpg', 'games/room_bg.jpg']];
+    wx.showLoading({ title: '上传中…', mask: true });
+    let done = 0;
+    for (const [local, cloudPath] of files) {
+      try {
+        const info = await new Promise((res, rej) => wx.getImageInfo({ src: `/assets/games/${local}`, success: res, fail: rej }));
+        await wx.cloud.uploadFile({ cloudPath, filePath: info.path });
+        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
+        done++;
+      } catch (e) { console.error('✘', cloudPath, e); }
+    }
+    wx.hideLoading();
+    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张`, showCancel: false });
   },
 
   copyCode() {

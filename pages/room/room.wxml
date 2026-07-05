@@ -1,5 +1,7 @@
 
 <view class="container">
+  <image wx:if="{{bgUrl}}" class="scene-bg {{bgOk ? 'on' : ''}}" src="{{bgUrl}}" mode="aspectFill"
+    bindload="onBgLoad" binderror="onBgErr"></image>
   <view class="card script-card">
     <view class="muted">本局剧本</view>
     <view class="sc-title">{{scriptTitle}}</view>
@@ -23,7 +25,7 @@
       <view class="muted {{canStart ? '' : 'warn'}}">{{canStart ? '房主为主持人，不参与' : '需 '+needPlayers+' 名玩家，已 '+realCount+' 人'}}</view>
     </view>
     <view class="players">
-      <view class="player" wx:for="{{players}}" wx:key="openid">
+      <view class="player {{(item.ready || item.isModerator) ? 'lit' : ''}}" wx:for="{{players}}" wx:key="openid">
         <view class="avatar">
           <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
           <block wx:else>{{item.nick[0]}}</block>
@@ -40,6 +42,8 @@
     <view wx:if="{{realCount >= needPlayers && !allReady}}" class="muted center warn ready-hint">等待玩家准备：{{readyCount}}/{{realCount}} 已准备</view>
     <button class="btn start-btn {{(!canStart || starting) ? 'btn-dim' : ''}}" bindtap="startGame">开始游戏</button>
     <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
+    <!-- 一次性：程序内上传光影素材（成功后删除本按钮） -->
+    <button class="dev-upload" bindtap="uploadLightAssets">↑ 上传光影素材（一次性）</button>
   </block>
   <block wx:else>
     <button wx:if="{{!iAmSpectator}}" class="btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '✓ 已准备（点击取消）' : '准备好了'}}</button>

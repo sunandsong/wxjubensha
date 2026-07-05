@@ -1,6 +1,12 @@
 const app = getApp();
 const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
+const IMGCACHE = require('../../utils/imgCache.js');
+
+// 光影素材：浮尘粒子（氛围）/ 体积光束（幕间过场）
+const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const DUST_FID = GBASE + '/dust.jpg';
+const BEAM_FID = GBASE + '/beam.jpg';
 
 Page({
   data: {
@@ -37,11 +43,19 @@ Page({
     myVote: '',
     votedCount: 0,
     totalPlayers: 0,
+    dustUrl: '',   // 浮尘氛围层
+    beamUrl: '',   // 过场体积光束
   },
 
   watcher: null,
 
   onLoad(query) {
+    IMGCACHE.resolve([DUST_FID, BEAM_FID], (m) => {
+      const d = {};
+      if (m[DUST_FID]) d.dustUrl = m[DUST_FID];
+      if (m[BEAM_FID]) d.beamUrl = m[BEAM_FID];
+      if (Object.keys(d).length) this.setData(d);
+    });
     this.setData({ roomId: query.roomId, roomCode: query.roomCode });
     app.saveSession({ roomId: query.roomId, roomCode: query.roomCode });
   },

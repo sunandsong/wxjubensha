@@ -1,6 +1,7 @@
 
 <!-- 分幕切换过场：幕号变化时淡入淡出 -->
 <view class="act-transition {{transShow ? 'show' : ''}}">
+  <image wx:if="{{beamUrl}}" class="at-beam" src="{{beamUrl}}" mode="aspectFit"></image>
   <view class="at-inner">
     <view class="at-label">{{transLabel}}</view>
     <view class="at-title">{{transTitle}}</view>
@@ -8,6 +9,7 @@
 </view>
 
 <view class="container">
+  <image wx:if="{{dustUrl}}" class="fx-dust" src="{{dustUrl}}" mode="aspectFill"></image>
   <!-- ============ 吃瓜群众：游戏开始后进来的，只围观第一幕、无任何操作 ============ -->
   <block wx:if="{{isSpectator}}">
     <view class="card mychar">
@@ -126,7 +128,7 @@
       <view wx:else class="muted">回群里讨论后再投。已投票 {{votedCount}}/{{totalPlayers}}，选定你认为的真凶，可改票。</view>
     </view>
     <view class="vote-list" wx:if="{{!isHost}}">
-      <view class="vote-item {{myVote===item.id?'picked':''}}" wx:for="{{roster}}" wx:key="id" data-id="{{item.id}}" bindtap="vote">
+      <view class="vote-item {{myVote===item.id?'picked':''}} {{myVote && myVote!==item.id ? 'dim' : ''}}" wx:for="{{roster}}" wx:key="id" data-id="{{item.id}}" bindtap="vote">
         <view class="vname">{{item.name}}<text class="vtitle">{{item.title}}</text></view>
         <view class="vcheck" wx:if="{{myVote===item.id}}">✓ 已选</view>
       </view>

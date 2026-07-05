@@ -46,3 +46,36 @@
 
 /* 开始按钮不可用态：仍可点击，点击会提示差什么（disabled 会吞掉点击导致无反馈） */
 .btn-dim { opacity: 0.55; }
+
+/* ══ 光影·一根线 ══ */
+page { background: #17121f; }
+/* 星空底图：星座连线 = 玩家逐个就位;云图淡入 */
+.scene-bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0;
+  opacity: 0; transition: opacity 0.8s ease; pointer-events: none; }
+.scene-bg.on { opacity: 0.55; }
+.card, .btn, .ready-hint, .wait-hint, .center, .dev-upload { position: relative; z-index: 1; }
+/* 剧本名下:一根发光的线划过 */
+.sc-title::after { content: ""; display: block; width: 140rpx; height: 2rpx; margin-top: 12rpx;
+  background: linear-gradient(90deg, #cabdff, transparent); box-shadow: 0 0 10rpx rgba(165,139,255,0.6); }
+/* 席位:未就位沉在暗处,就位=光点亮+线绕一圈打结 */
+.player .avatar { position: relative; overflow: visible; transition: filter 0.4s; filter: grayscale(0.7) brightness(0.45); }
+.player.lit .avatar { filter: none; }
+.player.lit .avatar::after { content: ""; position: absolute; left: -10rpx; top: -10rpx; right: -10rpx; bottom: -10rpx;
+  border-radius: 50%; border: 2rpx dashed rgba(202,189,255,0.85);
+  box-shadow: 0 0 16rpx rgba(165,139,255,0.5); animation: knotIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes knotIn { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.player .pname { transition: color 0.4s; color: rgba(236,232,245,0.4); }
+.player.lit .pname { color: #ece8f5; }
+/* 开始按钮:一束光的颜色 */
+.start-btn { background: linear-gradient(135deg, #f2eeff, #cabdff) !important; color: #241d3a !important;
+  box-shadow: 0 0 34rpx rgba(165,139,255,0.35); }
+.start-btn.btn-dim { opacity: 0.45; }
+
+/* 一次性上传按钮（跑完删除） */
+.dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
+  background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }
+
+/* 卡片/按钮实底：星空只在缝隙里,不透进内容 */
+.card { background: #272040; border: 1rpx solid rgba(255,255,255,0.15); }
+.btn-ghost { background: #272040; }
+.dev-upload { background: #272040; }

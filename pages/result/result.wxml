@@ -10,6 +10,8 @@
 
   <!-- ====== 主持人：完整结算 ====== -->
   <block wx:else>
+    <!-- 破晓天光：真相揭晓,黑夜退场 -->
+    <view class="dawn-sky"></view>
     <!-- 抓对真凶撒花 -->
     <view class="confetti" wx:if="{{caught}}">
       <view class="confetti-piece" wx:for="{{confetti}}" wx:key="i"
@@ -23,7 +25,7 @@
 
     <view class="card">
       <view class="sec-title">投票结果</view>
-      <view class="tally-item" wx:for="{{tally}}" wx:key="name">
+      <view class="tally-item" wx:for="{{tally}}" wx:key="name" style="animation-delay:{{index * 120}}ms">
         <view class="t-name">
           {{item.name}}<text class="t-title">{{item.title}}</text>
           <text class="t-player" wx:if="{{item.playerNick}}">· {{item.playerNick}}</text>

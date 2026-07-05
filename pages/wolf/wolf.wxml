@@ -38,20 +38,6 @@
 
   <!-- ══ 房间 ══ -->
   <block wx:if="{{mode === 'room'}}">
-    <!-- 房间号卡 -->
-    <view class="card">
-      <view class="code-row">
-        <view>
-          <view class="muted">房间号</view>
-          <view class="code">{{roomCode}}</view>
-        </view>
-        <view class="code-actions">
-          <button class="btn-mini share" open-type="share">分享链接</button>
-        </view>
-      </view>
-      <view class="muted invite-tip" wx:if="{{status === 'waiting'}}">把链接发到群里，点开直接进房 · 满 6 名玩家可开始（上帝不算）</view>
-    </view>
-
     <!-- 阶段卡：白天/黑夜大字 + 黑夜行动说明 -->
     <view class="card phase-card {{status === 'day' ? 'p-day' : ''}}" wx:if="{{status !== 'waiting'}}">
       <view class="ph-big">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : status === 'day' ? '☀️ 第 ' + round + ' 天 · 天亮请睁眼' : '🃏 终局 · 请亮牌'}}</view>
@@ -117,6 +103,8 @@
 
     <!-- 等待阶段 -->
     <block wx:if="{{status === 'waiting'}}">
+      <button class="btn share-btn" open-type="share">分享链接 · 邀请群友进房</button>
+      <view class="muted center room-code-line">房间号 {{roomCode}} · 点开链接直接进房</view>
       <button wx:if="{{isHost}}" class="btn start-btn" bindtap="startGame" disabled="{{starting || !canStart}}">
         开始游戏（自动发身份）
       </button>

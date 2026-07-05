@@ -186,3 +186,5 @@
 .phase-card.p-day .ph-big { color: #ffd9a8; }
 .ph-sub { font-size: 23rpx; color: #b3a6cc; margin-top: 12rpx; line-height: 1.7; }
 .ph-sub2 { font-size: 21rpx; color: #8d81a8; margin-top: 6rpx; }
+.share-btn { background: linear-gradient(90deg, #ff9a45, #ffce54); color: #3a2408; }
+.room-code-line { margin-top: 14rpx; font-size: 22rpx; }

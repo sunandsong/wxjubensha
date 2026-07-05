@@ -38,20 +38,6 @@
 
   <!-- ══ 房间 ══ -->
   <block wx:if="{{mode === 'room'}}">
-    <!-- 米勒山谷：满月村庄剪影横幅（昼夜随局势切换） -->
-    <view class="village {{status === 'day' ? 'vday' : status === 'finished' ? 'vdusk' : ''}}">
-      <view class="v-orb"></view>
-      <view class="v-sil church"></view>
-      <view class="v-sil spire"></view>
-      <view class="v-sil hut1"></view>
-      <view class="v-sil hut2"></view>
-      <view class="v-sil pine1"></view>
-      <view class="v-sil pine2"></view>
-      <view class="v-sil pine3"></view>
-      <view class="v-win"></view>
-      <view class="v-phase">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : status === 'day' ? '☀️ 第 ' + round + ' 天 · 天亮请睁眼' : status === 'finished' ? '🃏 终局 · 请亮牌' : '🌘 夜幕将至 · 村民集结中'}}</view>
-    </view>
-
     <!-- 房间号卡 -->
     <view class="card">
       <view class="code-row">

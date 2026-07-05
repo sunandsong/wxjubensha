@@ -148,40 +148,6 @@
 .dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
   background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }
 
-/* ── 米勒山谷:满月村庄剪影横幅(CSS 版,夜/昼/终局三态) ── */
-.village { position: relative; height: 220rpx; margin: 0 -28rpx 4rpx; overflow: hidden;
-  background: linear-gradient(180deg, #100c22 0%, #241b3e 70%, rgba(30,24,48,0) 100%);
-  transition: background 0.8s; }
-.v-orb { position: absolute; right: 90rpx; top: 30rpx; width: 72rpx; height: 72rpx; border-radius: 50%;
-  background: radial-gradient(circle at 38% 35%, #fff, #e8e4f8 55%, #b8aede);
-  box-shadow: 0 0 34rpx rgba(210,200,255,0.55); transition: all 0.8s; }
-.v-sil { position: absolute; bottom: 34rpx; background: #0d0a18; transition: background 0.8s; }
-.v-sil.church { left: 90rpx; width: 90rpx; height: 80rpx; }
-.v-sil.spire { left: 112rpx; width: 46rpx; height: 130rpx;
-  clip-path: polygon(50% 0, 100% 38%, 100% 100%, 0 100%, 0 38%); }
-.v-sil.hut1 { left: 220rpx; width: 84rpx; height: 56rpx; clip-path: polygon(50% 0, 100% 34%, 100% 100%, 0 100%, 0 34%); }
-.v-sil.hut2 { left: 330rpx; width: 70rpx; height: 46rpx; clip-path: polygon(50% 0, 100% 36%, 100% 100%, 0 100%, 0 36%); }
-.v-sil.pine1 { right: 200rpx; width: 44rpx; height: 90rpx; clip-path: polygon(50% 0, 88% 55%, 70% 55%, 100% 100%, 0 100%, 30% 55%, 12% 55%); }
-.v-sil.pine2 { right: 150rpx; width: 34rpx; height: 66rpx; clip-path: polygon(50% 0, 88% 55%, 70% 55%, 100% 100%, 0 100%, 30% 55%, 12% 55%); }
-.v-sil.pine3 { right: 40rpx; width: 40rpx; height: 78rpx; clip-path: polygon(50% 0, 88% 55%, 70% 55%, 100% 100%, 0 100%, 30% 55%, 12% 55%); }
-/* 教堂的小窗:夜里一点灯火呼吸 */
-.v-win { position: absolute; left: 128rpx; bottom: 66rpx; width: 10rpx; height: 16rpx;
-  border-radius: 5rpx 5rpx 0 0; background: #ffb85c; box-shadow: 0 0 12rpx rgba(255,170,80,0.9);
-  animation: winbreath 3s ease-in-out infinite; }
-@keyframes winbreath { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-.v-phase { position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
-  font-size: 22rpx; letter-spacing: 3rpx; color: #b3a6cc; }
-/* 白天:暖光洒在同一座村庄 */
-.village.vday { background: linear-gradient(180deg, #4a3050 0%, #6e4a45 60%, rgba(30,24,48,0) 100%); }
-.village.vday .v-orb { background: radial-gradient(circle at 38% 35%, #fff8e0, #ffd98a 60%, #ff9a45);
-  box-shadow: 0 0 44rpx rgba(255,180,80,0.7); }
-.village.vday .v-sil { background: #241626; }
-.village.vday .v-win { opacity: 0; animation: none; }
-.village.vday .v-phase { color: #ffd9a8; }
-/* 终局:暮色 */
-.village.vdusk { background: linear-gradient(180deg, #241626 0%, #3d2038 60%, rgba(30,24,48,0) 100%); }
-.village.vdusk .v-phase { color: #ff9db4; }
-
 /* ── 墓碑:出局头顶弹出 ── */
 .tomb { position: absolute; top: -20rpx; left: 50%; margin-left: -18rpx; font-size: 36rpx; z-index: 3;
   filter: drop-shadow(0 4rpx 8rpx rgba(0,0,0,0.6));
@@ -211,4 +177,4 @@
 .scene-bg.bg-day.on { opacity: 0.3; }   /* 晨光图更亮,压低一点保 UI */
 .scene-fade { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(30,24,48,0.15) 0%, rgba(30,24,48,0.55) 45%, rgba(30,24,48,0.8) 100%); }
-.title, .subtitle, .resume-bar, .card, .btn, .village, .ready-hint, .center, .dev-upload { position: relative; z-index: 1; }
+.title, .subtitle, .resume-bar, .card, .btn, .ready-hint, .center, .dev-upload { position: relative; z-index: 1; }

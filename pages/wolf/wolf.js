@@ -16,6 +16,7 @@ const ROLE_FIDS = {
 };
 
 const ROLE_NAMES = { wolf: '狼人 🐺', seer: '预言家 🔮', witch: '女巫 🧪', villager: '平民 🧑‍🌾', god: '上帝 👁️' };
+const ROLE_TEXT = { wolf: '狼人', seer: '预言家', witch: '女巫', villager: '平民', god: '上帝' };   // 牌面用纯文字
 
 Page({
   data: {
@@ -35,6 +36,7 @@ Page({
     announceText: '', actTip: '', myTarget: '',
     reveal: null, winnerText: '',
     god: null,          // 上帝面板(仅房主):全员身份+夜晚进度
+    killCountdown: 0, myTargetNick: '',   // 双狼定刀倒计时 / 我选的目标昵称
     backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
     bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
     starting: false,
@@ -62,7 +64,7 @@ Page({
       this._startWatch();
     }
   },
-  onHide() { this._closeWatch(); },
+  onHide() { this._closeWatch(); this._clearWolfTimer(); },
   onUnload() { this._closeWatch(); },
 
   // ── 大厅 ──
@@ -248,6 +250,7 @@ Page({
     } else {
       this._nightVer = nv;
       if (this.data.night) this.setData({ night: null, pickPoison: false });
+      this._clearWolfTimer();
     }
     // 上帝面板：开局后随状态/夜晚版本刷新
     if (room.hostOpenid === this.data.openid && room.status !== 'waiting') {
@@ -285,7 +288,9 @@ Page({
     } else if (status === 'day' && isHost) {
       actTip = '🗳 群里投票后，点头像将 TA 放逐出村';
     }
-    this.setData({ actTip, myTarget: (role === 'wolf' && night && night.myVote) || '' });
+    const myVote = (role === 'wolf' && night && night.myVote) || '';
+    const mp = (this.data.players || []).find((p) => p.openid === myVote);
+    this.setData({ actTip, myTarget: myVote, myTargetNick: mp ? mp.nick : '' });
   },
 
   async _fetchRole() {
@@ -295,7 +300,7 @@ Page({
       const res = await app.callGame({ action: 'wolfRole', roomId: this.data.roomId });
       const r = res && res.result;
       if (r && r.ok) {
-        this.setData({ role: r.role, roleName: ROLE_NAMES[r.role] || r.role, matesText: (r.mates || []).join('、') });
+        this.setData({ role: r.role, roleName: ROLE_NAMES[r.role] || r.role, roleText: ROLE_TEXT[r.role] || r.role, matesText: (r.mates || []).join('、') });
         this._resolveRoleImg(r.role);
       }
     } catch (e) {}
@@ -313,6 +318,58 @@ Page({
     } catch (e) {}
     this._fetchingNight = false;
     this._deriveTips();
+    this._maybeWolfTimer();
+  },
+
+  // 狼人选/改目标（可反复改）
+  async _wolfPick(target) {
+    try {
+      const res = await app.callGame({ action: 'wolfNightAct', roomId: this.data.roomId, act: 'kill', target });
+      const r = res && res.result;
+      if (r && !r.ok) return wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      this._fetchNight();
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
+
+  // 单狼点确认 / 双狼倒计时到点：定刀
+  confirmKill() { this._killConfirm(); },
+  async _killConfirm() {
+    try {
+      await app.callGame({ action: 'wolfNightAct', roomId: this.data.roomId, act: 'killConfirm' });
+      this._refresh();
+      this._fetchNight();
+    } catch (e) {}
+  },
+
+  // 双狼都选定 → 5 秒倒计时,期间改选(voteSig 变化)则重置;到点自动定刀
+  _maybeWolfTimer() {
+    const n = this.data.night;
+    if (this.data.role !== 'wolf' || !n || n.done || (n.wolfCount || 1) <= 1 || !n.allVoted) {
+      return this._clearWolfTimer();
+    }
+    if (n.voteSig !== this._wolfSig || !this._wolfTimer) {
+      this._wolfSig = n.voteSig;
+      this._startWolfTimer();
+    }
+  },
+  _startWolfTimer() {
+    this._clearWolfTimer();
+    let left = 5;
+    this.setData({ killCountdown: left });
+    this._wolfTimer = setInterval(() => {
+      left -= 1;
+      if (left <= 0) {
+        this._clearWolfTimer();
+        this._killConfirm();
+      } else {
+        this.setData({ killCountdown: left });
+      }
+    }, 1000);
+  },
+  _clearWolfTimer() {
+    if (this._wolfTimer) { clearInterval(this._wolfTimer); this._wolfTimer = null; }
+    this._wolfSig = '';
+    if (this.data.killCountdown) this.setData({ killCountdown: 0 });
   },
 
   // ── 等待阶段 ──
@@ -343,14 +400,14 @@ Page({
     if (r && !r.ok) wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
   },
 
-  // ── 身份卡：长按看，松手盖回 ──
-  async peekOn() {
+  // ── 身份卡：点击翻转/盖回 ──
+  async toggleCard() {
+    if (this.data.peeking) return this.setData({ peeking: false });
     if (this.data.role) return this.setData({ peeking: true });
     await this._fetchRole();
     if (this.data.role) this.setData({ peeking: true });
     else wx.showToast({ title: '身份获取失败，再试一次', icon: 'none' });
   },
-  peekOff() { if (this.data.peeking) this.setData({ peeking: false }); },
 
   // ── 点头像：按当前阶段/角色分发 ──
   onPlayerTap(e) {
@@ -370,7 +427,7 @@ Page({
     }
     if (role === 'wolf' && !night.done) {
       if (d.openid === openid) return wx.showToast({ title: '不能刀自己', icon: 'none' });
-      return this._confirmAct(`今晚刀「${d.nick}」？`, 'wolfNightAct', { act: 'kill', target: d.openid }, '行动中');
+      return this._wolfPick(d.openid);   // 只提交选择,单狼再点确认/双狼倒计时定刀
     }
     if (role === 'seer' && !night.done) {
       if (d.openid === openid) return wx.showToast({ title: '不用查自己', icon: 'none' });
@@ -426,9 +483,6 @@ Page({
   },
 
   // ── 房主控制 ──
-  forceDawn() {
-    this._confirmAct('把还没行动的角色视为无操作，直接天亮？', 'wolfForce', {}, '结算中');
-  },
   revealAll() {
     this._confirmAct('公开所有人的身份并结束本局？', 'wolfReveal', {}, '揭晓中');
   },

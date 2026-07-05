@@ -525,9 +525,11 @@ exports.main = async (event) => {
       const base = { ok: true, phase: 'night', role, meOut };
       if (meOut) return base;
       if (role === 'wolf') {
-        const votes = alive.filter((p) => sec.roles[p.openid] === 'wolf')
-          .map((p) => ({ nick: p.nick, target: nickOf((night.wolfVotes || {})[p.openid]) }));
-        return { ...base, myVote: (night.wolfVotes || {})[OPENID] || '', votes, done: wolvesDone, kill: wolvesDone && night.wolfKill ? nickOf(night.wolfKill) : '' };
+        const aliveWolves = alive.filter((p) => sec.roles[p.openid] === 'wolf');
+        const votes = aliveWolves.map((p) => ({ nick: p.nick, target: nickOf((night.wolfVotes || {})[p.openid]) }));
+        const allVoted = aliveWolves.every((p) => (night.wolfVotes || {})[p.openid]);
+        const voteSig = aliveWolves.map((p) => p.openid + ':' + ((night.wolfVotes || {})[p.openid] || '')).join('|');
+        return { ...base, myVote: (night.wolfVotes || {})[OPENID] || '', votes, wolfCount: aliveWolves.length, allVoted, voteSig, done: wolvesDone, kill: wolvesDone && night.wolfKill ? nickOf(night.wolfKill) : '' };
       }
       if (role === 'seer') {
         const history = (sec.checks || []).map((c) => ({ round: c.round, nick: nickOf(c.target), isWolf: c.isWolf }));
@@ -560,25 +562,33 @@ exports.main = async (event) => {
       const aliveIds = wolfAliveOf(room).map((p) => p.openid);
       const nickOf = (id) => { const p = (room.players || []).find((x) => x.openid === id); return p ? p.nick : ''; };
 
-      // 狼人提刀：全员提交后定刀（多数票，平票取最后提交）
+      // 狼人选/改目标：只记票（含时间戳），不定刀；bump nightVer 让狼队友看到彼此的选择
       if (role === 'wolf' && event.act === 'kill') {
         if (night.wolfKill !== undefined) return { ok: false, msg: '刀口已确定' };
         if (event.target === OPENID) return { ok: false, msg: '不能刀自己' };
         if (aliveIds.indexOf(event.target) < 0) return { ok: false, msg: '目标无效' };
-        await secrets.doc(event.roomId).update({ data: { ['night.wolfVotes.' + OPENID]: event.target } });
+        await secrets.doc(event.roomId).update({ data: {
+          ['night.wolfVotes.' + OPENID]: event.target,
+          ['night.wolfTs.' + OPENID]: Date.now(),
+        } });
+        await wolfAfterAct(event.roomId, room);   // 未定刀 → bump nightVer
+        return { ok: true };
+      }
+
+      // 狼人确认定刀（单狼点确认 / 双狼倒计时到点触发）：幂等
+      if (role === 'wolf' && event.act === 'killConfirm') {
         const s2 = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
         if (!s2) return { ok: false, msg: '本局数据异常' };
         const n2 = s2.night || {};
+        if (n2.wolfKill !== undefined) return { ok: true };   // 已定,幂等
         const aliveWolves = wolfAliveOf(room).filter((p) => s2.roles[p.openid] === 'wolf');
-        if (n2.wolfKill === undefined && aliveWolves.every((p) => (n2.wolfVotes || {})[p.openid])) {
-          const cnt = {};
-          aliveWolves.forEach((p) => { const t = n2.wolfVotes[p.openid]; cnt[t] = (cnt[t] || 0) + 1; });
-          let kill = event.target, max = 0;
-          Object.keys(cnt).forEach((t) => { if (cnt[t] > max) { max = cnt[t]; kill = t; } });
-          if (Object.keys(cnt).filter((t) => cnt[t] === max).length > 1) kill = event.target;  // 平票取最后提交
-          await secrets.doc(event.roomId).update({ data: { 'night.wolfKill': kill } });
-        }
-        await wolfAfterAct(event.roomId, room);
+        if (!aliveWolves.every((p) => (n2.wolfVotes || {})[p.openid])) return { ok: false, msg: '还有狼没选目标' };
+        const votes = aliveWolves.map((p) => ({ t: (n2.wolfVotes || {})[p.openid], ts: (n2.wolfTs || {})[p.openid] || 0 }));
+        const uniq = [...new Set(votes.map((v) => v.t))];
+        const kill = uniq.length === 1 ? uniq[0] : votes.slice().sort((a, b) => b.ts - a.ts)[0].t;   // 一致取该目标,否则取最后改动
+        await secrets.doc(event.roomId).update({ data: { 'night.wolfKill': kill } });
+        const room2 = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => room);
+        await wolfAfterAct(event.roomId, room2);
         return { ok: true };
       }
 

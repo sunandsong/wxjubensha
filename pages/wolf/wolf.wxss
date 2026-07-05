@@ -123,7 +123,7 @@
 .god-night { margin-top: 14rpx; font-size: 22rpx; color: #b3a6cc; line-height: 1.7; }
 
 /* ── 身份卡：图腾卡背,长按翻开木刻角色牌 ── */
-.idcard { position: relative; width: 340rpx; height: 480rpx; margin: 20rpx auto 6rpx;
+.idcard { position: relative; width: 240rpx; height: 340rpx; margin: 16rpx auto 6rpx;
   border-radius: 20rpx; overflow: hidden; perspective: 1000rpx;
   box-shadow: 0 16rpx 44rpx rgba(0,0,0,0.5); }
 .id-face { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
@@ -132,15 +132,15 @@
 .id-front { opacity: 0; transform: scale(1.06); }
 .idcard.open .id-back { opacity: 0; transform: scale(0.96); }
 .idcard.open .id-front { opacity: 1; transform: none; }
-.id-back-css { display: flex; align-items: center; justify-content: center; font-size: 100rpx;
+.id-back-css { display: flex; align-items: center; justify-content: center; font-size: 72rpx;
   background: linear-gradient(160deg, #3a2a20, #241812); }
-.id-front-css { display: flex; align-items: center; justify-content: center; font-size: 44rpx; font-weight: 900;
+.id-front-css { display: flex; align-items: center; justify-content: center; font-size: 34rpx; font-weight: 900;
   color: #fff; background: linear-gradient(160deg, #2c2244, #221936); }
-.id-name { position: absolute; left: 0; right: 0; bottom: 14rpx; text-align: center;
-  font-size: 30rpx; font-weight: 900; letter-spacing: 4rpx; color: #ffe8c9;
+.id-name { position: absolute; left: 0; right: 0; bottom: 12rpx; text-align: center;
+  font-size: 26rpx; font-weight: 900; letter-spacing: 4rpx; color: #ffe8c9;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.9); }
-.id-hint { position: absolute; left: 0; right: 0; bottom: 14rpx; text-align: center;
-  font-size: 20rpx; letter-spacing: 2rpx; color: rgba(255,255,255,0.75);
+.id-hint { position: absolute; left: 0; right: 0; bottom: 10rpx; text-align: center;
+  font-size: 17rpx; letter-spacing: 2rpx; color: rgba(255,255,255,0.75);
   text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.9); }
 .word-card .mates { text-align: center; margin-top: 12rpx; }
 
@@ -188,3 +188,7 @@
 .ph-sub2 { font-size: 21rpx; color: #8d81a8; margin-top: 6rpx; }
 .share-btn { background: linear-gradient(90deg, #ff9a45, #ffce54); color: #3a2408; }
 .room-code-line { margin-top: 14rpx; font-size: 22rpx; }
+.id-mates { position: absolute; left: 0; right: 0; bottom: 60rpx; text-align: center;
+  font-size: 22rpx; color: #ffd9c9; text-shadow: 0 2rpx 10rpx rgba(0,0,0,0.9); }
+.kill-confirm { margin-top: 18rpx; background: linear-gradient(90deg, #a8324e, #d43a52); }
+.wolf-hint { margin-top: 14rpx; font-size: 22rpx; }

@@ -65,16 +65,14 @@
     <!-- 我的身份卡（玩家）：图腾卡背,长按翻开角色牌 -->
     <view class="card word-card" wx:if="{{status !== 'waiting' && !isHost}}">
       <view class="sec-title">我的身份{{myOut ? '（已出局 👻）' : ''}}</view>
-      <view class="idcard {{peeking ? 'open' : ''}}"
-        bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">
+      <view class="idcard {{peeking ? 'open' : ''}}" bindtap="toggleCard">
         <image wx:if="{{backUrl}}" class="id-face id-back" src="{{backUrl}}" mode="aspectFill"></image>
         <view wx:else class="id-face id-back id-back-css">🐺</view>
         <image wx:if="{{roleImg}}" class="id-face id-front" src="{{roleImg}}" mode="aspectFill"></image>
-        <view wx:else class="id-face id-front id-front-css">{{roleName}}</view>
-        <view class="id-name" wx:if="{{peeking}}">{{roleName}}</view>
-        <view class="id-hint" wx:if="{{!peeking}}">🔒 长按看身份 · 松手盖回</view>
+        <view wx:else class="id-face id-front id-front-css">{{roleText}}</view>
+        <view class="id-mates" wx:if="{{peeking && matesText}}">狼队友：{{matesText}}</view>
+        <view class="id-name" wx:if="{{peeking}}">{{roleText}}</view>
       </view>
-      <view class="mates" wx:if="{{peeking && matesText}}">狼队友：{{matesText}}</view>
     </view>
 
     <!-- 玩家（夜晚/白天点头像行动） -->
@@ -122,7 +120,17 @@
       <view class="card" wx:if="{{role === 'wolf'}}">
         <view class="sec-title">狼人频道 🐺</view>
         <view class="board-line" wx:for="{{night.votes}}" wx:key="nick">{{item.nick}} → {{item.target || '还没选'}}</view>
-        <view class="muted night-wait" wx:if="{{night.done}}">刀口已定{{night.kill ? '：' + night.kill : '（空刀）'}}，等待天亮…</view>
+        <!-- 已定刀 -->
+        <view class="muted night-wait" wx:if="{{night.done}}">刀口已定{{night.kill ? '：' + night.kill : ''}}，等待天亮…</view>
+        <!-- 单狼：选了目标 → 确认按钮 -->
+        <block wx:elif="{{night.wolfCount <= 1 && myTargetNick}}">
+          <button class="btn kill-confirm" bindtap="confirmKill">确认刀「{{myTargetNick}}」</button>
+          <view class="muted center wolf-hint">点其他头像可改目标</view>
+        </block>
+        <!-- 双狼：都选了 → 倒计时 -->
+        <view class="muted center wolf-hint" wx:elif="{{killCountdown > 0}}">双方已选定 · {{killCountdown}} 秒后定刀（改选可重置）</view>
+        <!-- 还没选齐 -->
+        <view class="muted center wolf-hint" wx:else>点头像选择目标{{night.wolfCount > 1 ? '，等狼队友一起选定' : ''}}</view>
       </view>
 
       <!-- 预言家 -->
@@ -184,7 +192,6 @@
     </block>
 
     <!-- 房主控制 -->
-    <button wx:if="{{isHost && status === 'night'}}" class="btn btn-ghost start-btn" bindtap="forceDawn">强制天亮（跳过未行动）</button>
     <button wx:if="{{isHost && (status === 'night' || status === 'day')}}" class="btn btn-ghost start-btn" bindtap="revealAll">提前揭晓（结束本局）</button>
 
     <button class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>

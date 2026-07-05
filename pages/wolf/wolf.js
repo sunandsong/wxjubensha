@@ -1,8 +1,19 @@
 // 狼人杀 · 无上帝自动主持：创建/加入 → 全员准备 → 云端发身份入夜 →
 // 夜晚各角色在 App 里行动（云端收齐自动天亮）→ 白天回群里讨论、口头投票后房主点人出局 → 循环至分胜负
 const app = getApp();
+const IMGCACHE = require('../../utils/imgCache.js');
 
-const ROLE_NAMES = { wolf: '狼人 🐺', seer: '预言家 🔮', witch: '女巫 🧪', villager: '平民 🧑‍🌾' };
+// 牌面素材（云存储 games/）：图腾卡背 + 四张木刻角色牌
+const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const BACK_FID = GBASE + '/wolf_back.jpg';
+const ROLE_FIDS = {
+  wolf: GBASE + '/wolf_r_wolf.jpg',
+  seer: GBASE + '/wolf_r_seer.jpg',
+  witch: GBASE + '/wolf_r_witch.jpg',
+  villager: GBASE + '/wolf_r_villager.jpg',
+};
+
+const ROLE_NAMES = { wolf: '狼人 🐺', seer: '预言家 🔮', witch: '女巫 🧪', villager: '平民 🧑‍🌾', god: '上帝 👁️' };
 
 Page({
   data: {
@@ -21,12 +32,15 @@ Page({
     // 展示
     announceText: '', actTip: '', myTarget: '',
     reveal: null, winnerText: '',
+    god: null,          // 上帝面板(仅房主):全员身份+夜晚进度
+    backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
     starting: false,
   },
 
   watcher: null,
 
   async onLoad(query) {
+    this._resolveImgs();
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     if (query && query.joinCode) return this._join(query.joinCode);
     const s = app.getWolfSession();
@@ -49,6 +63,42 @@ Page({
   onUnload() { this._closeWatch(); },
 
   // ── 大厅 ──
+  // 牌面素材：本地缓存优先
+  _resolveImgs() {
+    IMGCACHE.resolve([BACK_FID], (m) => {
+      if (m[BACK_FID] && m[BACK_FID] !== this.data.backUrl) this.setData({ backUrl: m[BACK_FID] });
+    });
+  },
+  _resolveRoleImg(role) {
+    const fid = ROLE_FIDS[role];
+    if (!fid) return this.setData({ roleImg: '' });
+    IMGCACHE.resolve([fid], (m) => { if (m[fid]) this.setData({ roleImg: m[fid] }); });
+  },
+
+  // 一次性：上传牌背+四张角色牌（成功后删本函数/按钮/up_wolf_*）
+  async uploadWolfAssets() {
+    const files = [
+      ['up_wolf_back.jpg', 'games/wolf_back.jpg'],
+      ['up_wolf_r_wolf.jpg', 'games/wolf_r_wolf.jpg'],
+      ['up_wolf_r_seer.jpg', 'games/wolf_r_seer.jpg'],
+      ['up_wolf_r_witch.jpg', 'games/wolf_r_witch.jpg'],
+      ['up_wolf_r_villager.jpg', 'games/wolf_r_villager.jpg'],
+    ];
+    wx.showLoading({ title: '上传中…', mask: true });
+    let done = 0;
+    for (const [local, cloudPath] of files) {
+      try {
+        const info = await new Promise((res, rej) => wx.getImageInfo({ src: `/assets/games/${local}`, success: res, fail: rej }));
+        await wx.cloud.uploadFile({ cloudPath, filePath: info.path });
+        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
+        done++;
+      } catch (e) { console.error('✘', cloudPath, e); }
+    }
+    wx.hideLoading();
+    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张`, showCancel: false });
+    if (done) this._resolveImgs();
+  },
+
   // 不再弹框要名字：有昵称直接用；没有就发个代号并记住（资料页随时可改）
   _getNick() {
     let nick = wx.getStorageSync('nick');
@@ -157,9 +207,9 @@ Page({
     const a = room.announce;
     let announceText = '';
     if (a && a.type === 'dawn') {
-      announceText = `☀️ 第 ${a.round} 天亮了：` + (a.peace ? '平安夜，无人倒牌' : `昨夜 ${(a.deaths || []).join('、')} 倒牌`);
+      announceText = '☀️ 天亮请睁眼——' + (a.peace ? '昨夜是平安夜，无人倒牌' : `昨夜倒牌的是 ${(a.deaths || []).join('、')}`);
     } else if (a && a.type === 'out') {
-      announceText = `🗳 ${a.nick} 被投票出局，TA 是「${a.roleName}」`;
+      announceText = `🪦 ${a.nick} 被放逐出村，TA 是「${a.roleName}」`;
     }
     const rv = room.reveal || null;
     this.setData({
@@ -171,14 +221,15 @@ Page({
       myOut: !!(me && me.out),
       readyCount,
       needReady: others.length,
-      canStart: (room.players || []).length >= 6 && readyCount === others.length,
+      canStart: others.length >= 6 && readyCount === others.length,   // 上帝不算人数
       announceText,
       reveal: rv,
       winnerText: rv ? (rv.winner === 'wolf' ? '狼人阵营获胜 🐺' : rv.winner === 'good' ? '好人阵营获胜 🎉' : '本局提前结束，身份公开') : '',
     });
     // 回到等待（再来一局）：清掉上一局身份
     if (room.status === 'waiting' && this.data.role) {
-      this.setData({ role: '', roleName: '', matesText: '', night: null, reveal: null, peeking: false, pickPoison: false });
+      this.setData({ role: '', roleName: '', matesText: '', night: null, reveal: null, peeking: false, pickPoison: false, god: null });
+      this._godKey = '';
     }
     // 游戏中还没拿到身份 → 拉一次
     if (room.status !== 'waiting' && room.status !== 'finished' && !this.data.role) this._fetchRole();
@@ -190,6 +241,23 @@ Page({
       this._nightVer = nv;
       if (this.data.night) this.setData({ night: null, pickPoison: false });
     }
+    // 上帝面板：开局后随状态/夜晚版本刷新
+    if (room.hostOpenid === this.data.openid && room.status !== 'waiting') {
+      const gk = room.status + ':' + nv;
+      if (gk !== this._godKey) { this._godKey = gk; this._fetchGod(); }
+    }
+    this._deriveTips();
+  },
+
+  async _fetchGod() {
+    if (this._fetchingGod) return;
+    this._fetchingGod = true;
+    try {
+      const res = await app.callGame({ action: 'wolfGod', roomId: this.data.roomId });
+      const r = res && res.result;
+      if (r && r.ok) this.setData({ god: r });
+    } catch (e) {}
+    this._fetchingGod = false;
     this._deriveTips();
   },
 
@@ -198,11 +266,16 @@ Page({
     const { status, role, night, isHost, myOut, pickPoison } = this.data;
     let actTip = '';
     if (status === 'night' && !myOut && night) {
-      if (pickPoison) actTip = '☠️ 点头像选择下毒目标';
-      else if (role === 'wolf' && !night.done) actTip = '🔪 点头像选择今晚的目标（狼人共同决定）';
-      else if (role === 'seer' && !night.done) actTip = '🔮 点头像查验一名玩家';
+      if (pickPoison) actTip = '☠️ 女巫请睁眼——点头像选择下毒目标';
+      else if (role === 'wolf' && !night.done) actTip = '🐺 狼人请睁眼——点头像选择今晚的目标（共同决定）';
+      else if (role === 'seer' && !night.done) actTip = '🔮 预言家请睁眼——点头像查验一名玩家';
+    } else if (status === 'night' && isHost) {
+      const g = this.data.god;
+      actTip = g && g.night
+        ? `🌙 狼人${g.night.wolfDone ? '✓' : '…'} 预言家${g.night.seerDone ? '✓' : '…'} 女巫${g.night.witchDone ? '✓' : '…'}（收齐自动天亮）`
+        : '🌙 天黑请闭眼，等待各角色行动…';
     } else if (status === 'day' && isHost) {
-      actTip = '🗳 群里口头投票后，点头像让 TA 出局';
+      actTip = '🗳 群里投票后，点头像将 TA 放逐出村';
     }
     this.setData({ actTip, myTarget: (role === 'wolf' && night && night.myVote) || '' });
   },
@@ -215,6 +288,7 @@ Page({
       const r = res && res.result;
       if (r && r.ok) {
         this.setData({ role: r.role, roleName: ROLE_NAMES[r.role] || r.role, matesText: (r.mates || []).join('、') });
+        this._resolveRoleImg(r.role);
       }
     } catch (e) {}
     this._fetchingRole = false;

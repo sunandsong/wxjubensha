@@ -204,7 +204,7 @@ exports.main = async (event) => {
       // 派对房（卧底/狼人杀）：开局后不能进（身份已发完），最多 12 人
       if (room.gameType === 'spy' || room.gameType === 'wolf') {
         if (room.status !== 'waiting') return { ok: false, msg: '本局已开始，等下一局再来' };
-        if (room.players.length >= 12) return { ok: false, msg: '房间已满（最多 12 人）' };
+        if (room.players.filter((p) => p.openid !== room.hostOpenid).length >= 12) return { ok: false, msg: '房间已满（最多 12 名玩家）' };
         await rooms.doc(room._id).update({
           data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', ready: false, out: false }) },
         });
@@ -290,9 +290,10 @@ exports.main = async (event) => {
       // 狼人杀：随机发身份入夜（无上帝，夜晚 App 收集行动自动结算）
       if (room.gameType === 'wolf') {
         if (room.status !== 'waiting') return { ok: false, msg: '游戏已开始' };
-        const ps = room.players || [];
-        if (ps.length < 6) return { ok: false, msg: `至少 6 人才能开始（现在 ${ps.length} 人）` };
-        const notReady = ps.filter((p) => p.openid !== room.hostOpenid && !p.ready);
+        // 上帝模式：房主是上帝，不发身份、不计入人数
+        const ps = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
+        if (ps.length < 6) return { ok: false, msg: `至少 6 名玩家才能开始（上帝不算，现在 ${ps.length} 人）` };
+        const notReady = ps.filter((p) => !p.ready);
         if (notReady.length) return { ok: false, msg: `还有 ${notReady.length} 名玩家未点准备` };
         const wolves = ps.length >= 10 ? 3 : 2;   // 6–9人=2狼，10–12人=3狼；神职固定：预言家+女巫
         const deck = shuffle(ps.map((p) => p.openid));
@@ -303,7 +304,7 @@ exports.main = async (event) => {
         await secrets.doc(event.roomId).set({
           data: { roles, potions: { save: true, poison: true }, night: { wolfVotes: {} }, checks: [], createdAt: db.serverDate() },
         });
-        const players = ps.map((p) => ({ ...p, out: false }));
+        const players = (room.players || []).map((p) => ({ ...p, out: false }));
         await rooms.doc(event.roomId).update({
           data: { players, status: 'night', round: 1, nightVer: 1, announce: _.remove(), reveal: _.remove() },
         });
@@ -421,7 +422,7 @@ exports.main = async (event) => {
 
     // ═══════════ 狼人杀（无上帝：夜晚收集行动自动结算，白天群里讨论、房主点人出局） ═══════════
     const WOLF_NAMES = { wolf: '狼人', seer: '预言家', witch: '女巫', villager: '平民' };
-    const wolfAliveOf = (room) => (room.players || []).filter((p) => !p.out);
+    const wolfAliveOf = (room) => (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算存活
     // 夜晚是否收集完毕：狼刀已定 && 预言家已查(或已死) && 女巫已动(或已死)
     const wolfNightComplete = (room, sec) => {
       const night = sec.night || {};
@@ -447,7 +448,7 @@ exports.main = async (event) => {
       if (night.witchPoison && deaths.indexOf(night.witchPoison) < 0) deaths.push(night.witchPoison);
       const players = (room.players || []).map((p) => (deaths.indexOf(p.openid) >= 0 ? { ...p, out: true } : p));
       const deadNicks = players.filter((p) => deaths.indexOf(p.openid) >= 0).map((p) => p.nick);
-      const alive = players.filter((p) => !p.out);
+      const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = { type: 'dawn', round: room.round, deaths: deadNicks, peace: !deaths.length };
       let data;
@@ -465,10 +466,38 @@ exports.main = async (event) => {
       await rooms.doc(roomId).update({ data: { nightVer: _.inc(1) } }).catch(() => {});
     };
 
+    // ── 狼人杀：上帝面板（仅房主可见：全员身份 + 夜晚进度 + 药水）──
+    if (action === 'wolfGod') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!room || room.gameType !== 'wolf') return { ok: false, msg: '房间不存在' };
+      if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有上帝能看' };
+      const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!sec) return { ok: false, msg: '本局还没发身份' };
+      const ps = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
+      const nickOf = (id) => { const x = ps.find((q) => q.openid === id); return x ? x.nick : ''; };
+      const list = ps.map((q) => ({ nick: q.nick, out: !!q.out, role: sec.roles[q.openid] || '', roleName: WOLF_NAMES[sec.roles[q.openid]] || '?' }));
+      const night = sec.night || {};
+      const alive = wolfAliveOf(room);
+      const seerAlive = alive.some((q) => sec.roles[q.openid] === 'seer');
+      const witchAlive = alive.some((q) => sec.roles[q.openid] === 'witch');
+      return {
+        ok: true, list, potions: sec.potions || {},
+        night: room.status === 'night' ? {
+          wolfDone: night.wolfKill !== undefined,
+          kill: night.wolfKill ? nickOf(night.wolfKill) : '',
+          seerDone: !!night.seerDone || !seerAlive,
+          witchDone: !!night.witchDone || !witchAlive,
+          saved: !!night.witchSave,
+          poison: night.witchPoison ? nickOf(night.witchPoison) : '',
+        } : null,
+      };
+    }
+
     // ── 狼人杀：我的身份（狼人附带队友昵称）──
     if (action === 'wolfRole') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room || room.gameType !== 'wolf') return { ok: false, msg: '房间不存在' };
+      if (room.hostOpenid === OPENID) return { ok: true, role: 'god', mates: [] };   // 上帝
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局还没发身份' };
       const role = sec.roles[OPENID];
@@ -617,12 +646,13 @@ exports.main = async (event) => {
       if (!room || room.gameType !== 'wolf') return { ok: false, msg: '房间不存在' };
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以执行出局' };
       if (room.status !== 'day') return { ok: false, msg: '现在不是白天' };
+      if (event.target === room.hostOpenid) return { ok: false, msg: '上帝不能出局' };
       const t = (room.players || []).find((p) => p.openid === event.target);
       if (!t || t.out) return { ok: false, msg: '目标无效' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局数据异常' };
       const players = (room.players || []).map((p) => (p.openid === event.target ? { ...p, out: true } : p));
-      const alive = players.filter((p) => !p.out);
+      const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = {
         type: 'out', round: room.round, nick: t.nick,

@@ -3,7 +3,7 @@
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">
     <view class="title">狼人杀 🐺</view>
-    <view class="subtitle">6–12 人 · 无上帝自动主持：夜晚在这里行动，白天回微信群讨论</view>
+    <view class="subtitle">6–12 名玩家 + 上帝主持：夜晚玩家在这里行动，白天上帝带群里讨论投票</view>
 
     <view class="resume-bar" wx:if="{{resumeId}}" bindtap="resumeRoom">
       🔔 你有一局还没结束 · 房间 {{resumeCode}}<text class="rb-go">回去 ›</text>
@@ -13,7 +13,7 @@
       <view class="sec-title">板子（按人数自动配置）</view>
       <view class="board-line">6–9 人：2 狼人 + 预言家 + 女巫 + 平民</view>
       <view class="board-line">10–12 人：3 狼人 + 预言家 + 女巫 + 平民</view>
-      <view class="board-line muted">夜晚：狼人刀人、预言家查验、女巫用药，云端自动天亮；白天群里讨论，口头投票后房主点人出局</view>
+      <view class="board-line muted">上帝（房主）不发身份、不计入人数；夜晚各角色行动云端自动结算，白天上帝执行出局</view>
       <button class="btn" bindtap="createRoom">创建房间</button>
       <button class="btn btn-ghost" bindtap="showJoinModal">输入房间号加入</button>
     </view>
@@ -34,6 +34,20 @@
 
   <!-- ══ 房间 ══ -->
   <block wx:if="{{mode === 'room'}}">
+    <!-- 米勒山谷：满月村庄剪影横幅（昼夜随局势切换） -->
+    <view class="village {{status === 'day' ? 'vday' : status === 'finished' ? 'vdusk' : ''}}">
+      <view class="v-orb"></view>
+      <view class="v-sil church"></view>
+      <view class="v-sil spire"></view>
+      <view class="v-sil hut1"></view>
+      <view class="v-sil hut2"></view>
+      <view class="v-sil pine1"></view>
+      <view class="v-sil pine2"></view>
+      <view class="v-sil pine3"></view>
+      <view class="v-win"></view>
+      <view class="v-phase">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : status === 'day' ? '☀️ 第 ' + round + ' 天 · 天亮请睁眼' : status === 'finished' ? '🃏 终局 · 请亮牌' : '🌘 夜幕将至 · 村民集结中'}}</view>
+    </view>
+
     <!-- 房间号卡 -->
     <view class="card">
       <view class="code-row">
@@ -46,9 +60,9 @@
         </view>
       </view>
       <view class="muted invite-tip">
-        {{status === 'waiting' ? '把链接发到群里，点开直接进房 · 满 6 人可开始' : ''}}
+        {{status === 'waiting' ? '把链接发到群里，点开直接进房 · 满 6 名玩家可开始（上帝不算）' : ''}}
         {{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼，各角色悄悄行动' : ''}}
-        {{status === 'day' ? '☀️ 第 ' + round + ' 天 · 回群里讨论，投完票房主执行出局' : ''}}
+        {{status === 'day' ? '☀️ 第 ' + round + ' 天 · 回群里讨论，投完票上帝执行出局' : ''}}
         {{status === 'finished' ? '本局已结束' : ''}}
       </view>
     </view>
@@ -56,17 +70,32 @@
     <!-- 公告：死讯/出局 -->
     <view class="card announce" wx:if="{{announceText && status !== 'waiting'}}">{{announceText}}</view>
 
-    <!-- 我的身份卡 -->
-    <view class="card word-card" wx:if="{{status !== 'waiting'}}">
-      <view class="sec-title">我的身份{{myOut ? '（已出局 👻）' : ''}}</view>
-      <view class="wc-body">
-        <view wx:if="{{peeking}}" class="wc-word">{{roleName}}</view>
-        <view wx:if="{{peeking && matesText}}" class="mates">狼队友：{{matesText}}</view>
-        <view wx:if="{{!peeking}}" class="wc-cover"
-          bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">🔒 长按看身份（松手盖回）</view>
-        <view wx:if="{{peeking}}" class="wc-cover ghost"
-          bindtouchend="peekOff" bindtouchcancel="peekOff"></view>
+    <!-- 上帝视角：全员身份 + 夜晚进度（只有房主可见） -->
+    <view class="card god-card" wx:if="{{isHost && status !== 'waiting' && god}}">
+      <view class="sec-title">👁️ 上帝视角（只有你能看到）</view>
+      <view class="god-row" wx:for="{{god.list}}" wx:key="nick">
+        <text class="g-nick {{item.out ? 'gout' : ''}}">{{item.nick}}{{item.out ? '（出局）' : ''}}</text>
+        <text class="g-role {{item.role}}">{{item.roleName}}</text>
       </view>
+      <view class="god-night" wx:if="{{god.night}}">
+        🌙 狼人{{god.night.wolfDone ? (god.night.kill ? ' 已刀 ' + god.night.kill : ' 空刀') : ' 行动中…'}} · 预言家{{god.night.seerDone ? ' ✓' : ' …'}} · 女巫{{god.night.witchDone ? ' ✓' : ' …'}}{{god.night.saved ? ' · 已用解药' : ''}}{{god.night.poison ? ' · 毒了 ' + god.night.poison : ''}}
+      </view>
+      <view class="god-night">🧪 解药{{god.potions.save ? '还在' : '已用'}} · 毒药{{god.potions.poison ? '还在' : '已用'}}</view>
+    </view>
+
+    <!-- 我的身份卡（玩家）：图腾卡背,长按翻开角色牌 -->
+    <view class="card word-card" wx:if="{{status !== 'waiting' && !isHost}}">
+      <view class="sec-title">我的身份{{myOut ? '（已出局 👻）' : ''}}</view>
+      <view class="idcard {{peeking ? 'open' : ''}}"
+        bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">
+        <image wx:if="{{backUrl}}" class="id-face id-back" src="{{backUrl}}" mode="aspectFill"></image>
+        <view wx:else class="id-face id-back id-back-css">🐺</view>
+        <image wx:if="{{roleImg}}" class="id-face id-front" src="{{roleImg}}" mode="aspectFill"></image>
+        <view wx:else class="id-face id-front id-front-css">{{roleName}}</view>
+        <view class="id-name" wx:if="{{peeking}}">{{roleName}}</view>
+        <view class="id-hint" wx:if="{{!peeking}}">🔒 长按看身份 · 松手盖回</view>
+      </view>
+      <view class="mates" wx:if="{{peeking && matesText}}">狼队友：{{matesText}}</view>
     </view>
 
     <!-- 玩家（夜晚/白天点头像行动） -->
@@ -81,14 +110,14 @@
           wx:for="{{players}}" wx:key="openid"
           data-openid="{{item.openid}}" data-nick="{{item.nick}}" data-out="{{item.out}}"
           bindtap="onPlayerTap">
-          <view class="host-badge" wx:if="{{item.isHost}}">房主</view>
+          <view class="host-badge" wx:if="{{item.isHost}}">上帝</view>
           <view class="avatar">
             <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
             <block wx:else>{{item.nick[0]}}</block>
           </view>
           <view class="pname">{{item.nick}}</view>
           <view class="ready-badge on" wx:if="{{status === 'waiting' && item.ready && !item.isHost}}">已准备</view>
-          <view class="ready-badge outtag" wx:if="{{item.out}}">出局</view>
+          <view class="tomb" wx:if="{{item.out}}">🪦</view>
         </view>
       </view>
     </view>
@@ -99,7 +128,7 @@
         开始游戏（自动发身份）
       </button>
       <view wx:if="{{isHost && !canStart}}" class="center muted ready-hint">
-        {{players.length < 6 ? '满 6 人才能开始' : '等所有玩家点「准备好了」'}}
+        {{needReady < 6 ? '满 6 名玩家才能开始（上帝不算，还差 ' + (6 - needReady) + ' 人）' : '等所有玩家点「准备好了」'}}
       </view>
       <button wx:if="{{!isHost}}" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">
         {{myReady ? '已准备（点击取消）' : '准备好了'}}
@@ -161,9 +190,13 @@
     <block wx:if="{{status === 'finished' && reveal}}">
       <view class="card">
         <view class="win-line">{{winnerText}}</view>
-        <view class="rev-row" wx:for="{{reveal.roles}}" wx:key="openid">
-          <text class="muted">{{item.nick}}</text>
-          <text class="rev-v {{item.role === 'wolf' ? 'warn' : ''}}">{{item.roleName}}</text>
+        <view class="rev-narr">请亮牌——</view>
+        <view class="rev-cards">
+          <view class="rev-card {{item.role === 'wolf' ? 'is-wolf' : ''}}"
+            wx:for="{{reveal.roles}}" wx:key="openid" style="animation-delay:{{index * 220}}ms">
+            <view class="rc-role">{{item.roleName}}</view>
+            <view class="rc-nick">{{item.nick}}</view>
+          </view>
         </view>
       </view>
       <button wx:if="{{isHost}}" class="btn start-btn" bindtap="playAgain">再来一局</button>
@@ -175,6 +208,9 @@
 
     <button class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
   </block>
+
+  <!-- 一次性：程序内上传牌面素材（成功后删除本按钮） -->
+  <button class="dev-upload" wx:if="{{mode === 'lobby'}}" bindtap="uploadWolfAssets">↑ 上传狼人杀牌面（一次性）</button>
 </view>
 
 <id-switch />

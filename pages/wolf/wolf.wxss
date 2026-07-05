@@ -109,3 +109,97 @@
   background: rgba(255,206,84,0.1); border: 1rpx solid rgba(255,206,84,0.32);
 }
 .rb-go { margin-left: auto; font-weight: 700; color: #ffce54; }
+
+/* ── 上帝视角面板 ── */
+.god-card { border-color: rgba(255,206,84,0.35); }
+.god-row { display: flex; justify-content: space-between; align-items: center;
+  padding: 12rpx 4rpx; border-bottom: 1rpx dashed rgba(255,255,255,0.1); font-size: 26rpx; }
+.g-nick.gout { text-decoration: line-through; opacity: 0.5; }
+.g-role { font-weight: 700; }
+.g-role.wolf { color: #ff8f8f; }
+.g-role.seer { color: #8fd0ff; }
+.g-role.witch { color: #c9a4ff; }
+.g-role.villager { color: #b9e6a8; }
+.god-night { margin-top: 14rpx; font-size: 22rpx; color: #b3a6cc; line-height: 1.7; }
+
+/* ── 身份卡：图腾卡背,长按翻开木刻角色牌 ── */
+.idcard { position: relative; width: 340rpx; height: 480rpx; margin: 20rpx auto 6rpx;
+  border-radius: 20rpx; overflow: hidden; perspective: 1000rpx;
+  box-shadow: 0 16rpx 44rpx rgba(0,0,0,0.5); }
+.id-face { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  transition: opacity 0.35s ease, transform 0.35s ease; border-radius: 20rpx; }
+.id-back { opacity: 1; transform: none; }
+.id-front { opacity: 0; transform: scale(1.06); }
+.idcard.open .id-back { opacity: 0; transform: scale(0.96); }
+.idcard.open .id-front { opacity: 1; transform: none; }
+.id-back-css { display: flex; align-items: center; justify-content: center; font-size: 100rpx;
+  background: linear-gradient(160deg, #3a2a20, #241812); }
+.id-front-css { display: flex; align-items: center; justify-content: center; font-size: 44rpx; font-weight: 900;
+  color: #fff; background: linear-gradient(160deg, #2c2244, #221936); }
+.id-name { position: absolute; left: 0; right: 0; bottom: 14rpx; text-align: center;
+  font-size: 30rpx; font-weight: 900; letter-spacing: 4rpx; color: #ffe8c9;
+  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.9); }
+.id-hint { position: absolute; left: 0; right: 0; bottom: 14rpx; text-align: center;
+  font-size: 20rpx; letter-spacing: 2rpx; color: rgba(255,255,255,0.75);
+  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.9); }
+.word-card .mates { text-align: center; margin-top: 12rpx; }
+
+/* 一次性上传按钮（跑完删除） */
+.dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
+  background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }
+
+/* ── 米勒山谷:满月村庄剪影横幅(CSS 版,夜/昼/终局三态) ── */
+.village { position: relative; height: 220rpx; margin: 0 -28rpx 4rpx; overflow: hidden;
+  background: linear-gradient(180deg, #100c22 0%, #241b3e 70%, rgba(30,24,48,0) 100%);
+  transition: background 0.8s; }
+.v-orb { position: absolute; right: 90rpx; top: 30rpx; width: 72rpx; height: 72rpx; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff, #e8e4f8 55%, #b8aede);
+  box-shadow: 0 0 34rpx rgba(210,200,255,0.55); transition: all 0.8s; }
+.v-sil { position: absolute; bottom: 34rpx; background: #0d0a18; transition: background 0.8s; }
+.v-sil.church { left: 90rpx; width: 90rpx; height: 80rpx; }
+.v-sil.spire { left: 112rpx; width: 46rpx; height: 130rpx;
+  clip-path: polygon(50% 0, 100% 38%, 100% 100%, 0 100%, 0 38%); }
+.v-sil.hut1 { left: 220rpx; width: 84rpx; height: 56rpx; clip-path: polygon(50% 0, 100% 34%, 100% 100%, 0 100%, 0 34%); }
+.v-sil.hut2 { left: 330rpx; width: 70rpx; height: 46rpx; clip-path: polygon(50% 0, 100% 36%, 100% 100%, 0 100%, 0 36%); }
+.v-sil.pine1 { right: 200rpx; width: 44rpx; height: 90rpx; clip-path: polygon(50% 0, 88% 55%, 70% 55%, 100% 100%, 0 100%, 30% 55%, 12% 55%); }
+.v-sil.pine2 { right: 150rpx; width: 34rpx; height: 66rpx; clip-path: polygon(50% 0, 88% 55%, 70% 55%, 100% 100%, 0 100%, 30% 55%, 12% 55%); }
+.v-sil.pine3 { right: 40rpx; width: 40rpx; height: 78rpx; clip-path: polygon(50% 0, 88% 55%, 70% 55%, 100% 100%, 0 100%, 30% 55%, 12% 55%); }
+/* 教堂的小窗:夜里一点灯火呼吸 */
+.v-win { position: absolute; left: 128rpx; bottom: 66rpx; width: 10rpx; height: 16rpx;
+  border-radius: 5rpx 5rpx 0 0; background: #ffb85c; box-shadow: 0 0 12rpx rgba(255,170,80,0.9);
+  animation: winbreath 3s ease-in-out infinite; }
+@keyframes winbreath { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.v-phase { position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
+  font-size: 22rpx; letter-spacing: 3rpx; color: #b3a6cc; }
+/* 白天:暖光洒在同一座村庄 */
+.village.vday { background: linear-gradient(180deg, #4a3050 0%, #6e4a45 60%, rgba(30,24,48,0) 100%); }
+.village.vday .v-orb { background: radial-gradient(circle at 38% 35%, #fff8e0, #ffd98a 60%, #ff9a45);
+  box-shadow: 0 0 44rpx rgba(255,180,80,0.7); }
+.village.vday .v-sil { background: #241626; }
+.village.vday .v-win { opacity: 0; animation: none; }
+.village.vday .v-phase { color: #ffd9a8; }
+/* 终局:暮色 */
+.village.vdusk { background: linear-gradient(180deg, #241626 0%, #3d2038 60%, rgba(30,24,48,0) 100%); }
+.village.vdusk .v-phase { color: #ff9db4; }
+
+/* ── 墓碑:出局头顶弹出 ── */
+.tomb { position: absolute; top: -20rpx; left: 50%; margin-left: -18rpx; font-size: 36rpx; z-index: 3;
+  filter: drop-shadow(0 4rpx 8rpx rgba(0,0,0,0.6));
+  animation: tombpop 0.5s cubic-bezier(0.2, 1.8, 0.4, 1); }
+@keyframes tombpop { 0% { transform: translateY(16rpx) scale(0); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+/* ── 终局:依次亮牌,狼人牌深红 ── */
+.rev-narr { text-align: center; font-size: 24rpx; letter-spacing: 6rpx; color: #b3a6cc; margin: 8rpx 0 18rpx; }
+.rev-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 14rpx; }
+.rev-card { width: 128rpx; height: 176rpx; border-radius: 14rpx; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8rpx;
+  background: linear-gradient(165deg, #efe3c8, #d9c9a3); border: 3rpx solid #8a7450;
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.4);
+  transform: rotateY(90deg); opacity: 0; animation: flipin 0.45s ease forwards; }
+@keyframes flipin { 0% { transform: rotateY(90deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.rev-card .rc-role { font-size: 26rpx; font-weight: 900; letter-spacing: 2rpx; color: #3a3020; }
+.rev-card .rc-nick { font-size: 19rpx; color: #6b5c3a; max-width: 112rpx; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis; }
+.rev-card.is-wolf { background: linear-gradient(165deg, #7a1f2e, #4a1220); border-color: #a8324e; }
+.rev-card.is-wolf .rc-role { color: #ffd9c9; }
+.rev-card.is-wolf .rc-nick { color: #d9909e; }

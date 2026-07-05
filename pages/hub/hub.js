@@ -157,11 +157,11 @@ Page({
     if (!r || !r.ok) return wx.showToast({ title: (r && r.msg) || '加入失败', icon: 'none' });
     if (r.gameType === 'spy') {
       app.saveSpySession({ roomId: r.roomId, roomCode: r.roomCode });
-      return wx.navigateTo({ url: '/pages/spy/spy' });
+      return wx.navigateTo({ url: '/pages/spy/spy?resume=1' });   // 加入成功直接进房,不停大厅
     }
     if (r.gameType === 'wolf') {
       app.saveWolfSession({ roomId: r.roomId, roomCode: r.roomCode });
-      return wx.navigateTo({ url: '/pages/wolf/wolf' });
+      return wx.navigateTo({ url: '/pages/wolf/wolf?resume=1' });
     }
     return wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
   },

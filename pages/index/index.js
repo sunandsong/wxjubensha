@@ -28,10 +28,6 @@ Page({
     gender: '',     // 'm' / 'f'，决定角色照片；记住后下次自动带上
     loading: false,
     scripts: SCRIPTS.list().map(toCard),
-    filteredScripts: [],   // 当前分类 + 关键词过滤后的剧本（onLoad 初始化）
-    categories: [],        // 分类标签：全部 + 各主分类（onLoad 初始化）
-    activeCat: '全部',     // 当前选中的分类
-    keyword: '',           // 搜索关键词
     needAuth: false, // 未完善头像昵称 → 强制授权门
     authStep: 1,     // 授权向导步骤：1 头像 / 2 昵称 / 3 性别
     editing: false,  // true=从首页「编辑」进入（按钮显示「确定」）
@@ -80,7 +76,6 @@ Page({
       showGuide: !wx.getStorageSync('seenGuide'),   // 首次进入自动弹一次新手指引
     });
     app.ensureLogin().catch(() => {});
-    this.initCategories();
     this._resolveCovers();   // 首屏先用缓存的封面直链秒显
     // 云端剧本就绪后重建卡片（首屏先用兜底/缓存，秒开不白屏）
     SCRIPTS.ensureLoaded().then(() => { this._reloadScripts(); this._tryOpenPendingDetail(); });
@@ -93,10 +88,10 @@ Page({
     this.openDetail({ currentTarget: { dataset: { id } } });
   },
 
-  // 用最新剧本数据重建首页卡片 + 分类
+  // 用最新剧本数据重建首页卡片
   _reloadScripts() {
     const scripts = SCRIPTS.list().map(toCard);
-    this.setData({ scripts }, () => { this.initCategories(); this.applyFilter(); this._resolveCovers(); });
+    this.setData({ scripts }, () => this._resolveCovers());
   },
 
   // 封面三级缓存：本地文件(永久,秒显) > https 临时链接(1小时) > cloud:// 现取
@@ -119,7 +114,7 @@ Page({
       const u = s.coverFid && best(s.coverFid);
       return u ? { ...s, cover: { ...s.cover, image: u } } : s;
     });
-    this.setData({ scripts: apply() }, () => this.applyFilter());
+    this.setData({ scripts: apply() });
     // 2) 后台把还没落盘的封面下载到本地，下次秒开
     const download = (fid, url) => wx.downloadFile({
       url,
@@ -144,43 +139,9 @@ Page({
     wx.cloud.getTempFileURL({ fileList: need }).then((res) => {
       (res.fileList || []).forEach((f) => { if (f.fileID && f.tempFileURL) map[f.fileID] = f.tempFileURL; });
       wx.setStorageSync(CK, { ts: Date.now(), map });
-      this.setData({ scripts: apply() }, () => this.applyFilter());
+      this.setData({ scripts: apply() });
       toSave(map);
     }).catch(() => {});
-  },
-
-  // 初始化分类标签 + 默认展示全部剧本
-  initCategories() {
-    const cats = [];
-    this.data.scripts.forEach((s) => { if (cats.indexOf(s.cat) < 0) cats.push(s.cat); });
-    this.setData({ categories: ['全部'].concat(cats), filteredScripts: this.data.scripts });
-  },
-
-  // 按分类 + 关键词过滤剧本
-  applyFilter() {
-    const { scripts, activeCat, keyword } = this.data;
-    const kw = (keyword || '').trim().toLowerCase();
-    const filteredScripts = scripts.filter((s) => {
-      const okCat = activeCat === '全部' || s.cat === activeCat;
-      const okKw = !kw || `${s.title} ${s.subtitle} ${s.tag} ${s.players}`.toLowerCase().indexOf(kw) >= 0;
-      return okCat && okKw;
-    });
-    this.setData({ filteredScripts });
-  },
-
-  // 点选分类标签
-  selectCat(e) {
-    this.setData({ activeCat: e.currentTarget.dataset.cat }, () => this.applyFilter());
-  },
-
-  // 搜索框输入
-  onSearchInput(e) {
-    this.setData({ keyword: e.detail.value }, () => this.applyFilter());
-  },
-
-  // 清空搜索框
-  clearSearch() {
-    this.setData({ keyword: '' }, () => this.applyFilter());
   },
 
   // 编辑资料：重新打开三步向导（带出当前头像/昵称/性别，改完再确认）

@@ -51,30 +51,11 @@
     </view>
     <view class="home-head-right">
       <view class="home-guide-btn" bindtap="openGuide">❓ 怎么玩</view>
-      <view class="home-me" bindtap="editProfile">
-        <image wx:if="{{avatar}}" class="home-me-avatar" src="{{avatar}}" mode="aspectFill" />
-        <view wx:else class="home-me-avatar home-me-ph">我</view>
-      </view>
     </view>
   </view>
 
-  <!-- 搜索框 -->
-  <view class="pick-search">
-    <text class="pick-search-ico">🔍</text>
-    <input class="pick-search-input" placeholder="搜剧本名 / 题材 / 人数" placeholder-class="pick-search-ph"
-      value="{{keyword}}" bindinput="onSearchInput" confirm-type="search" />
-    <text wx:if="{{keyword}}" class="pick-search-clear" catchtap="clearSearch">✕</text>
-  </view>
-
-  <!-- 分类标签 -->
-  <scroll-view class="pick-cats" scroll-x>
-    <view class="pick-cat {{activeCat===item ? 'on' : ''}}" wx:for="{{categories}}" wx:key="*this"
-      data-cat="{{item}}" catchtap="selectCat">{{item}}</view>
-  </scroll-view>
-
   <scroll-view class="pick-scroll" scroll-y>
-    <view wx:if="{{!filteredScripts.length}}" class="pick-empty">没有匹配的剧本，换个分类或关键词试试</view>
-    <view class="pick-card" wx:for="{{filteredScripts}}" wx:key="id" data-id="{{item.id}}" bindtap="openDetail">
+    <view class="pick-card" wx:for="{{scripts}}" wx:key="id" data-id="{{item.id}}" bindtap="openDetail">
       <view class="pick-cover" style="background:{{item.cover.gradient}}">
         <image wx:if="{{item.cover.image}}" class="cover-ph" src="/assets/cover_ph.jpg" mode="aspectFill"></image>
         <image wx:if="{{item.cover.image}}" class="pick-cover-img" src="{{item.cover.image}}" mode="aspectFill"></image>
@@ -88,13 +69,7 @@
         <view class="pick-meta">{{item.players}} · {{item.duration}}</view>
       </view>
     </view>
-    <view class="pick-bottom-tip">点封面看详情 → 详情页「创建房间」开局</view>
   </scroll-view>
-</view>
-
-<!-- 底部悬浮按钮 -->
-<view class="fab-bar">
-  <button class="fab" bindtap="enterRoom" disabled="{{loading}}">🚪 进入房间</button>
 </view>
 
 <!-- 进入房间弹层（主题色，替代原生 showModal）-->

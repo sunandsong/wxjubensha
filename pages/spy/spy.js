@@ -60,23 +60,6 @@ Page({
   onHeroErr() { IMGCACHE.invalidate(HERO_FID); this.setData({ heroUrl: this.data.heroUrl !== HERO_FID ? HERO_FID : '' }); },
   onCardErr() { IMGCACHE.invalidate(CARD_FID); this.setData({ cardUrl: this.data.cardUrl !== CARD_FID ? CARD_FID : '' }); },
 
-  // 一次性：三张素材程序内上传（成功后删本函数/按钮/up_spy_*）
-  async uploadSpyAssets() {
-    const files = [['up_spy_bg.jpg', 'games/spy_bg.jpg'], ['up_spy_hero.png', 'games/spy_hero.png'], ['up_spy_card.jpg', 'games/spy_card.jpg']];
-    wx.showLoading({ title: '上传中…', mask: true });
-    let done = 0;
-    for (const [local, cloudPath] of files) {
-      try {
-        const info = await new Promise((res, rej) => wx.getImageInfo({ src: `/assets/games/${local}`, success: res, fail: rej }));
-        await wx.cloud.uploadFile({ cloudPath, filePath: info.path });
-        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
-        done++;
-      } catch (e) { console.error('✘', cloudPath, e); }
-    }
-    wx.hideLoading();
-    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张`, showCancel: false });
-    if (done) this._resolveImgs();
-  },
 
   onShow() {
     if (this.data.mode === 'room' && this.data.roomId) {
@@ -213,6 +196,7 @@ Page({
     this.setData({
       status: room.status || 'waiting',
       players,
+      emptySlots: Array.from({ length: Math.max(0, 4 - (room.players || []).length) }, (v, i) => i),
       round: room.round || 0,
       isHost: room.hostOpenid === this.data.openid,
       myReady: !!(me && me.ready),

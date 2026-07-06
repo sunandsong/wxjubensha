@@ -41,6 +41,11 @@ Component({
     },
     closePanel() { this.setData({ panel: false }); },
 
+    gotoTest() {
+      this.setData({ panel: false });
+      wx.navigateTo({ url: '/pages/test/test' });
+    },
+
     pick(e) {
       const uid = e.currentTarget.dataset.uid;
       const app = getApp();

@@ -58,7 +58,7 @@
 .warn { color: #ffb347; }
 
 .btn { width: 100% !important; box-sizing: border-box; margin-left: 0; margin-right: 0; }
-.start-btn { margin-top: 32rpx; }
+.start-btn { margin-top: 32rpx; padding: 44rpx 0; font-size: 36rpx; }
 
 /* 卧底人数选项 */
 .opts { display: flex; gap: 18rpx; margin-top: 22rpx; }
@@ -143,3 +143,31 @@
 /* 一次性上传按钮（跑完删除） */
 .dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
   background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }
+
+/* ══ 等待房间：布局对齐剧本杀 ══ */
+.rm-script { text-align: center; font-size: 44rpx; font-weight: 700; color: #fff; margin-top: 12rpx; letter-spacing: 4rpx; position: relative; }
+.codebox { text-align: center; margin: 34rpx 0 4rpx; position: relative; }
+.code-lab { font-size: 22rpx; letter-spacing: 10rpx; color: #8a7fa6; }
+.code-big {
+  font-size: 140rpx; font-weight: 900; letter-spacing: 30rpx; color: #fff; line-height: 1.35;
+  text-shadow: 0 0 50rpx rgba(140, 100, 255, 0.45);
+}
+.rm-narr { text-align: center; font-size: 25rpx; color: #b3a6cc; margin-bottom: 26rpx; position: relative; }
+
+.rm-players { display: flex; flex-wrap: wrap; justify-content: center; gap: 28rpx 30rpx; margin: 8rpx 0 4rpx; position: relative; }
+.rm-players .avatar { position: relative; overflow: visible; }
+.rm-players .avatar .avatar-img { border-radius: 50%; }
+.okmark {
+  position: absolute; right: -6rpx; top: -6rpx; z-index: 2;
+  width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center;
+  border-radius: 50%; font-size: 22rpx; color: #fff;
+  background: linear-gradient(135deg, #7b5cff, #c44dff);
+  border: 2rpx solid #1e1830;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.45);
+}
+.avatar.slot-empty {
+  background: none; border: 2rpx dashed rgba(255, 255, 255, 0.25);
+  color: #8a7fa6; font-size: 34rpx; box-sizing: border-box;
+}
+.pname-dim { color: #8a7fa6; }
+.rm-count { margin-top: 20rpx; position: relative; }

@@ -8,5 +8,6 @@
       {{item.nick}}
       <text class="idsw-cur" wx:if="{{item.uid === current || (!item.uid && !current)}}">当前</text>
     </view>
+    <view class="idsw-item idsw-tools" catchtap="gotoTest">🧰 测试工具页</view>
   </view>
 </view>

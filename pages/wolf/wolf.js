@@ -48,12 +48,9 @@ Page({
     this._resolveImgs();
     try { this.setData({ openid: await app.ensureLogin() }); } catch (e) {}
     if (query && query.joinCode) return this._join(query.joinCode);
+    // 已在某个房间（没点退出）→ 直接回房间（想换房要先退出）
     const s = app.getWolfSession();
-    if (s && s.roomId) {
-      // 悬浮钮/启动续房（带 resume=1）→ 直达房间；普通进入 → 停在大厅，显示"回去"横幅
-      if (query && query.resume) return this._enterRoom(s.roomId, s.roomCode);
-      this.setData({ resumeId: s.roomId, resumeCode: s.roomCode });
-    }
+    if (s && s.roomId) return this._enterRoom(s.roomId, s.roomCode);
   },
 
   resumeRoom() { if (this.data.resumeId) this._enterRoom(this.data.resumeId, this.data.resumeCode); },
@@ -84,30 +81,6 @@ Page({
     IMGCACHE.resolve([fid], (m) => { if (m[fid]) this.setData({ roleImg: m[fid] }); });
   },
 
-  // 一次性：上传牌背+四张角色牌（成功后删本函数/按钮/up_wolf_*）
-  async uploadWolfAssets() {
-    const files = [
-      ['up_wolf_bg_n.jpg', 'games/wolf_bg_n.jpg'],
-      ['up_wolf_bg_d.jpg', 'games/wolf_bg_d.jpg'],
-      ['up_wolf_r3_wolf.jpg', 'games/wolf_r3_wolf.jpg'],
-      ['up_wolf_r3_seer.jpg', 'games/wolf_r3_seer.jpg'],
-      ['up_wolf_r3_witch.jpg', 'games/wolf_r3_witch.jpg'],
-      ['up_wolf_r3_villager.jpg', 'games/wolf_r3_villager.jpg'],
-    ];
-    wx.showLoading({ title: '上传中…', mask: true });
-    let done = 0;
-    for (const [local, cloudPath] of files) {
-      try {
-        const info = await new Promise((res, rej) => wx.getImageInfo({ src: `/assets/games/${local}`, success: res, fail: rej }));
-        await wx.cloud.uploadFile({ cloudPath, filePath: info.path });
-        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
-        done++;
-      } catch (e) { console.error('✘', cloudPath, e); }
-    }
-    wx.hideLoading();
-    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张`, showCancel: false });
-    if (done) this._resolveImgs();
-  },
 
   // 不再弹框要名字：有昵称直接用；没有就发个代号并记住（资料页随时可改）
   _getNick() {
@@ -226,6 +199,7 @@ Page({
       status: room.status || 'waiting',
       round: room.round || 0,
       players,
+      emptySlots: Array.from({ length: Math.max(0, 6 - others.length) }, (v, i) => i),
       isHost: room.hostOpenid === this.data.openid,
       myReady: !!(me && me.ready),
       myOut: !!(me && me.out),

@@ -1,11 +1,6 @@
 const app = getApp();
 const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
-const IMGCACHE = require('../../utils/imgCache.js');
-
-// 光影素材（云存储 games/）：星空底图（候场=星座连线,玩家逐个就位点亮）
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
-const BG_FID = GBASE + '/room_bg.jpg';
 
 Page({
   data: {
@@ -20,13 +15,11 @@ Page({
     scriptTitle: '',
     scriptSub: '',
     shareImg: '',     // 分享卡片缩略图：当前本封面的 https 临时链接（cloud:// 不能直接当分享图）
-    bgUrl: '', bgOk: false,   // 星空底图
   },
 
   watcher: null,
 
   onLoad(query) {
-    IMGCACHE.resolve([BG_FID], (m) => { if (m[BG_FID] && m[BG_FID] !== this.data.bgUrl) this.setData({ bgUrl: m[BG_FID] }); });
     this.setData({ roomId: query.roomId, roomCode: query.roomCode });
     // 记住当前对局，切屏/重启后可在首页续上
     app.saveSession({ roomId: query.roomId, roomCode: query.roomCode });
@@ -56,6 +49,7 @@ Page({
   },
 
   onHide() { this._hidden = true; this.closeWatch(); },
+  onUnload() { this._hidden = true; this.closeWatch(); },
 
 
   // 分享小程序卡片到群：群友点卡片 → 打开小程序 → 自动加入本房间
@@ -87,6 +81,9 @@ Page({
 
   renderRoom(room) {
     if (!room) {
+      if (this._dissolved) return;   // 只处理一次：防 watch 推送/手动拉取/重试各弹一个框
+      this._dissolved = true;
+      this._hidden = true;           // 停掉监听重建定时器
       app.clearSession();
       this.closeWatch();
       wx.showModal({ title: '提示', content: '房间已解散', showCancel: false, success: () => wx.reLaunch({ url: '/pages/hub/hub' }) });
@@ -106,6 +103,7 @@ Page({
       players,
       realCount,
       needPlayers,
+      emptySlots: Array.from({ length: Math.max(0, needPlayers - realCount) }, (v, i) => i),
       readyCount,
       allReady,
       myReady: !!(me && me.ready),
@@ -124,7 +122,7 @@ Page({
   },
 
   startWatch() {
-    if (this.watcher) return;
+    if (this.watcher || this._dissolved) return;
     this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
       onChange: (snap) => this.renderRoom(snap.docs && snap.docs[0]),
       onError: (e) => {
@@ -172,25 +170,6 @@ Page({
     if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
   },
 
-  onBgLoad() { this.setData({ bgOk: true }); },
-  onBgErr() { IMGCACHE.invalidate(BG_FID); this.setData(this.data.bgUrl !== BG_FID ? { bgUrl: BG_FID, bgOk: false } : { bgUrl: '', bgOk: false }); },
-
-  // 一次性：上传星空底图（成功后删本函数与按钮）
-  async uploadLightAssets() {
-    const files = [['up_room_bg.jpg', 'games/room_bg.jpg']];
-    wx.showLoading({ title: '上传中…', mask: true });
-    let done = 0;
-    for (const [local, cloudPath] of files) {
-      try {
-        const info = await new Promise((res, rej) => wx.getImageInfo({ src: `/assets/games/${local}`, success: res, fail: rej }));
-        await wx.cloud.uploadFile({ cloudPath, filePath: info.path });
-        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
-        done++;
-      } catch (e) { console.error('✘', cloudPath, e); }
-    }
-    wx.hideLoading();
-    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张`, showCancel: false });
-  },
 
   copyCode() {
     wx.setClipboardData({ data: this.data.roomCode, success: () => wx.showToast({ title: '房间号已复制' }) });

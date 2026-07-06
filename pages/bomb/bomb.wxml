@@ -1,19 +1,18 @@
-<view class="page {{booming ? 'quake' : ''}}">
-  <!-- 爆炸白闪：生成瞬间闪一帧 -->
-  <view class="flash {{booming ? 'on' : ''}}"></view>
+<view class="page">
+  <!-- 生成瞬间：白闪一帧 -->
+  <view class="flash {{fx ? 'on' : ''}}"></view>
   <!-- 氛围底图：警戒机库，云端图淡入；拿不到就纯色底 -->
   <image wx:if="{{bgUrl}}" class="scene-bg {{bgOk ? 'on' : ''}}" src="{{bgUrl}}" mode="aspectFill"
     bindload="onBgLoad" binderror="onBgErr"></image>
 
-  <image wx:if="{{heroUrl}}" class="bomb-hero {{booming ? 'pump' : ''}}" src="{{heroUrl}}" mode="aspectFit" binderror="onHeroErr"></image>
-  <view wx:else class="bomb-ico {{booming ? 'pump' : ''}}">💣</view>
+  <image wx:if="{{heroUrl}}" class="bomb-hero {{fx ? 'pump' : ''}}" src="{{heroUrl}}" mode="aspectFit" binderror="onHeroErr"></image>
+  <view wx:else class="bomb-ico {{fx ? 'pump' : ''}}">💣</view>
   <view class="title">数字炸弹</view>
   <view class="rule">主持人点「生成」暗抽一颗 1~100 的炸弹数，群里轮流报数，报中的人爆炸 💥</view>
 
-  <!-- 抽出的数 / 问号 / 爆炸中 -->
-  <view class="num-box {{num ? 'lit' : ''}} {{booming ? 'shaking' : ''}}">
-    <view wx:if="{{booming}}" class="num boom-emoji">💥</view>
-    <view wx:elif="{{num}}" class="num pop">{{num}}</view>
+  <!-- 抽出的数 / 问号 -->
+  <view class="num-box {{num ? 'lit' : ''}}">
+    <view wx:if="{{num}}" class="num pop">{{num}}</view>
     <view wx:else class="num">?</view>
     <view wx:if="{{num}}" class="meta">
       <view class="meta-ln">{{ts}}</view>

@@ -213,8 +213,15 @@ Page({
     const id = e && e.currentTarget && e.currentTarget.dataset.game;
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
     if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });
-    if (id === 'spy') return wx.navigateTo({ url: '/pages/spy/spy' });
-    if (id === 'wolf') return wx.navigateTo({ url: '/pages/wolf/wolf' });
+    // 卧底/狼人杀：已在房间里 → 带 resume=1 直达房间，否则进大厅
+    if (id === 'spy') {
+      const sp = app.getSpySession && app.getSpySession();
+      return wx.navigateTo({ url: '/pages/spy/spy' + (sp && sp.roomId ? '?resume=1' : '') });
+    }
+    if (id === 'wolf') {
+      const wf = app.getWolfSession && app.getWolfSession();
+      return wx.navigateTo({ url: '/pages/wolf/wolf' + (wf && wf.roomId ? '?resume=1' : '') });
+    }
     wx.showToast({ title: '即将上线，敬请期待', icon: 'none' });
   },
   soon() { wx.showToast({ title: '即将上线', icon: 'none' }); },

@@ -44,14 +44,13 @@ Page({
   },
 
   gen() {
-    if (this.data.booming) return;
-    this.setData({ booming: true, num: 0 });   // 先点火爆炸，数字清空
-    setTimeout(() => {
-      wx.vibrateLong();   // 长震兼容性最好；确认有震感后可换回 vibrateShort
-      const num = 1 + Math.floor(Math.random() * 100);
-      const now = new Date();
-      this.setData({ booming: false, num, ts: this._fmt(now), code: this._makeCode(num, now.getTime()) });
-    }, 620);
+    wx.vibrateLong();   // 长震兼容性最好；确认有震感后可换回 vibrateShort
+    const num = 1 + Math.floor(Math.random() * 100);
+    const now = new Date();
+    // 数字立即出；同时白闪一帧 + 炸弹缩放一下
+    this.setData({ num, ts: this._fmt(now), code: this._makeCode(num, now.getTime()), fx: true });
+    clearTimeout(this._fxTimer);
+    this._fxTimer = setTimeout(() => this.setData({ fx: false }), 650);
   },
 
   // 生成留证图片并保存到相册

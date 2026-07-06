@@ -1,54 +1,44 @@
 
 <view class="container">
-  <image wx:if="{{bgUrl}}" class="scene-bg {{bgOk ? 'on' : ''}}" src="{{bgUrl}}" mode="aspectFill"
-    bindload="onBgLoad" binderror="onBgErr"></image>
-  <view class="card script-card">
-    <view class="muted">本局剧本</view>
-    <view class="sc-title">{{scriptTitle}}</view>
-    <view class="muted">{{scriptSub}}</view>
-  </view>
+  <!-- 剧本名 -->
+  <view class="rm-script">{{scriptTitle}}</view>
 
-  <view class="card code-card">
-    <view class="code-row">
-      <view>
-        <view class="muted">房间号</view>
-        <view class="code">{{roomCode}}</view>
+  <!-- 房间号大字 -->
+  <view class="codebox">
+    <view class="code-lab">房 间 号</view>
+    <view class="code-big">{{roomCode}}</view>
+  </view>
+  <view class="rm-narr">人齐了，故事就开始</view>
+
+  <!-- 玩家网格：已准备=紫勾章，空位=虚线圈 -->
+  <view class="rm-players">
+    <view class="player" wx:for="{{players}}" wx:key="openid">
+      <view class="avatar">
+        <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+        <block wx:else>{{item.nick[0]}}</block>
+        <view class="okmark" wx:if="{{item.ready && !item.isModerator && !item.spectator}}">✓</view>
       </view>
-      <button class="btn-mini share" open-type="share">分享链接</button>
+      <view class="host-badge" wx:if="{{item.isModerator}}">主持人</view>
+      <view class="pname">{{item.nick}}</view>
     </view>
-    <view class="muted invite-tip">点「分享链接」发卡片，群友点卡片直接进房（无需输房间号）。</view>
+    <view class="player" wx:for="{{emptySlots}}" wx:key="*this">
+      <view class="avatar slot-empty">?</view>
+      <view class="pname pname-dim">等待中</view>
+    </view>
   </view>
 
-  <view class="card">
-    <view class="row-between">
-      <view class="sec-title">玩家 {{realCount}} 人</view>
-      <view class="muted {{canStart ? '' : 'warn'}}">{{canStart ? '房主为主持人，不参与' : '需 '+needPlayers+' 名玩家，已 '+realCount+' 人'}}</view>
-    </view>
-    <view class="players">
-      <view class="player {{(item.ready || item.isModerator) ? 'lit' : ''}}" wx:for="{{players}}" wx:key="openid">
-        <view class="avatar">
-          <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
-          <block wx:else>{{item.nick[0]}}</block>
-        </view>
-        <view class="pname">{{item.nick}}</view>
-        <view class="host-badge" wx:if="{{item.isModerator}}">主持人</view>
-        <view wx:elif="{{!item.spectator}}" class="ready-badge {{item.ready ? 'on' : ''}}">{{item.ready ? '✓已准备' : '未准备'}}</view>
-      </view>
-    </view>
-    <view class="muted tip">主持人只推进流程、公布真相；其余玩家由系统发牌分配角色。</view>
-  </view>
-
+  <!-- 房主视角 -->
   <block wx:if="{{isHost}}">
-    <view wx:if="{{realCount >= needPlayers && !allReady}}" class="muted center warn ready-hint">等待玩家准备：{{readyCount}}/{{realCount}} 已准备</view>
-    <button class="btn start-btn {{(!canStart || starting) ? 'btn-dim' : ''}}" bindtap="startGame">开始游戏</button>
-    <button class="btn btn-ghost" bindtap="endGame">结束游戏</button>
-    <!-- 一次性：程序内上传光影素材（成功后删除本按钮） -->
-    <button class="dev-upload" bindtap="uploadLightAssets">↑ 上传光影素材（一次性）</button>
+    <view wx:if="{{!canStart}}" class="muted center rm-count">{{realCount < needPlayers ? '还差 ' + (needPlayers - realCount) + ' 名玩家 · 主持人不占角色' : '等待玩家准备 ' + readyCount + '/' + realCount}}</view>
+    <button hover-class="none" class="btn start-btn {{(!canStart || starting) ? 'btn-dim' : ''}}" bindtap="startGame">开始游戏</button>
+    <button hover-class="none" class="btn btn-ghost" open-type="share">分享链接 · 邀请群友</button>
+    <button hover-class="none" class="btn btn-ghost" bindtap="endGame">解散房间</button>
   </block>
+  <!-- 玩家视角 -->
   <block wx:else>
-    <button wx:if="{{!iAmSpectator}}" class="btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '✓ 已准备（点击取消）' : '准备好了'}}</button>
-    <view class="muted center wait-hint">{{iAmSpectator ? '你是围观，等主持人开始…' : (myReady ? '已准备，等所有人准备好主持人就开始' : '点「准备好了」，全员准备后主持人才能开始')}}</view>
-    <button class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
+    <button hover-class="none" wx:if="{{!iAmSpectator}}" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
+    <view class="muted center rm-count">{{iAmSpectator ? '你是围观，等主持人开始…' : (myReady ? '已准备，等所有人准备好主持人就开始' : '点「准备好了」，全员准备后主持人才能开始')}}</view>
+    <button hover-class="none" class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
   </block>
 </view>
 

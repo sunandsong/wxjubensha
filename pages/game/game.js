@@ -3,10 +3,9 @@ const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
 const IMGCACHE = require('../../utils/imgCache.js');
 
-// 光影素材：浮尘粒子（氛围）/ 体积光束（幕间过场）
+// 光影素材：浮尘粒子（氛围）
 const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
 const DUST_FID = GBASE + '/dust.jpg';
-const BEAM_FID = GBASE + '/beam.jpg';
 
 Page({
   data: {
@@ -44,17 +43,13 @@ Page({
     votedCount: 0,
     totalPlayers: 0,
     dustUrl: '',   // 浮尘氛围层
-    beamUrl: '',   // 过场体积光束
   },
 
   watcher: null,
 
   onLoad(query) {
-    IMGCACHE.resolve([DUST_FID, BEAM_FID], (m) => {
-      const d = {};
-      if (m[DUST_FID]) d.dustUrl = m[DUST_FID];
-      if (m[BEAM_FID]) d.beamUrl = m[BEAM_FID];
-      if (Object.keys(d).length) this.setData(d);
+    IMGCACHE.resolve([DUST_FID], (m) => {
+      if (m[DUST_FID]) this.setData({ dustUrl: m[DUST_FID] });
     });
     this.setData({ roomId: query.roomId, roomCode: query.roomCode });
     app.saveSession({ roomId: query.roomId, roomCode: query.roomCode });
@@ -223,7 +218,7 @@ Page({
   },
 
   startWatch() {
-    if (this.watcher) return;
+    if (this.watcher || this._dissolved) return;
     this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
       onChange: (snap) => {
         const room = snap.docs && snap.docs[0];
@@ -382,19 +377,6 @@ Page({
       totalPlayers: players.filter((p) => p.openid !== room.hostOpenid && !p.spectator).length,
     });
 
-    // 切换过场电影感标题卡：开场（第一幕）显示剧本名，其余幕显示「第X幕 · 标题」
-    if (status === 'playing' && this._lastActIndex !== actIndex) {
-      this._lastActIndex = actIndex;
-      if (actIndex === 0) {
-        this.setData({ transShow: true, transLabel: '', transTitle: SCRIPT.title || '' });
-      } else {
-        const label = '第' + (['一', '二', '三', '四', '五', '六', '七', '八'][actIndex] || (actIndex + 1)) + '幕';
-        this.setData({ transShow: true, transLabel: label, transTitle: act ? act.title : '' });
-      }
-      clearTimeout(this._transTimer);
-      this._transTimer = setTimeout(() => this.setData({ transShow: false }), 1600);
-    }
-
     // 吃瓜群众不进结算页（看不到真相），停留在第一幕围观视图
     if (room.status === 'finished' && !isSpectator) {
       this.closeWatch();
@@ -403,6 +385,9 @@ Page({
   },
 
   onDissolved() {
+    if (this._dissolved) return;   // 只处理一次：防 watch 推送/手动拉取/重试重复弹框
+    this._dissolved = true;
+    this._hidden = true;           // 停掉监听重建定时器
     this.closeWatch();
     app.clearSession();
     wx.showModal({ title: '提示', content: '本局游戏已结束', showCancel: false, success: () => wx.reLaunch({ url: '/pages/hub/hub' }) });

@@ -473,18 +473,27 @@ exports.main = async (event) => {
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有上帝能看' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局还没发身份' };
-      // 主持人不知身份：只回匿名夜晚进度（哪个角色行动完,不透露是谁）
+      // 主持台：给上帝夜晚行动实况(刀谁/验谁结果/用药),但不给开局身份表
+      const nickOf = (id) => { const x = (room.players || []).find((q) => q.openid === id); return x ? x.nick : ''; };
       const night = sec.night || {};
       const alive = wolfAliveOf(room);
       const seerAlive = alive.some((q) => sec.roles[q.openid] === 'seer');
       const witchAlive = alive.some((q) => sec.roles[q.openid] === 'witch');
+      const myCheck = (sec.checks || []).filter((c) => c.round === room.round)[0];
       return {
         ok: true,
-        night: room.status === 'night' ? {
+        potions: sec.potions || { save: true, poison: true },
+        night: {
           wolfDone: night.wolfKill !== undefined,
+          kill: night.wolfKill ? nickOf(night.wolfKill) : '',
+          emptyKill: night.wolfKill === null,
           seerDone: !!night.seerDone || !seerAlive,
+          seerTarget: myCheck ? nickOf(myCheck.target) : '',
+          seerIsWolf: myCheck ? !!myCheck.isWolf : null,
           witchDone: !!night.witchDone || !witchAlive,
-        } : null,
+          saved: !!night.witchSave,
+          poison: night.witchPoison ? nickOf(night.witchPoison) : '',
+        },
       };
     }
 
@@ -634,14 +643,19 @@ exports.main = async (event) => {
       if (room.status !== 'night') return { ok: false, msg: '现在不是夜晚' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局数据异常' };
-      const night = sec.night || {};
-      const upd = {};
-      if (night.wolfKill === undefined) upd['night.wolfKill'] = null;   // 空刀
-      if (!night.seerDone) upd['night.seerDone'] = true;
-      if (!night.witchDone) upd['night.witchDone'] = true;
-      if (Object.keys(upd).length) await secrets.doc(event.roomId).update({ data: upd });
-      const s2 = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
-      if (s2) await wolfSettleNight(event.roomId, room, s2);
+      // 必须各角色都行动完才能天亮
+      if (!wolfNightComplete(room, sec)) {
+        const night = sec.night || {};
+        const alive = wolfAliveOf(room);
+        const seerAlive = alive.some((p) => sec.roles[p.openid] === 'seer');
+        const witchAlive = alive.some((p) => sec.roles[p.openid] === 'witch');
+        const pend = [];
+        if (night.wolfKill === undefined) pend.push('狼人');
+        if (seerAlive && !night.seerDone) pend.push('预言家');
+        if (witchAlive && !night.witchDone) pend.push('女巫');
+        return { ok: false, msg: `还有 ${pend.join('、')} 没行动完，无法天亮` };
+      }
+      await wolfSettleNight(event.roomId, room, sec);
       return { ok: true };
     }
 
@@ -698,8 +712,13 @@ exports.main = async (event) => {
       if (room.status !== 'day') return { ok: false, msg: '现在不是白天' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局数据异常' };
+      // 必须所有存活玩家都投完票才能天黑
+      const alivePlayers = (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);
+      const dv = room.dayVotes || {};
+      const notVoted = alivePlayers.filter((p) => !dv[p.openid]);
+      if (notVoted.length) return { ok: false, msg: `还有 ${notVoted.length} 人没投票，等大家投完再天黑` };
       const cnt = {};
-      Object.values(room.dayVotes || {}).forEach((tid) => { if (tid) cnt[tid] = (cnt[tid] || 0) + 1; });
+      Object.values(dv).forEach((tid) => { if (tid) cnt[tid] = (cnt[tid] || 0) + 1; });
       const ids = Object.keys(cnt);
       if (!ids.length) return { ok: false, msg: '还没有人投票，等大家投完再天黑' };
       let max = 0; ids.forEach((tid) => { if (cnt[tid] > max) max = cnt[tid]; });

@@ -86,8 +86,26 @@
       </block>
     </view>
 
-    <!-- 公告：死讯/出局 -->
-    <view class="card announce" wx:if="{{announceText && status !== 'waiting'}}">{{announceText}}</view>
+
+    <!-- 玩家白天：投票按钮（点开弹框选人,对齐卧底/剧本杀） -->
+    <button wx:if="{{!isHost && status === 'day' && !myOut}}" hover-class="none" class="btn vote-open-btn" bindtap="showVoteSheet">🗳 投票放逐{{myDayVote ? '（已投,可改）' : ''}}</button>
+
+    <!-- 主持台：夜晚行动实况 + 白天投票（只有上帝可见,不含开局身份表） -->
+    <view class="card host-board" wx:if="{{isHost && status !== 'waiting'}}">
+      <view class="sec-title">🎬 主持台（只有你能看到）</view>
+      <block wx:if="{{status === 'night' && god && god.night}}">
+        <view class="hb-line">🐺 狼人：{{god.night.kill ? '已刀 ' + god.night.kill : (god.night.emptyKill ? '空刀' : '行动中…')}}</view>
+        <view class="hb-line">🔮 预言家：{{god.night.seerTarget ? '查验 ' + god.night.seerTarget + ' → ' + (god.night.seerIsWolf ? '狼人 🐺' : '好人 🙂') : (god.night.seerDone ? '（本夜无预言家）' : '行动中…')}}</view>
+        <view class="hb-line">🧪 女巫：{{god.night.saved ? '用解药救人 ' : ''}}{{god.night.poison ? '毒了 ' + god.night.poison : ''}}{{(!god.night.saved && !god.night.poison) ? (god.night.witchDone ? '不用药' : '行动中…') : ''}}</view>
+        <view class="hb-line hb-dim">解药 {{god.potions.save ? '还在' : '已用'}} · 毒药 {{god.potions.poison ? '还在' : '已用'}}</view>
+      </block>
+      <block wx:elif="{{status === 'day'}}">
+        <view class="hb-line" wx:if="{{god && god.night}}">🌙 昨夜：{{god.night.kill ? '狼人刀了 ' + god.night.kill : '空刀'}}{{god.night.saved ? ' · 女巫用了解药' : ''}}{{god.night.poison ? ' · 女巫毒了 ' + god.night.poison : ''}}</view>
+        <view class="hb-line" wx:if="{{god && god.night && god.night.seerTarget}}">🔮 预言家昨夜查验 {{god.night.seerTarget}} → {{god.night.seerIsWolf ? '狼人 🐺' : '好人 🙂'}}</view>
+        <view class="hb-line hb-dim" wx:if="{{god && god.potions}}">解药 {{god.potions.save ? '还在' : '已用'}} · 毒药 {{god.potions.poison ? '还在' : '已用'}}</view>
+        <view class="hb-line">🗳 白天投票 · 已投 {{dayVoted}} 人（得票见头像角标）</view>
+      </block>
+    </view>
 
     <!-- 我的身份卡（玩家）：图腾卡背,长按翻开角色牌 -->
     <view class="card word-card" wx:if="{{status !== 'waiting' && !isHost}}">
@@ -116,25 +134,19 @@
       <view class="board-line" wx:for="{{seerLog}}" wx:key="round">第 {{item.round}} 夜：{{item.nick}} — <text class="{{item.isWolf ? 'chk-wolf' : 'chk-good'}}">{{item.isWolf ? '狼人 🐺' : '好人 🙂'}}</text></view>
     </view>
 
-    <!-- 玩家（夜晚/白天点头像行动） -->
-    <view class="card" wx:if="{{status !== 'waiting'}}">
-      <view class="row-between">
-        <view class="sec-title">玩家（{{players.length}}）</view>
-      </view>
-      <view class="act-tip" wx:if="{{actTip}}">{{actTip}}</view>
-      <view class="players">
-        <view class="player {{item.out ? 'out' : ''}} {{item.openid === myTarget ? 'picked' : ''}}"
-          wx:for="{{players}}" wx:key="openid"
-          data-openid="{{item.openid}}" data-nick="{{item.nick}}" data-out="{{item.out}}"
-          bindtap="onPlayerTap">
+    <!-- 上帝：玩家网格（直观看投票票数 / 出局） -->
+    <view class="card" wx:if="{{status !== 'waiting' && isHost}}">
+      <view class="sec-title">{{status === 'day' ? '🗳 投票情况' : '👥 玩家'}}（{{players.length}}）</view>
+      <view class="players game-players">
+        <view class="player {{item.out ? 'out' : ''}}" wx:for="{{players}}" wx:key="openid"
+          data-openid="{{item.openid}}" data-nick="{{item.nick}}" data-out="{{item.out}}" bindtap="onPlayerTap">
           <view class="host-badge" wx:if="{{item.isHost}}">上帝</view>
           <view class="avatar">
             <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
             <block wx:else>{{item.nick[0]}}</block>
           </view>
-          <view class="pname {{item.openid === myTarget ? 'pname-kill' : ''}} {{status === 'day' && item.openid === myDayVote ? 'pname-vote' : ''}}">{{item.nick}}</view>
+          <view class="pname">{{item.nick}}</view>
           <view class="tomb" wx:if="{{item.out}}">🪦</view>
-          <view class="knife" wx:if="{{item.openid === myTarget && !item.out}}">🔪</view>
           <view class="votebadge" wx:if="{{status === 'day' && !item.out && dayTally[item.openid]}}">{{dayTally[item.openid]}}票</view>
         </view>
       </view>
@@ -146,23 +158,19 @@
       <view class="card" wx:if="{{role === 'wolf'}}">
         <view class="sec-title">狼人频道 🐺</view>
         <view class="board-line" wx:for="{{night.votes}}" wx:key="nick">{{item.nick}} → {{item.target || '还没选'}}</view>
-        <!-- 已定刀 -->
         <view class="muted night-wait" wx:if="{{night.done}}">刀口已定{{night.kill ? '：' + night.kill : ''}}，等待天亮…</view>
-        <!-- 单狼：选了目标 → 确认按钮 -->
-        <block wx:elif="{{night.wolfCount <= 1 && myTargetNick}}">
-          <button class="btn kill-confirm" bindtap="confirmKill">确认刀「{{myTargetNick}}」</button>
-          <view class="muted center wolf-hint">点其他头像可改目标</view>
+        <block wx:else>
+          <button class="btn" bindtap="openKillPick">{{myTargetNick ? '改目标（现选：' + myTargetNick + '）' : '🔪 选择今晚要刀的人'}}</button>
+          <button class="btn kill-confirm" wx:if="{{night.wolfCount <= 1 && myTargetNick}}" bindtap="confirmKill">确认刀「{{myTargetNick}}」</button>
+          <view class="muted center wolf-hint" wx:if="{{killCountdown > 0}}">双方已选定 · {{killCountdown}} 秒后定刀（改选可重置）</view>
+          <view class="muted center wolf-hint" wx:elif="{{night.wolfCount > 1 && myTargetNick}}">已选，等狼队友一起选定</view>
         </block>
-        <!-- 双狼：都选了 → 倒计时 -->
-        <view class="muted center wolf-hint" wx:elif="{{killCountdown > 0}}">双方已选定 · {{killCountdown}} 秒后定刀（改选可重置）</view>
-        <!-- 还没选齐 -->
-        <view class="muted center wolf-hint" wx:else>点头像选择目标{{night.wolfCount > 1 ? '，等狼队友一起选定' : ''}}</view>
       </view>
 
       <!-- 预言家:夜晚操作提示(记录见下方常驻卡) -->
       <view class="card" wx:if="{{role === 'seer'}}">
         <view class="sec-title">预言家 🔮</view>
-        <view class="muted" wx:if="{{!night.done}}">点一名玩家的头像查验其身份（每晚一次）</view>
+        <button class="btn" wx:if="{{!night.done}}" bindtap="openCheckPick">🔮 查验一名玩家（每晚一次）</button>
         <view class="muted night-wait" wx:else>今晚已查验，等待天亮…</view>
       </view>
 
@@ -175,9 +183,7 @@
         <block wx:elif="{{!night.done}}">
           <view class="board-line">{{night.killId ? '☠️ 今晚「' + night.killNick + '」被刀' : '今晚是空刀，无人被害'}}</view>
           <button class="btn witch-btn" wx:if="{{night.canSave}}" bindtap="witchSave">💊 用解药救 {{night.killNick}}</button>
-          <button class="btn btn-ghost witch-btn" wx:if="{{night.canPoison}}" bindtap="witchPoisonToggle">
-            {{pickPoison ? '取消用毒' : '☠️ 用毒药（点上方头像选人）'}}
-          </button>
+          <button class="btn btn-ghost witch-btn" wx:if="{{night.canPoison}}" bindtap="openPoisonPick">☠️ 用毒药（选一名玩家）</button>
           <button class="btn btn-ghost witch-btn" bindtap="witchSkip">🌙 不用药</button>
         </block>
         <view class="muted night-wait" wx:else>今晚已行动，等待天亮…</view>
@@ -221,6 +227,46 @@
 
     <button wx:if="{{status !== 'waiting'}}" class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
   </block>
+
+  <!-- 夜晚选人弹框(狼刀/验人/毒人共用) -->
+  <view class="mask" wx:if="{{showPick}}" bindtap="hidePick">
+    <view class="modal" catchtap="">
+      <view class="m-title">{{pickTitle}}</view>
+      <view class="vt-list">
+        <view class="vt-item {{pickMode === 'kill' && item.openid === myTarget ? 'picked' : ''}}"
+          wx:for="{{voteTargets}}" wx:key="openid"
+          data-openid="{{item.openid}}" data-nick="{{item.nick}}" bindtap="onPick">
+          <view class="vt-avatar">
+            <image wx:if="{{item.avatar}}" class="vt-img" src="{{item.avatar}}" mode="aspectFill" />
+            <block wx:else>{{item.nick[0]}}</block>
+          </view>
+          <view class="vt-nick">{{item.nick}}</view>
+          <view class="vt-check" wx:if="{{pickMode === 'kill' && item.openid === myTarget}}">✓ 现选</view>
+        </view>
+      </view>
+      <view class="m-btns"><button class="m-cancel" bindtap="hidePick">关闭</button></view>
+    </view>
+  </view>
+
+  <!-- 白天投票弹框 -->
+  <view class="mask" wx:if="{{showVote}}" bindtap="hideVoteSheet">
+    <view class="modal" catchtap="">
+      <view class="m-title">投出你要放逐的人</view>
+      <view class="vt-list">
+        <view class="vt-item {{item.openid === myDayVote ? 'picked' : ''}}"
+          wx:for="{{voteTargets}}" wx:key="openid"
+          data-openid="{{item.openid}}" data-nick="{{item.nick}}" bindtap="voteFor">
+          <view class="vt-avatar">
+            <image wx:if="{{item.avatar}}" class="vt-img" src="{{item.avatar}}" mode="aspectFill" />
+            <block wx:else>{{item.nick[0]}}</block>
+          </view>
+          <view class="vt-nick">{{item.nick}}</view>
+          <view class="vt-check" wx:if="{{item.openid === myDayVote}}">✓ 我投的</view>
+        </view>
+      </view>
+      <view class="m-btns"><button class="m-cancel" bindtap="hideVoteSheet">关闭</button></view>
+    </view>
+  </view>
 </view>
 
 <id-switch />

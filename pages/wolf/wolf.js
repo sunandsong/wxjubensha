@@ -37,6 +37,8 @@ Page({
     reveal: null, winnerText: '',
     god: null,          // 上帝面板(仅房主):全员身份+夜晚进度
     killCountdown: 0, myTargetNick: '',   // 双狼定刀倒计时 / 我选的目标昵称
+    seerLog: [],        // 预言家查验记录(本地持久,天亮后仍可回看)
+    dayTally: {}, myDayVote: '', dayVoted: 0,   // 白天投票:得票/我投的/已投人数
     backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
     bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
     starting: false,
@@ -195,7 +197,13 @@ Page({
       announceText = `🪦 ${a.nick} 被放逐出村，TA 是「${a.roleName}」`;
     }
     const rv = room.reveal || null;
+    const dayVotes = room.dayVotes || {};
+    const dayTally = {};
+    Object.values(dayVotes).forEach((tid) => { if (tid) dayTally[tid] = (dayTally[tid] || 0) + 1; });
     this.setData({
+      dayTally,
+      myDayVote: dayVotes[this.data.openid] || '',
+      dayVoted: Object.keys(dayVotes).length,
       status: room.status || 'waiting',
       round: room.round || 0,
       players,
@@ -212,7 +220,7 @@ Page({
     });
     // 回到等待（再来一局）：清掉上一局身份
     if (room.status === 'waiting' && this.data.role) {
-      this.setData({ role: '', roleName: '', matesText: '', night: null, reveal: null, peeking: false, pickPoison: false, god: null });
+      this.setData({ role: '', roleName: '', matesText: '', night: null, reveal: null, peeking: false, pickPoison: false, god: null, seerLog: [] });
       this._godKey = '';
     }
     // 游戏中还没拿到身份 → 拉一次
@@ -257,12 +265,17 @@ Page({
     } else if (status === 'night' && isHost) {
       const g = this.data.god;
       actTip = g && g.night
-        ? `🌙 狼人${g.night.wolfDone ? '✓' : '…'} 预言家${g.night.seerDone ? '✓' : '…'} 女巫${g.night.witchDone ? '✓' : '…'}（收齐自动天亮）`
+        ? `🌙 狼人${g.night.wolfDone ? '✓' : '…'} 预言家${g.night.seerDone ? '✓' : '…'} 女巫${g.night.witchDone ? '✓' : '…'}（都行动后点「宣布天亮」）`
         : '🌙 天黑请闭眼，等待各角色行动…';
     } else if (status === 'day' && isHost) {
-      actTip = '🗳 群里投票后，点头像将 TA 放逐出村';
+      actTip = '🗳 大家投票中（' + (this.data.dayVoted || 0) + ' 人已投）· 讨论完点「宣布天黑」统计';
     }
-    const myVote = (role === 'wolf' && night && night.myVote) || '';
+    let myVote = (role === 'wolf' && night && night.myVote) || '';
+    // 乐观选中锁：服务端数据还没追上"我刚选的目标"之前,不回退成旧值(消除闪回)
+    if (this._pendingTarget) {
+      if (myVote === this._pendingTarget) this._pendingTarget = null;   // 已确认
+      else myVote = this._pendingTarget;                                 // 未确认,保持新目标
+    }
     const mp = (this.data.players || []).find((p) => p.openid === myVote);
     this.setData({ actTip, myTarget: myVote, myTargetNick: mp ? mp.nick : '' });
   },
@@ -288,25 +301,79 @@ Page({
     try {
       const res = await app.callGame({ action: 'wolfNightState', roomId: this.data.roomId });
       const r = res && res.result;
-      if (r && r.ok && r.phase === 'night') this.setData({ night: r });
+      if (r && r.ok && r.phase === 'night') {
+        const d = { night: r };
+        if (r.history && r.history.length >= (this.data.seerLog || []).length) d.seerLog = r.history;
+        this.setData(d);
+      }
     } catch (e) {}
     this._fetchingNight = false;
     this._deriveTips();
     this._maybeWolfTimer();
   },
 
-  // 狼人选/改目标（可反复改）
+  // 狼人选/改目标（可反复改）：点击立即本地高亮,请求后台跑
   async _wolfPick(target) {
+    const prev = this.data.myTarget;
+    const mp = (this.data.players || []).find((p) => p.openid === target);
+    this._pendingTarget = target;   // 锁定,数据追上前不被旧推送覆盖
+    this.setData({ myTarget: target, myTargetNick: mp ? mp.nick : '' });   // 乐观更新,秒亮
+    this._clearWolfTimer();   // 改了目标先停倒计时,待服务端确认后按 voteSig 重启
     try {
       const res = await app.callGame({ action: 'wolfNightAct', roomId: this.data.roomId, act: 'kill', target });
       const r = res && res.result;
-      if (r && !r.ok) return wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      if (r && !r.ok) {
+        this._pendingTarget = null;
+        this.setData({ myTarget: prev });   // 失败回滚
+        return wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      }
       this._fetchNight();
-    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+    } catch (e) {
+      this._pendingTarget = null;
+      this.setData({ myTarget: prev });
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
   },
 
   // 单狼点确认 / 双狼倒计时到点：定刀
+  // 上帝一键复制主持词发到群里（按当前昼夜生成）
+  copyHostScript() {
+    const round = this.data.round || 1;
+    let text;
+    if (this.data.status === 'night') {
+      text = `【第 ${round} 夜 · 天黑请闭眼】\n请对应角色打开小程序悄悄行动：\n🐺 狼人——一起选定今晚要刀的人\n🔮 预言家——查验一名玩家的身份\n🧪 女巫——决定是否用解药 / 毒药\n（其余村民请闭眼等待，行动完我会宣布天亮）`;
+    } else {
+      const dawn = (this.data.announceText || '').replace(/^☀️\s*/, '');
+      text = `【第 ${round} 天 · 天亮请睁眼】\n${dawn || '昨夜平安，无人倒牌'}\n\n现在大家自由发言、轮流陈述，说说昨晚的判断和怀疑。\n讨论结束后开始投票：把你要放逐的人报给我，我来统计。`;
+    }
+    wx.setClipboardData({
+      data: text,
+      success: () => wx.showToast({ title: '已复制，去群里粘贴', icon: 'none' }),
+    });
+  },
+
   confirmKill() { this._killConfirm(); },
+
+  // 白天玩家投票放逐（点头像,可改票,乐观高亮）
+  async _dayVote(target, nick) {
+    const prev = this.data.myDayVote;
+    this.setData({ myDayVote: target });
+    try {
+      const res = await app.callGame({ action: 'wolfVote', roomId: this.data.roomId, target });
+      const r = res && res.result;
+      if (r && !r.ok) { this.setData({ myDayVote: prev }); return wx.showToast({ title: r.msg || '投票失败', icon: 'none' }); }
+      this._refresh();
+    } catch (e) { this.setData({ myDayVote: prev }); wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
+
+  // 上帝：宣布天亮（结算夜晚）
+  wolfDawn() {
+    this._confirmAct('宣布天亮？未行动的角色视为放弃，结算昨夜死讯。', 'wolfForce', {}, '结算中');
+  },
+  // 上帝：宣布天黑（按白天票数放逐最高票）
+  wolfDusk() {
+    this._confirmAct('宣布天黑？按当前投票放逐得票最高的玩家。', 'wolfDusk', {}, '结算中');
+  },
   async _killConfirm() {
     try {
       await app.callGame({ action: 'wolfNightAct', roomId: this.data.roomId, act: 'killConfirm' });
@@ -388,9 +455,12 @@ Page({
     const d = e.currentTarget.dataset;
     const { status, role, night, isHost, myOut, pickPoison, openid } = this.data;
     if (status === 'day') {
-      if (!isHost) return;
       if (d.out) return wx.showToast({ title: 'TA 已出局', icon: 'none' });
-      return this._confirmAct(`让「${d.nick}」出局？（按群里投票结果执行）`, 'wolfDayOut', { target: d.openid }, '执行中');
+      if (isHost) {   // 上帝:平票时手动指定出局(备用)
+        return this._confirmAct(`直接让「${d.nick}」出局？（一般用「宣布天黑」按票统计）`, 'wolfDayOut', { target: d.openid }, '执行中');
+      }
+      if (myOut) return wx.showToast({ title: '你已出局，不能投票', icon: 'none' });
+      return this._dayVote(d.openid, d.nick);   // 玩家:投票(可改)
     }
     if (status !== 'night' || myOut || !night) return;
     if (d.out) return wx.showToast({ title: 'TA 已出局', icon: 'none' });
@@ -435,6 +505,11 @@ Page({
       }), '查验中');
       const r = res && res.result;
       if (!r || !r.ok) return wx.showToast({ title: (r && r.msg) || '查验失败', icon: 'none' });
+      const log = (this.data.seerLog || []).slice();
+      if (!log.some((x) => x.round === this.data.round && x.nick === d.nick)) {
+        log.push({ round: this.data.round, nick: d.nick, isWolf: r.isWolf });
+        this.setData({ seerLog: log });
+      }
       wx.showModal({ title: '查验结果', content: `${d.nick} 是${r.isWolf ? '狼人 🐺' : '好人 🙂'}`, showCancel: false });
       this._refresh();
       this._fetchNight();

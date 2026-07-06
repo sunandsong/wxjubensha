@@ -58,7 +58,11 @@
 .ready-badge.outtag { color: #fff; background: rgba(255,255,255,0.18); }
 .player.out .avatar { opacity: 0.35; filter: grayscale(1); }
 .player.out .pname { color: #6f6786; text-decoration: line-through; }
-.player.picked .avatar { box-shadow: 0 0 0 5rpx #ffb347; }
+/* 选中态:静态强红光(无入场动画,避免数据刷新时重播闪动) */
+.player.picked .avatar { box-shadow: 0 0 0 6rpx #ff4d5e, 0 0 28rpx rgba(255,77,94,0.65); }
+.pname-kill { color: #ff6a5c !important; font-weight: 800; }
+.knife { position: absolute; top: -14rpx; right: 4rpx; font-size: 36rpx; z-index: 4;
+  filter: drop-shadow(0 3rpx 8rpx rgba(0,0,0,0.7)); }
 .ready-hint { margin-top: 14rpx; }
 .center { text-align: center; }
 .warn { color: #ff7a45; }
@@ -124,14 +128,18 @@
 
 /* ── 身份卡：图腾卡背,长按翻开木刻角色牌 ── */
 .idcard { position: relative; width: 340rpx; height: 480rpx; margin: 20rpx auto 6rpx;
-  border-radius: 20rpx; overflow: hidden; perspective: 1000rpx;
+  perspective: 1400rpx; }
+/* 内层随点击绕 Y 轴翻 180° */
+.id-inner { position: absolute; inset: 0; transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4, 0.1, 0.3, 1); }
+.idcard.open .id-inner { transform: rotateY(180deg); }
+.id-face { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 20rpx; overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
   box-shadow: 0 16rpx 44rpx rgba(0,0,0,0.5); }
-.id-face { position: absolute; left: 0; top: 0; width: 100%; height: 100%;
-  transition: opacity 0.35s ease, transform 0.35s ease; border-radius: 20rpx; }
-.id-back { opacity: 1; transform: none; }
-.id-front { opacity: 0; transform: scale(1.06); }
-.idcard.open .id-back { opacity: 0; transform: scale(0.96); }
-.idcard.open .id-front { opacity: 1; transform: none; }
+.id-back { transform: rotateY(0deg); }
+.id-front { transform: rotateY(180deg); }
+
+.id-img { width: 100%; height: 100%; border-radius: 20rpx; }
 .id-back-css { display: flex; align-items: center; justify-content: center; font-size: 100rpx;
   background: linear-gradient(160deg, #3a2a20, #241812); }
 .id-front-css { display: flex; align-items: center; justify-content: center; font-size: 44rpx; font-weight: 900;
@@ -228,3 +236,19 @@
 .phase-card.p-day { background: #43324a; }      /* 白天暖调实底 */
 .god-card { background: #2a2340; }
 .btn-ghost { background: #2a2342; }
+
+.chk-wolf { color: #ff8f8f; font-weight: 700; }
+.chk-good { color: #b9e6a8; font-weight: 700; }
+
+/* 白天投票:得票角标 + 我投的高亮 */
+.votebadge { position: absolute; top: -12rpx; right: -4rpx; font-size: 18rpx; font-weight: 800; color: #fff;
+  background: #c44dff; border-radius: 999rpx; padding: 2rpx 10rpx; z-index: 4; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.5); }
+.pname-vote { color: #d9b8ff !important; font-weight: 800; }
+.player.picked .avatar, .player.voted .avatar { /* 占位,兼容 */ }
+.dawn-btn { background: linear-gradient(90deg, #ff9a45, #ffce54); color: #3a2408; }
+.dusk-btn { background: linear-gradient(90deg, #5a4bff, #8b5cff); color: #fff; }
+
+.mini-btn { align-self: flex-start; line-height: 1.7;
+  background: rgba(123,92,255,0.3); color: #ddd2ff;
+  font-size: 22rpx; padding: 6rpx 20rpx; border-radius: 999rpx; }
+.ph-copy { display: inline-block; margin-top: 14rpx; white-space: nowrap; }

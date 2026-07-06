@@ -220,3 +220,11 @@
 }
 .pname-dim { color: #8a7fa6; }
 .rm-count { margin-top: 20rpx; position: relative; }
+
+/* ── 游戏中卡片:实底,不透背景(对齐海龟汤风格) ── */
+.card { background: #2c2447; border: 1rpx solid rgba(255,255,255,0.16);
+  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.35); }
+.phase-card { background: #322a52; }           /* 阶段卡稍亮一档,做主角 */
+.phase-card.p-day { background: #43324a; }      /* 白天暖调实底 */
+.god-card { background: #2a2340; }
+.btn-ghost { background: #2a2342; }

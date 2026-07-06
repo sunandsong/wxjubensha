@@ -106,11 +106,11 @@
             <view wx:else class="face-css back-css">🎩</view>
           </view>
           <view class="id-face id-front">
-            <image wx:if="{{cardFrontUrl}}" class="face-img" src="{{cardFrontUrl}}" mode="aspectFill"></image>
+            <image wx:if="{{cardFrontUrl}}" class="face-img" src="{{cardFrontUrl}}" mode="aspectFill" binderror="onCardFrontErr"></image>
             <view wx:else class="face-css front-css"></view>
             <view class="wd-inner">
               <view class="wd-label">你 的 词</view>
-              <view class="wd-word">{{word}}</view>
+              <view class="wd-word" style="font-size:{{wdSize}}rpx">{{word}}</view>
             </view>
           </view>
         </view>
@@ -121,15 +121,34 @@
       <!-- 上一轮结果公告 -->
       <view class="card vote-ann" wx:if="{{lastVoteText}}">{{lastVoteText}}</view>
 
-      <!-- 投票状态区（去掉玩家列表：房主开启投票，弹框里选人） -->
+      <!-- 玩家：标出房主、出局、投票进度 -->
+      <view class="card">
+        <view class="row-between">
+          <view class="sec-title">玩家（{{players.length}}）</view>
+          <view class="muted" wx:if="{{voting}}">已投 {{votedCount}}/{{aliveCount}}</view>
+        </view>
+        <view class="players">
+          <view class="player {{item.out ? 'out' : ''}}" wx:for="{{players}}" wx:key="openid">
+            <view class="host-badge" wx:if="{{item.isHost}}">房主</view>
+            <view class="avatar">
+              <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+              <block wx:else>{{item.nick[0]}}</block>
+            </view>
+            <view class="out-stamp" wx:if="{{item.out}}">OUT</view>
+            <view class="pname">{{item.nick}}</view>
+            <view class="ready-badge on" wx:if="{{!item.out && voting && item.voted}}">已投</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 投票状态区：房主开启投票，弹框里选人 -->
       <block wx:if="{{!voting}}">
         <button wx:if="{{isHost}}" hover-class="none" class="btn start-btn" bindtap="openVoteStart">开启投票</button>
         <view wx:else class="muted center rm-count">描述完等房主开启投票</view>
       </block>
       <block wx:else>
-        <view class="vote-progress">🗳 投票进行中 · 已投 {{votedCount}}/{{aliveCount}}</view>
         <button wx:if="{{!myOut}}" hover-class="none" class="btn start-btn {{myVote ? 'btn-ghost' : ''}}" bindtap="showVoteSheet">
-          {{myVote ? '已投给 ' + myVoteNick + ' · 点击改票' : '去投票'}}
+          {{myVote ? '已投给 ' + myVoteNick + ' · 点击改票' : '🗳 去投票'}}
         </button>
         <view wx:if="{{myOut}}" class="muted center rm-count">👻 你已出局，等大家投完</view>
       </block>

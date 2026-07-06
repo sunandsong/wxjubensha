@@ -29,7 +29,7 @@ Page({
     voteTargets: [],      // 弹框里可投的人（存活且不是自己）
     myVoteNick: '',       // 我投的人昵称
     // 我的词
-    word: '', peeking: false,
+    word: '', wdSize: 80, peeking: false,
     starting: false,
     heroUrl: '', cardUrl: '', cardFrontUrl: '',   // 云端素材
   },
@@ -63,9 +63,10 @@ Page({
   },
   onHeroErr() { IMGCACHE.invalidate(HERO_FID); this.setData({ heroUrl: this.data.heroUrl !== HERO_FID ? HERO_FID : '' }); },
   onCardErr() { IMGCACHE.invalidate(CARD_FID); this.setData({ cardUrl: this.data.cardUrl !== CARD_FID ? CARD_FID : '' }); },
-
+  onCardFrontErr() { IMGCACHE.invalidate(CARDF_FID); this.setData({ cardFrontUrl: this.data.cardFrontUrl !== CARDF_FID ? CARDF_FID : '' }); },
 
   onShow() {
+    this._resolveImgs();   // 回前台重新解析素材：临时链接过期后自动换新
     if (this.data.mode === 'room' && this.data.roomId) {
       this._refresh();   // 回到前台先手动同步一次，watch 断线期间的变化（如已开局）别漏掉
       this._startWatch();
@@ -231,7 +232,7 @@ Page({
     // 本轮投票已结算 → 自动收起投票弹框
     if (!room.voting && this.data.showVote) this.setData({ showVote: false });
     // 回到等待中（再来一局）→ 清掉上一局的词，否则下一局不会去取新词
-    if (room.status === 'waiting' && this.data.word) this.setData({ word: '', peeking: false });
+    if (room.status === 'waiting' && this.data.word) this.setData({ word: '', wdSize: 80, peeking: false });
     // 游戏中且还没拿到词 → 拉自己的词
     if (room.status === 'playing' && !this.data.word) this._fetchWord();
   },
@@ -249,8 +250,18 @@ Page({
       if (showErr) wx.showToast({ title: '网络异常，再长按一次', icon: 'none' });
     }
     this._fetchingWord = false;
-    if (word) this.setData({ word });
+    if (word) this.setData({ word, wdSize: this._wordSize(word) });
     return word;
+  },
+
+  // 按字数给词卡字号：短词大、长词缩小并换行（卡面留白约 260rpx 宽）
+  _wordSize(w) {
+    const n = (w || '').length;
+    if (n <= 2) return 80;
+    if (n === 3) return 68;
+    if (n === 4) return 56;
+    if (n <= 6) return 44;
+    return 36;
   },
 
   async toggleReady() {
@@ -327,7 +338,7 @@ Page({
     try {
       const res = await app.runOnce('spyReset', () => app.callGame({ action: 'reset', roomId: this.data.roomId }), '重开中');
       const r = res && res.result;
-      if (r && r.ok) this.setData({ word: '', peeking: false });
+      if (r && r.ok) this.setData({ word: '', wdSize: 80, peeking: false });
       else if (r) wx.showToast({ title: r.msg || '重开失败', icon: 'none' });
     } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },

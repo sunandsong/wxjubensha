@@ -27,10 +27,7 @@ Page({
       const soup = SOUPS.find((s) => s.id === query.soupId);
       if (soup) return this._show(soup, !!query.guest, !!query.reveal);
     }
-    // 主持人正常进入：恢复上次那碗（分享出去后再进来还是原汤），没有才随机抽
-    const last = SOUPS.find((s) => s.id === wx.getStorageSync('soupLastId'));
-    if (last) return this._show(last);
-    this.draw();
+    // 主持人正常进入：不自动出汤，点上面口味才端一碗（空碗态）
   },
 
   // 酒馆素材：本地缓存优先，云图淡入

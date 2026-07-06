@@ -24,6 +24,9 @@ Page({
       if (map[HERO_FID] && map[HERO_FID] !== this.data.heroUrl) d.heroUrl = map[HERO_FID];
       if (Object.keys(d).length) this.setData(d);
     });
+    // 恢复上次生成的炸弹数(退出再进不丢),不重播动画
+    const last = wx.getStorageSync('bombLast');
+    if (last && last.num) this.setData({ num: last.num, ts: last.ts, code: last.code });
   },
   onBgLoad() { this.setData({ bgOk: true }); },
   // 缓存坏了退回 cloud:// 原地址；再失败就隐藏（纯色底兜底）
@@ -47,10 +50,13 @@ Page({
     wx.vibrateLong();   // 长震兼容性最好；确认有震感后可换回 vibrateShort
     const num = 1 + Math.floor(Math.random() * 100);
     const now = new Date();
-    // 数字立即出；同时白闪一帧 + 炸弹缩放一下
-    this.setData({ num, ts: this._fmt(now), code: this._makeCode(num, now.getTime()), fx: true });
-    clearTimeout(this._fxTimer);
-    this._fxTimer = setTimeout(() => this.setData({ fx: false }), 650);
+    // 数字立即出；白闪+炸弹缩放+数字晃动放大回弹。先关 fx 再下一帧开,保证每次生成都重播动画
+    clearTimeout(this._fxTimer); clearTimeout(this._fxOn);
+    const ts = this._fmt(now), code = this._makeCode(num, now.getTime());
+    wx.setStorageSync('bombLast', { num, ts, code });   // 存下来,退出再进还在
+    this.setData({ num, ts, code, fx: false });
+    this._fxOn = setTimeout(() => this.setData({ fx: true }), 24);
+    this._fxTimer = setTimeout(() => this.setData({ fx: false }), 480);
   },
 
   // 生成留证图片并保存到相册

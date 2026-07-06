@@ -136,3 +136,10 @@ page { background: #1d1730; }
 .btn::after { border: none; }
 .btn.ghost { background: #2a2342; color: #b9aed6; box-shadow: none;
   border: 1rpx solid rgba(255,255,255,0.18); font-weight: 600; }
+
+/* 空碗态：进页未点汤 */
+.empty-bowl { text-align: center; padding: 90rpx 30rpx; }
+.eb-icon { font-size: 120rpx; animation: ebfloat 3.5s ease-in-out infinite; }
+@keyframes ebfloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14rpx); } }
+.eb-t { font-size: 34rpx; font-weight: 900; color: #fff; margin-top: 20rpx; letter-spacing: 2rpx; }
+.eb-s { font-size: 24rpx; color: #b9aed6; margin-top: 12rpx; }

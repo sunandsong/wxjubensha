@@ -18,11 +18,18 @@
   <block wx:if="{{!isGuest}}">
     <view class="h-row"><text class="h-b">🍶 今夜口味</text><text class="h-s">点一下，换一碗</text></view>
     <view class="flavors">
-      <view class="fl {{soup.flavor === 'qing' ? 'on' : ''}}" data-f="qing" bindtap="drawFlavor">清汤 🍵</view>
-      <view class="fl hong {{soup.flavor === 'hong' ? 'on' : ''}}" data-f="hong" bindtap="drawFlavor">红汤 🌶️</view>
+      <view class="fl {{soup && soup.flavor === 'qing' ? 'on' : ''}}" data-f="qing" bindtap="drawFlavor">清汤 🍵</view>
+      <view class="fl hong {{soup && soup.flavor === 'hong' ? 'on' : ''}}" data-f="hong" bindtap="drawFlavor">红汤 🌶️</view>
       <view class="fl" data-f="all" bindtap="drawFlavor">随机 🎲</view>
     </view>
   </block>
+
+  <!-- 空碗态：还没点汤 -->
+  <view class="empty-bowl" wx:if="{{!soup && !isGuest}}">
+    <view class="eb-icon">🍜</view>
+    <view class="eb-t">今晚喝哪碗？</view>
+    <view class="eb-s">点上面的口味，酒保这就给你端一碗</view>
+  </view>
 
   <!-- 端上来之后 -->
   <block wx:if="{{soup}}">

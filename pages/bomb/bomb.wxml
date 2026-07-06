@@ -12,7 +12,7 @@
 
   <!-- 抽出的数 / 问号 -->
   <view class="num-box {{num ? 'lit' : ''}}">
-    <view wx:if="{{num}}" class="num pop">{{num}}</view>
+    <view wx:if="{{num}}" class="num {{fx ? 'pop' : ''}}">{{num}}</view>
     <view wx:else class="num">?</view>
     <view wx:if="{{num}}" class="meta">
       <view class="meta-ln">{{ts}}</view>

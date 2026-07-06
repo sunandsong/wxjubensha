@@ -473,22 +473,17 @@ exports.main = async (event) => {
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有上帝能看' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局还没发身份' };
-      const ps = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
-      const nickOf = (id) => { const x = ps.find((q) => q.openid === id); return x ? x.nick : ''; };
-      const list = ps.map((q) => ({ nick: q.nick, out: !!q.out, role: sec.roles[q.openid] || '', roleName: WOLF_NAMES[sec.roles[q.openid]] || '?' }));
+      // 主持人不知身份：只回匿名夜晚进度（哪个角色行动完,不透露是谁）
       const night = sec.night || {};
       const alive = wolfAliveOf(room);
       const seerAlive = alive.some((q) => sec.roles[q.openid] === 'seer');
       const witchAlive = alive.some((q) => sec.roles[q.openid] === 'witch');
       return {
-        ok: true, list, potions: sec.potions || {},
+        ok: true,
         night: room.status === 'night' ? {
           wolfDone: night.wolfKill !== undefined,
-          kill: night.wolfKill ? nickOf(night.wolfKill) : '',
           seerDone: !!night.seerDone || !seerAlive,
           witchDone: !!night.witchDone || !witchAlive,
-          saved: !!night.witchSave,
-          poison: night.witchPoison ? nickOf(night.witchPoison) : '',
         } : null,
       };
     }

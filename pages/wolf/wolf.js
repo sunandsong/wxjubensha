@@ -35,10 +35,11 @@ Page({
     // 展示
     announceText: '', actTip: '', myTarget: '',
     reveal: null, winnerText: '',
-    god: null,          // 上帝面板(仅房主):全员身份+夜晚进度
+    god: null,          // 夜晚匿名进度(不含身份)
     killCountdown: 0, myTargetNick: '',   // 双狼定刀倒计时 / 我选的目标昵称
     seerLog: [],        // 预言家查验记录(本地持久,天亮后仍可回看)
     dayTally: {}, myDayVote: '', dayVoted: 0,   // 白天投票:得票/我投的/已投人数
+    hostScript: '',     // 上帝阶段卡直接展示的主持词全文(点复制即发群)
     backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
     bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
     starting: false,
@@ -277,7 +278,9 @@ Page({
       else myVote = this._pendingTarget;                                 // 未确认,保持新目标
     }
     const mp = (this.data.players || []).find((p) => p.openid === myVote);
-    this.setData({ actTip, myTarget: myVote, myTargetNick: mp ? mp.nick : '' });
+    const hostScript = (this.data.isHost && (this.data.status === 'night' || this.data.status === 'day'))
+      ? this._buildHostScript() : '';
+    this.setData({ actTip, myTarget: myVote, myTargetNick: mp ? mp.nick : '', hostScript });
   },
 
   async _fetchRole() {
@@ -336,18 +339,22 @@ Page({
   },
 
   // 单狼点确认 / 双狼倒计时到点：定刀
-  // 上帝一键复制主持词发到群里（按当前昼夜生成）
+  // 主持词正文（不含标题——标题由阶段卡大字承担,避免重复）
+  _buildHostScript() {
+    if (this.data.status === 'night') {
+      return `🐺 狼人请睁眼，一起选定今晚要刀的人\n🔮 预言家请睁眼，查验一名玩家的身份\n🧪 女巫请睁眼，决定是否用解药 / 毒药\n其余村民请闭眼等待，行动完我会宣布天亮`;
+    }
+    const dawn = (this.data.announceText || '').replace(/^☀️\s*/, '');
+    return `${dawn || '昨夜平安，无人倒牌'}\n大家轮流发言讨论，然后在小程序里点头像投票，票最多的将被放逐。`;
+  },
+  // 复制主持词发群（复制时补回标题,群里粘贴更完整）
   copyHostScript() {
     const round = this.data.round || 1;
-    let text;
-    if (this.data.status === 'night') {
-      text = `【第 ${round} 夜 · 天黑请闭眼】\n请对应角色打开小程序悄悄行动：\n🐺 狼人——一起选定今晚要刀的人\n🔮 预言家——查验一名玩家的身份\n🧪 女巫——决定是否用解药 / 毒药\n（其余村民请闭眼等待，行动完我会宣布天亮）`;
-    } else {
-      const dawn = (this.data.announceText || '').replace(/^☀️\s*/, '');
-      text = `【第 ${round} 天 · 天亮请睁眼】\n${dawn || '昨夜平安，无人倒牌'}\n\n现在大家自由发言、轮流陈述，说说昨晚的判断和怀疑。\n讨论结束后开始投票：把你要放逐的人报给我，我来统计。`;
-    }
+    const title = this.data.status === 'night'
+      ? `【第 ${round} 夜 · 天黑请闭眼】`
+      : `【第 ${round} 天 · 天亮请睁眼】`;
     wx.setClipboardData({
-      data: text,
+      data: title + '\n' + (this.data.hostScript || this._buildHostScript()),
       success: () => wx.showToast({ title: '已复制，去群里粘贴', icon: 'none' }),
     });
   },

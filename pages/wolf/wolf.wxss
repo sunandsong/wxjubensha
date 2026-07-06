@@ -114,17 +114,7 @@
 }
 .rb-go { margin-left: auto; font-weight: 700; color: #ffce54; }
 
-/* ── 上帝视角面板 ── */
-.god-card { border-color: rgba(255,206,84,0.35); }
-.god-row { display: flex; justify-content: space-between; align-items: center;
-  padding: 12rpx 4rpx; border-bottom: 1rpx dashed rgba(255,255,255,0.1); font-size: 26rpx; }
-.g-nick.gout { text-decoration: line-through; opacity: 0.5; }
-.g-role { font-weight: 700; }
-.g-role.wolf { color: #ff8f8f; }
-.g-role.seer { color: #8fd0ff; }
-.g-role.witch { color: #c9a4ff; }
-.g-role.villager { color: #b9e6a8; }
-.god-night { margin-top: 14rpx; font-size: 22rpx; color: #b3a6cc; line-height: 1.7; }
+
 
 /* ── 身份卡：图腾卡背,长按翻开木刻角色牌 ── */
 .idcard { position: relative; width: 340rpx; height: 480rpx; margin: 20rpx auto 6rpx;
@@ -234,7 +224,6 @@
   box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.35); }
 .phase-card { background: #322a52; }           /* 阶段卡稍亮一档,做主角 */
 .phase-card.p-day { background: #43324a; }      /* 白天暖调实底 */
-.god-card { background: #2a2340; }
 .btn-ghost { background: #2a2342; }
 
 .chk-wolf { color: #ff8f8f; font-weight: 700; }
@@ -252,3 +241,5 @@
   background: rgba(123,92,255,0.3); color: #ddd2ff;
   font-size: 22rpx; padding: 6rpx 20rpx; border-radius: 999rpx; }
 .ph-copy { display: inline-block; margin-top: 14rpx; white-space: nowrap; }
+.ph-script { text-align: left; white-space: pre-line; font-size: 24rpx; line-height: 1.9;
+  color: #d6cef0; margin-top: 16rpx; }

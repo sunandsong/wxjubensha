@@ -74,27 +74,20 @@
     <!-- 阶段卡：白天/黑夜大字 + 黑夜行动说明 -->
     <view class="card phase-card {{status === 'day' ? 'p-day' : ''}}" wx:if="{{status !== 'waiting'}}">
       <view class="ph-big">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : status === 'day' ? '☀️ 第 ' + round + ' 天 · 天亮请睁眼' : '🃏 终局 · 请亮牌'}}</view>
-      <view class="ph-sub" wx:if="{{status === 'night'}}">现在行动：🐺 狼人选目标 · 🔮 预言家验人 · 🧪 女巫用药</view>
-      <view class="ph-sub2" wx:if="{{status === 'night'}}">各角色行动后 · 由上帝「宣布天亮」 · 平民请闭眼等待</view>
-      <view class="ph-sub" wx:if="{{status === 'day'}}">讨论发言 · 点你要放逐的人投票（可改）· 上帝「宣布天黑」时统计出局</view>
-      <text wx:if="{{isHost}}" class="mini-btn ph-copy" bindtap="copyHostScript">📋 复制主持词</text>
+      <!-- 上帝:主持词全文(点复制发群) -->
+      <block wx:if="{{isHost && hostScript}}">
+        <view class="ph-script">{{hostScript}}</view>
+        <text class="mini-btn ph-copy" bindtap="copyHostScript">📋 复制主持词</text>
+      </block>
+      <!-- 玩家:简短说明 -->
+      <block wx:else>
+        <view class="ph-sub" wx:if="{{status === 'night'}}">天黑请闭眼 · 对应角色在小程序里悄悄行动</view>
+        <view class="ph-sub" wx:if="{{status === 'day'}}">讨论发言 · 点你要放逐的人投票（可改票）</view>
+      </block>
     </view>
 
     <!-- 公告：死讯/出局 -->
     <view class="card announce" wx:if="{{announceText && status !== 'waiting'}}">{{announceText}}</view>
-
-    <!-- 上帝视角：全员身份 + 夜晚进度（只有房主可见） -->
-    <view class="card god-card" wx:if="{{isHost && status !== 'waiting' && god}}">
-      <view class="sec-title">👁️ 上帝视角（只有你能看到）</view>
-      <view class="god-row" wx:for="{{god.list}}" wx:key="nick">
-        <text class="g-nick {{item.out ? 'gout' : ''}}">{{item.nick}}{{item.out ? '（出局）' : ''}}</text>
-        <text class="g-role {{item.role}}">{{item.roleName}}</text>
-      </view>
-      <view class="god-night" wx:if="{{god.night}}">
-        🌙 狼人{{god.night.wolfDone ? (god.night.kill ? ' 已刀 ' + god.night.kill : ' 空刀') : ' 行动中…'}} · 预言家{{god.night.seerDone ? ' ✓' : ' …'}} · 女巫{{god.night.witchDone ? ' ✓' : ' …'}}{{god.night.saved ? ' · 已用解药' : ''}}{{god.night.poison ? ' · 毒了 ' + god.night.poison : ''}}
-      </view>
-      <view class="god-night">🧪 解药{{god.potions.save ? '还在' : '已用'}} · 毒药{{god.potions.poison ? '还在' : '已用'}}</view>
-    </view>
 
     <!-- 我的身份卡（玩家）：图腾卡背,长按翻开角色牌 -->
     <view class="card word-card" wx:if="{{status !== 'waiting' && !isHost}}">

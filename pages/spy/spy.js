@@ -4,9 +4,9 @@ const IMGCACHE = require('../../utils/imgCache.js');
 
 // 页面素材（云存储 games/）：聚光灯审讯室底图 / 礼帽面具立绘 / 机密卡卡面
 const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
-const BG_FID = GBASE + '/spy_bg.jpg';
 const HERO_FID = GBASE + '/spy_hero.png';
-const CARD_FID = GBASE + '/spy_card.jpg';
+const CARD_FID = GBASE + '/spy_card_v2.jpg';       // 卡背（v2：换名避开同名覆盖的 CDN/本地缓存）
+const CARDF_FID = GBASE + '/spy_card_front.jpg';   // 卡面（词压在上面）
 
 Page({
   data: {
@@ -19,13 +19,19 @@ Page({
     roomId: '', roomCode: '', openid: '',
     status: 'waiting', players: [], round: 0,
     isHost: false, myReady: false, readyCount: 0, needReady: 0, canStart: false,
-    reveal: null,       // finished 后云端公布 {civilWord, spyWord, spies}
+    reveal: null,       // finished 后云端公布 {civilWord, spyWord, spies, winner}
     spyNicks: '',       // 卧底昵称串
     iAmSpy: false,
+    // 逐轮投票态
+    myOut: false, myVote: '', votedCount: 0, aliveCount: 0, lastVoteText: '',
+    voting: false,        // 房主已开启本轮投票
+    showVote: false,      // 投票弹框
+    voteTargets: [],      // 弹框里可投的人（存活且不是自己）
+    myVoteNick: '',       // 我投的人昵称
     // 我的词
     word: '', peeking: false,
     starting: false,
-    bgUrl: '', bgOk: false, heroUrl: '', cardUrl: '',   // 云端素材
+    heroUrl: '', cardUrl: '', cardFrontUrl: '',   // 云端素材
   },
 
   watcher: null,
@@ -47,16 +53,14 @@ Page({
 
   // 云端素材：本地缓存优先,云图淡入
   _resolveImgs() {
-    IMGCACHE.resolve([BG_FID, HERO_FID, CARD_FID], (map) => {
+    IMGCACHE.resolve([HERO_FID, CARD_FID, CARDF_FID], (map) => {
       const d = {};
-      if (map[BG_FID] && map[BG_FID] !== this.data.bgUrl) d.bgUrl = map[BG_FID];
       if (map[HERO_FID] && map[HERO_FID] !== this.data.heroUrl) d.heroUrl = map[HERO_FID];
       if (map[CARD_FID] && map[CARD_FID] !== this.data.cardUrl) d.cardUrl = map[CARD_FID];
+      if (map[CARDF_FID] && map[CARDF_FID] !== this.data.cardFrontUrl) d.cardFrontUrl = map[CARDF_FID];
       if (Object.keys(d).length) this.setData(d);
     });
   },
-  onBgLoad() { this.setData({ bgOk: true }); },
-  onBgErr() { IMGCACHE.invalidate(BG_FID); this.setData(this.data.bgUrl !== BG_FID ? { bgUrl: BG_FID, bgOk: false } : { bgUrl: '', bgOk: false }); },
   onHeroErr() { IMGCACHE.invalidate(HERO_FID); this.setData({ heroUrl: this.data.heroUrl !== HERO_FID ? HERO_FID : '' }); },
   onCardErr() { IMGCACHE.invalidate(CARD_FID); this.setData({ cardUrl: this.data.cardUrl !== CARD_FID ? CARD_FID : '' }); },
 
@@ -185,11 +189,18 @@ Page({
     }
     const others = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
     const readyCount = others.filter((p) => p.ready).length;
+    const votes = room.votes || {};
     const players = (room.players || []).map((p) => ({
       ...p,
       isHost: p.openid === room.hostOpenid,
       isSpy: !!(room.reveal && room.reveal.spies && room.reveal.spies.includes(p.openid)),
+      voted: !!votes[p.openid],
     }));
+    const alivePs = players.filter((p) => !p.out);
+    const lv = room.lastVote;
+    const lastVoteText = lv
+      ? (lv.tie ? `第 ${lv.round} 轮平票，无人出局` : `第 ${lv.round} 轮出局：${lv.outNick}（${lv.wasSpy ? '卧底 🎭' : '平民'}）`)
+      : '';
     const spyNicks = room.reveal
       ? players.filter((p) => p.isSpy).map((p) => p.nick).join('、')
       : '';
@@ -206,7 +217,19 @@ Page({
       reveal: room.reveal || null,
       spyNicks,
       iAmSpy: !!(room.reveal && room.reveal.spies && room.reveal.spies.includes(this.data.openid)),
+      myOut: !!(me && me.out),
+      myVote: votes[this.data.openid] || '',
+      myVoteNick: (players.find((p) => p.openid === votes[this.data.openid]) || {}).nick || '',
+      votedCount: alivePs.filter((p) => p.voted).length,
+      aliveCount: alivePs.length,
+      lastVoteText,
+      voting: !!room.voting,
+      voteTargets: alivePs
+        .filter((p) => p.openid !== this.data.openid)
+        .map((p) => ({ openid: p.openid, nick: p.nick, avatar: p.avatar })),
     });
+    // 本轮投票已结算 → 自动收起投票弹框
+    if (!room.voting && this.data.showVote) this.setData({ showVote: false });
     // 回到等待中（再来一局）→ 清掉上一局的词，否则下一局不会去取新词
     if (room.status === 'waiting' && this.data.word) this.setData({ word: '', peeking: false });
     // 游戏中且还没拿到词 → 拉自己的词
@@ -254,29 +277,50 @@ Page({
     }
     this.setData({ starting: false });
     const r = res && res.result;
-    if (r && !r.ok) wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
+    if (r && !r.ok) return wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
+    this._refresh();   // 不干等 watch 推送，主动拉一次进入游戏界面
   },
 
-  // 长按看词，松手盖回；本地还没词就现场补取一次（此前取词失败会卡在"长按没反应"）
-  async peekOn() {
+  // ── 逐轮投票（房主开启 → 弹框选人） ──
+  async openVoteStart() {
+    const ok = await new Promise((res) => {
+      wx.showModal({ title: '开启投票', content: '大家描述完了？开启本轮投票，全员投完自动出局一人。', confirmText: '开启', success: (r) => res(r.confirm) });
+    });
+    if (!ok) return;
+    try {
+      const res = await app.runOnce('spyVoteOpen', () => app.callGame({ action: 'spyVoteOpen', roomId: this.data.roomId }), '开启中');
+      const r = res && res.result;
+      if (r && !r.ok) return wx.showToast({ title: r.msg || '开启失败', icon: 'none' });
+      this._refresh();
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
+
+  showVoteSheet() { this.setData({ showVote: true }); },
+  hideVoteSheet() { this.setData({ showVote: false }); },
+
+  // 弹框里点人 → 直接记票（可再点别人改票）
+  async voteFor(e) {
+    const d = e.currentTarget.dataset;
+    if (!this.data.voting || this.data.myOut) return;
+    if (d.openid === this.data.myVote) return;
+    try {
+      const res = await app.runOnce('spyVote', () => app.callGame({ action: 'spyVote', roomId: this.data.roomId, target: d.openid }), '投票中');
+      const r = res && res.result;
+      if (r && !r.ok) return wx.showToast({ title: r.msg || '投票失败', icon: 'none' });
+      wx.showToast({ title: `已投给 ${d.nick}`, icon: 'none' });
+      this.setData({ showVote: false });
+      this._refresh();
+    } catch (e2) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
+
+  // 词卡：点击翻开/盖回（同狼人杀身份牌）；本地还没词就现场补取一次
+  async toggleWordCard() {
+    if (this.data.peeking) return this.setData({ peeking: false });
     if (this.data.word) return this.setData({ peeking: true });
     wx.showLoading({ title: '取词中' });
     const word = await this._fetchWord(true);
     wx.hideLoading();
     if (word) this.setData({ peeking: true });
-  },
-  peekOff() { if (this.data.peeking) this.setData({ peeking: false }); },
-
-  async revealAll() {
-    const ok = await new Promise((res) => {
-      wx.showModal({ title: '揭晓', content: '公布词语和卧底身份，结束本局？', confirmText: '揭晓', success: (r) => res(r.confirm) });
-    });
-    if (!ok) return;
-    try {
-      const res = await app.runOnce('spyRevealAct', () => app.callGame({ action: 'spyReveal', roomId: this.data.roomId }), '揭晓中');
-      const r = res && res.result;
-      if (r && !r.ok) wx.showToast({ title: r.msg || '揭晓失败', icon: 'none' });
-    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },
 
   async playAgain() {

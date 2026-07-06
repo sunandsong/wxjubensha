@@ -19,6 +19,9 @@
 
   <view class="t-tip">封面挪到云存储：先在云函数调一次 seedScripts 灌库，再点下面按钮一键上传（跑完可删掉 /assets 里的封面图，缩小代码包）。</view>
   <button class="btn btn-ghost" bindtap="uploadCovers">⬆️ 上传封面到云存储（一次性）</button>
+
+  <view class="t-tip">卧底词卡（卡背+卡面）：上传到 games/spy_card.jpg 和 spy_card_front.jpg，传完可删 assets/games/up_spy_card*.jpg。</view>
+  <button class="btn btn-ghost" bindtap="uploadSpyCards">⬆️ 上传卧底词卡（一次性）</button>
 </view>
 
 <id-switch />

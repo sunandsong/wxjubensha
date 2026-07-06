@@ -1,5 +1,7 @@
 const app = getApp();
 const SCRIPTS = require('../../utils/scriptStore.js');
+const IMGCACHE = require('../../utils/imgCache.js');
+const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
 
 Page({
   data: {
@@ -16,6 +18,42 @@ Page({
 
   onShow() {
     this.setData({ current: app.getTestUid() || '' });
+  },
+
+  // 通用：把包内 assets/games/up_* 上传到云存储 games/（一次性，传完可删本地图）
+  async _uploadAssets(files) {
+    wx.showLoading({ title: '上传中…', mask: true });
+    const fs = wx.getFileSystemManager();
+    let done = 0;
+    for (const [local, cloudPath] of files) {
+      try {
+        const src = `/assets/games/${local}`;
+        const dest = `${wx.env.USER_DATA_PATH}/${local}`;
+        let filePath = '';
+        // 包内文件在工具里 getImageInfo 可能拿不到可上传路径，优先 FS 拷贝
+        try { fs.copyFileSync(src, dest); filePath = dest; }
+        catch (e1) {
+          try { fs.copyFileSync(src.replace(/^\//, ''), dest); filePath = dest; }
+          catch (e2) {
+            const info = await new Promise((res, rej) => wx.getImageInfo({ src, success: res, fail: rej }));
+            filePath = info.path;
+          }
+        }
+        await wx.cloud.uploadFile({ cloudPath, filePath });
+        IMGCACHE.invalidate(GBASE + '/' + cloudPath.split('/').pop());
+        done++;
+      } catch (e) { console.error('✘', cloudPath, e); }
+    }
+    wx.hideLoading();
+    wx.showModal({ title: '上传完成', content: `成功 ${done}/${files.length} 张（本地缓存已失效，重新编译生效）`, showCancel: false });
+  },
+
+  // 卧底词卡：卡背 + 卡面
+  uploadSpyCards() {
+    this._uploadAssets([
+      ['up_spy_card.jpg', 'games/spy_card_v2.jpg'],
+      ['up_spy_card_front.jpg', 'games/spy_card_front.jpg'],
+    ]);
   },
 
   // 选择一个模拟身份 → 设为当前身份，进入首页

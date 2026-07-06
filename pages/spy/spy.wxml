@@ -1,9 +1,4 @@
 <view class="container">
-  <!-- 聚光灯审讯室底图：云图淡入 + 内容区暗纱 -->
-  <image wx:if="{{bgUrl}}" class="scene-bg {{bgOk ? 'on' : ''}}" src="{{bgUrl}}" mode="aspectFill"
-    bindload="onBgLoad" binderror="onBgErr"></image>
-  <view class="scene-fade"></view>
-
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">
     <image wx:if="{{heroUrl}}" class="lobby-hero" src="{{heroUrl}}" mode="aspectFit" binderror="onHeroErr"></image>
@@ -35,6 +30,28 @@
       <view class="m-tip">输满 4 位自动进入</view>
       <view class="m-btns">
         <button class="m-cancel" bindtap="hideJoinModal">取消</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 投票弹框 -->
+  <view class="mask" wx:if="{{showVote}}" bindtap="hideVoteSheet">
+    <view class="modal" catchtap="">
+      <view class="m-title">投出你心中的卧底</view>
+      <view class="vt-list">
+        <view class="vt-item {{item.openid === myVote ? 'picked' : ''}}"
+          wx:for="{{voteTargets}}" wx:key="openid"
+          data-openid="{{item.openid}}" data-nick="{{item.nick}}" bindtap="voteFor">
+          <view class="vt-avatar">
+            <image wx:if="{{item.avatar}}" class="vt-img" src="{{item.avatar}}" mode="aspectFill" />
+            <block wx:else>{{item.nick[0]}}</block>
+          </view>
+          <view class="vt-nick">{{item.nick}}</view>
+          <view class="vt-check" wx:if="{{item.openid === myVote}}">✓ 我投的</view>
+        </view>
+      </view>
+      <view class="m-btns">
+        <button class="m-cancel" bindtap="hideVoteSheet">关闭</button>
       </view>
     </view>
   </view>
@@ -73,61 +90,55 @@
       <button hover-class="none" class="btn btn-ghost" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
     </block>
 
-    <!-- 游戏中 / 已揭晓：房间号卡 + 玩家卡 + 词卡/真相 -->
+    <!-- 游戏中 / 已揭晓（对齐设计稿：标题 + 旁白 + 机密卡 + 玩家卡） -->
     <block wx:if="{{status !== 'waiting'}}">
-    <view class="card">
-      <view class="code-row">
-        <view>
-          <view class="muted">房间号</view>
-          <view class="code">{{roomCode}}</view>
-        </view>
-        <view class="code-actions">
-          <button class="btn-mini share" open-type="share">分享链接</button>
-        </view>
-      </view>
-      <view class="muted invite-tip">
-        {{status === 'playing' ? '游戏中 · 去群里轮流描述，口头投票' : ''}}
-        {{status === 'finished' ? '本局已揭晓' : ''}}
-      </view>
-    </view>
 
-    <!-- 玩家 -->
-    <view class="card">
-      <view class="row-between">
-        <view class="sec-title">玩家（{{players.length}}）</view>
-      </view>
-      <view class="players">
-        <view class="player" wx:for="{{players}}" wx:key="openid">
-          <view class="host-badge" wx:if="{{item.isHost}}">房主</view>
-          <view class="avatar">
-            <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
-            <block wx:else>{{item.nick[0]}}</block>
-          </view>
-          <view class="pname">{{item.nick}}</view>
-          <view class="ready-badge spytag" wx:if="{{item.isSpy}}">卧底</view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 游戏中：我的词卡 -->
+    <!-- 游戏中 -->
     <block wx:if="{{status === 'playing'}}">
-      <!-- 机密卡：档案卡面上按住显影 -->
-      <view class="secret-card {{peeking ? 'open' : ''}}"
-        bindlongpress="peekOn" bindtouchend="peekOff" bindtouchcancel="peekOff">
-        <image wx:if="{{cardUrl}}" class="sc-face" src="{{cardUrl}}" mode="aspectFill" binderror="onCardErr"></image>
-        <view class="sc-inner">
-          <view class="sc-label">你 的 词</view>
-          <view class="sc-word">{{word}}</view>
-          <view class="sc-tip">{{peeking ? '松手盖回' : '🔒 按住显影 · 松手盖回'}}</view>
+      <view class="pg-title">第 {{round}} 轮</view>
+      <view class="pg-narr">有一个人，拿到的词不一样</view>
+
+      <!-- 词卡：机密卡背，点击翻开（同狼人杀身份牌） -->
+      <view class="idcard {{peeking ? 'open' : ''}}" bindtap="toggleWordCard">
+        <view class="card-inner">
+          <view class="id-face id-back">
+            <image wx:if="{{cardUrl}}" class="face-img" src="{{cardUrl}}" mode="aspectFill" binderror="onCardErr"></image>
+            <view wx:else class="face-css back-css">🎩</view>
+          </view>
+          <view class="id-face id-front">
+            <image wx:if="{{cardFrontUrl}}" class="face-img" src="{{cardFrontUrl}}" mode="aspectFill"></image>
+            <view wx:else class="face-css front-css"></view>
+            <view class="wd-inner">
+              <view class="wd-label">你 的 词</view>
+              <view class="wd-word">{{word}}</view>
+            </view>
+          </view>
         </view>
+        <view class="id-hint {{peeking ? 'on-light' : ''}}">{{peeking ? '点击盖回' : '点击翻开 · 看完记得盖回'}}</view>
       </view>
-      <view class="muted wc-tip">描述它，但别说出这个词；注意别暴露，卧底可能就是你自己</view>
-      <button wx:if="{{isHost}}" class="btn start-btn" bindtap="revealAll">揭晓（公布卧底）</button>
+      <view class="muted wc-tip">描述它，但别说出这个词；卧底可能就是你自己</view>
+
+      <!-- 上一轮结果公告 -->
+      <view class="card vote-ann" wx:if="{{lastVoteText}}">{{lastVoteText}}</view>
+
+      <!-- 投票状态区（去掉玩家列表：房主开启投票，弹框里选人） -->
+      <block wx:if="{{!voting}}">
+        <button wx:if="{{isHost}}" hover-class="none" class="btn start-btn" bindtap="openVoteStart">开启投票</button>
+        <view wx:else class="muted center rm-count">描述完等房主开启投票</view>
+      </block>
+      <block wx:else>
+        <view class="vote-progress">🗳 投票进行中 · 已投 {{votedCount}}/{{aliveCount}}</view>
+        <button wx:if="{{!myOut}}" hover-class="none" class="btn start-btn {{myVote ? 'btn-ghost' : ''}}" bindtap="showVoteSheet">
+          {{myVote ? '已投给 ' + myVoteNick + ' · 点击改票' : '去投票'}}
+        </button>
+        <view wx:if="{{myOut}}" class="muted center rm-count">👻 你已出局，等大家投完</view>
+      </block>
     </block>
 
     <!-- 已揭晓 -->
     <block wx:if="{{status === 'finished' && reveal}}">
       <view class="card">
+        <view class="win-line" wx:if="{{reveal.winner}}">{{reveal.winner === 'spy' ? '卧底获胜 🎭' : '平民获胜 🎉'}}</view>
         <view class="sec-title">真相</view>
         <view class="rev-row"><text class="muted">平民词</text><text class="rev-v">{{reveal.civilWord}}</text></view>
         <view class="rev-row"><text class="muted">卧底词</text><text class="rev-v warn">{{reveal.spyWord}}</text></view>

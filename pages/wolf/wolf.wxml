@@ -1,9 +1,9 @@
 <view class="container">
   <!-- 昼夜森林底图：同一片松林,天亮交叉淡入清晨版 -->
-  <!-- 背景只在房间内显示,大厅(创建房间界面)无背景 -->
-  <image wx:if="{{mode === 'room' && bgN}}" class="scene-bg {{status !== 'day' ? 'on' : ''}}" src="{{bgN}}" mode="aspectFill"></image>
-  <image wx:if="{{mode === 'room' && bgD}}" class="scene-bg bg-day {{status === 'day' ? 'on' : ''}}" src="{{bgD}}" mode="aspectFill"></image>
-  <view class="scene-fade" wx:if="{{mode === 'room'}}"></view>
+  <!-- 背景只在开局后(夜/昼/终局)显示;大厅与等待界面无背景 -->
+  <image wx:if="{{mode === 'room' && status !== 'waiting' && bgN}}" class="scene-bg {{status !== 'day' ? 'on' : ''}}" src="{{bgN}}" mode="aspectFill"></image>
+  <image wx:if="{{mode === 'room' && status !== 'waiting' && bgD}}" class="scene-bg bg-day {{status === 'day' ? 'on' : ''}}" src="{{bgD}}" mode="aspectFill"></image>
+  <view class="scene-fade" wx:if="{{mode === 'room' && status !== 'waiting'}}"></view>
 
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">

@@ -264,3 +264,18 @@
 .vt-check { font-size: 24rpx; color: #c9a4ff; font-weight: 600; }
 .game-players { margin-top: 20rpx; }
 .game-tip { margin-top: 20rpx; text-align: center; }
+
+/* 主持台标题行 + 记录按钮 */
+.hb-head { display: flex; justify-content: space-between; align-items: center; }
+.log-btn { font-size: 22rpx; color: #ddd2ff; background: rgba(123,92,255,0.3);
+  padding: 6rpx 20rpx; border-radius: 999rpx; }
+/* 对局记录弹框 */
+.log-list { max-height: 60vh; margin-top: 20rpx; }
+.log-empty { text-align: center; color: #9d8fbe; font-size: 24rpx; padding: 40rpx 0; }
+.log-item { border-left: 4rpx solid rgba(255,255,255,0.15); padding: 8rpx 0 12rpx 20rpx; margin-bottom: 16rpx; }
+.log-item.night { border-left-color: #7b5cff; }
+.log-item.day { border-left-color: #ffce54; }
+.log-round { font-size: 24rpx; font-weight: 800; color: #fff; margin-bottom: 6rpx; }
+.log-line { font-size: 23rpx; color: #ddd6ee; line-height: 1.8; }
+.log-dead { color: #ff9db4; }
+.copy-report-btn { background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff; }

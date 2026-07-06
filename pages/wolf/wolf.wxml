@@ -92,7 +92,10 @@
 
     <!-- 主持台：夜晚行动实况 + 白天投票（只有上帝可见,不含开局身份表） -->
     <view class="card host-board" wx:if="{{isHost && status !== 'waiting'}}">
-      <view class="sec-title">🎬 主持台（只有你能看到）</view>
+      <view class="hb-head">
+        <text class="sec-title">🎬 主持台（只有你能看到）</text>
+        <text class="log-btn" bindtap="showLog">📜 记录</text>
+      </view>
       <block wx:if="{{status === 'night' && god && god.night}}">
         <view class="hb-line">🐺 狼人：{{god.night.kill ? '已刀 ' + god.night.kill : (god.night.emptyKill ? '空刀' : '行动中…')}}</view>
         <view class="hb-line">🔮 预言家：{{god.night.seerTarget ? '查验 ' + god.night.seerTarget + ' → ' + (god.night.seerIsWolf ? '狼人 🐺' : '好人 🙂') : (god.night.seerDone ? '（本夜无预言家）' : '行动中…')}}</view>
@@ -100,10 +103,8 @@
         <view class="hb-line hb-dim">解药 {{god.potions.save ? '还在' : '已用'}} · 毒药 {{god.potions.poison ? '还在' : '已用'}}</view>
       </block>
       <block wx:elif="{{status === 'day'}}">
-        <view class="hb-line" wx:if="{{god && god.night}}">🌙 昨夜：{{god.night.kill ? '狼人刀了 ' + god.night.kill : '空刀'}}{{god.night.saved ? ' · 女巫用了解药' : ''}}{{god.night.poison ? ' · 女巫毒了 ' + god.night.poison : ''}}</view>
-        <view class="hb-line" wx:if="{{god && god.night && god.night.seerTarget}}">🔮 预言家昨夜查验 {{god.night.seerTarget}} → {{god.night.seerIsWolf ? '狼人 🐺' : '好人 🙂'}}</view>
-        <view class="hb-line hb-dim" wx:if="{{god && god.potions}}">解药 {{god.potions.save ? '还在' : '已用'}} · 毒药 {{god.potions.poison ? '还在' : '已用'}}</view>
-        <view class="hb-line">🗳 白天投票 · 已投 {{dayVoted}} 人（得票见头像角标）</view>
+        <view class="hb-line">🗳 白天投票 · 已投 {{dayVoted}}/{{aliveVoters}} 人（得票见头像角标）</view>
+        <view class="hb-line hb-dim">讨论完点「宣布天黑」按最高票放逐</view>
       </block>
     </view>
 
@@ -200,10 +201,6 @@
       <view class="muted center night-wait">👻 你已出局，安静吃瓜，等本局结束</view>
     </view>
 
-    <!-- 白天：非房主提示 -->
-    <view class="card" wx:if="{{status === 'day' && !isHost && !myOut}}">
-      <view class="muted center night-wait">☀️ 回群里发言讨论，口头投票后由房主执行出局</view>
-    </view>
 
     <!-- 已结束：身份公开 -->
     <block wx:if="{{status === 'finished' && reveal}}">
@@ -218,6 +215,7 @@
           </view>
         </view>
       </view>
+      <button wx:if="{{isHost}}" hover-class="none" class="btn copy-report-btn" bindtap="copyReport">📋 复制战报发到群里</button>
       <button wx:if="{{isHost}}" class="btn start-btn" bindtap="playAgain">再来一局</button>
     </block>
 
@@ -227,6 +225,30 @@
 
     <button wx:if="{{status !== 'waiting'}}" class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
   </block>
+
+  <!-- 对局记录弹框(每天/每夜) -->
+  <view class="mask" wx:if="{{showLog}}" bindtap="hideLog">
+    <view class="modal" catchtap="">
+      <view class="m-title">📜 对局记录</view>
+      <scroll-view class="log-list" scroll-y>
+        <view class="log-empty" wx:if="{{!gameLog.length}}">还没有记录</view>
+        <view class="log-item {{it.type}}" wx:for="{{gameLog}}" wx:key="index" wx:for-item="it">
+          <view class="log-round">第 {{it.round}} {{it.type === 'night' ? '夜' : '天'}}</view>
+          <block wx:if="{{it.type === 'night'}}">
+            <view class="log-line">🐺 狼人{{it.kill ? '刀了 ' + it.kill : '空刀'}}</view>
+            <view class="log-line" wx:if="{{it.seerTarget}}">🔮 预言家验 {{it.seerTarget}} → {{it.seerIsWolf ? '狼人🐺' : '好人🙂'}}</view>
+            <view class="log-line" wx:if="{{it.saved}}">🧪 女巫用解药救人</view>
+            <view class="log-line" wx:if="{{it.poison}}">🧪 女巫毒了 {{it.poison}}</view>
+            <view class="log-line log-dead">☠️ 倒牌：{{it.deaths.length ? it.deaths : '平安夜'}}</view>
+          </block>
+          <block wx:else>
+            <view class="log-line">🗳 投票放逐 {{it.out}}（{{it.role}}）</view>
+          </block>
+        </view>
+      </scroll-view>
+      <view class="m-btns"><button class="m-cancel" bindtap="hideLog">关闭</button></view>
+    </view>
+  </view>
 
   <!-- 夜晚选人弹框(狼刀/验人/毒人共用) -->
   <view class="mask" wx:if="{{showPick}}" bindtap="hidePick">

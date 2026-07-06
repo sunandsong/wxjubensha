@@ -34,11 +34,11 @@ Page({
     night: null, pickPoison: false,
     // 展示
     announceText: '', actTip: '', myTarget: '',
-    reveal: null, winnerText: '',
+    reveal: null, winnerText: '', lastDeaths: [],
     god: null,          // 夜晚匿名进度(不含身份)
     killCountdown: 0, myTargetNick: '',   // 双狼定刀倒计时 / 我选的目标昵称
     seerLog: [],        // 预言家查验记录(本地持久,天亮后仍可回看)
-    dayTally: {}, myDayVote: '', dayVoted: 0,   // 白天投票:得票/我投的/已投人数
+    dayTally: {}, myDayVote: '', dayVoted: 0, aliveVoters: 0,   // 白天投票:得票/我投的/已投人数
     hostScript: '',     // 上帝阶段卡直接展示的主持词全文(点复制即发群)
     showVote: false, voteTargets: [],   // 上帝点玩家头像：白天可手动指定出局（平票时备用；平时用「宣布天黑」按票）
   onPlayerTap(e) {
@@ -50,6 +50,7 @@ Page({
 
   // 白天投票弹框(对齐卧底/剧本杀)
     showPick: false, pickMode: '', pickTitle: '',   // 夜晚选人弹框(狼刀/验人/毒人)
+    showLog: false, gameLog: [],   // 对局记录弹框
     backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
     bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
     starting: false,
@@ -202,21 +203,36 @@ Page({
     const players = (room.players || []).map((p) => ({ ...p, isHost: p.openid === room.hostOpenid }));
     const a = room.announce;
     let announceText = '';
+    let lastDeaths = [];
     if (a && a.type === 'dawn') {
       announceText = '☀️ 天亮请睁眼——' + (a.peace ? '昨夜是平安夜，无人倒牌' : `昨夜倒牌的是 ${(a.deaths || []).join('、')}`);
+      lastDeaths = a.peace ? [] : (a.deaths || []);
     } else if (a && a.type === 'out') {
       announceText = `🪦 ${a.nick} 被放逐出村，TA 是「${a.roleName}」`;
+      lastDeaths = a.nick ? [a.nick] : [];
     }
     const rv = room.reveal || null;
-    const dayVotes = room.dayVotes || {};
-    const dayTally = {};
-    Object.values(dayVotes).forEach((tid) => { if (tid) dayTally[tid] = (dayTally[tid] || 0) + 1; });
+    const dayBallots = room.dayBallots || {};
     const alivePs = (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);
+    const aliveSet = {};
+    alivePs.forEach((p) => { aliveSet[p.openid] = 1; });
+    // 只算「本轮 + 存活玩家投给存活目标」的有效票,上一轮旧票/出局者票不计
+    const curRound = room.round || 0;
+    const valid = (v) => v && v.r === curRound && v.t && aliveSet[v.t];
+    const dayTally = {};
+    let dayVoted = 0;
+    Object.keys(dayBallots).forEach((voter) => {
+      const v = dayBallots[voter];
+      if (aliveSet[voter] && valid(v)) { dayTally[v.t] = (dayTally[v.t] || 0) + 1; dayVoted += 1; }
+    });
+    const mv = dayBallots[this.data.openid];
+    const myVote = (aliveSet[this.data.openid] && valid(mv)) ? mv.t : '';
     this.setData({
       dayTally,
       voteTargets: alivePs.filter((p) => p.openid !== this.data.openid),
-      myDayVote: dayVotes[this.data.openid] || '',
-      dayVoted: Object.keys(dayVotes).length,
+      myDayVote: myVote,
+      dayVoted,
+      aliveVoters: alivePs.length,
       status: room.status || 'waiting',
       round: room.round || 0,
       players,
@@ -228,6 +244,7 @@ Page({
       needReady: others.length,
       canStart: others.length >= 6 && readyCount === others.length,   // 上帝不算人数
       announceText,
+      lastDeaths,
       reveal: rv,
       winnerText: rv ? (rv.winner === 'wolf' ? '狼人阵营获胜 🐺' : rv.winner === 'good' ? '好人阵营获胜 🎉' : '本局提前结束，身份公开') : '',
     });
@@ -262,7 +279,7 @@ Page({
     try {
       const res = await app.callGame({ action: 'wolfGod', roomId: this.data.roomId });
       const r = res && res.result;
-      if (r && r.ok) this.setData({ god: r });
+      if (r && r.ok) this.setData({ god: r, gameLog: r.history || [] });
     } catch (e) {}
     this._fetchingGod = false;
     this._deriveTips();
@@ -353,15 +370,17 @@ Page({
   // 单狼点确认 / 双狼倒计时到点：定刀
   // 主持词正文（含承上：夜晚带昨天白天放逐情况,白天带昨夜死讯）
   _buildHostScript() {
+    const deaths = this.data.lastDeaths || [];
+    const willLine = deaths.length ? `请 ${deaths.join('、')} 发表遗言。\n` : '';
     if (this.data.status === 'night') {
       // 夜晚 announceText 是上一个白天的放逐结果（🪦 X 被放逐…）,第一夜为空
       const recap = (this.data.announceText || '').replace(/^🪦\s*/, '');
       const body = `🐺 狼人请睁眼，一起选定今晚要刀的人\n🔮 预言家请睁眼，查验一名玩家的身份\n🧪 女巫请睁眼，决定是否用解药 / 毒药\n其余村民请闭眼等待，行动完我会宣布天亮`;
-      return recap ? `昨天白天：${recap}\n\n${body}` : body;
+      return recap ? `昨天白天：${recap}\n${willLine}\n${body}` : body;
     }
     // 白天 announceText 是昨夜死讯（☀️ 天亮请睁眼——…）
     const dawn = (this.data.announceText || '').replace(/^☀️\s*天亮请睁眼——/, '').replace(/^☀️\s*/, '');
-    return `昨夜：${dawn || '平安夜，无人倒牌'}\n大家轮流发言讨论，然后在小程序里投票，票最多的将被放逐。`;
+    return `昨夜：${dawn || '平安夜，无人倒牌'}\n${willLine}大家轮流发言讨论，然后在小程序里投票，票最多的将被放逐。`;
   },
   // 复制主持词发群（复制时补回标题,群里粘贴更完整）
   copyHostScript() {
@@ -389,7 +408,7 @@ Page({
       const r = res && res.result;
       if (r && !r.ok) { this.setData({ myDayVote: prev }); return wx.showToast({ title: r.msg || '投票失败', icon: 'none' }); }
       this._refresh();
-    } catch (e2) { this.setData({ myDayVote: prev }); wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+    } catch (e2) { console.error('wolfVote 失败:', e2); this.setData({ myDayVote: prev }); wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },
 
   // ── 夜晚选人弹框(狼刀/验人/毒人共用) ──
@@ -397,6 +416,32 @@ Page({
   openCheckPick() { this.setData({ pickMode: 'check', pickTitle: '查验谁的身份', showPick: true }); },
   openPoisonPick() { this.setData({ pickMode: 'poison', pickTitle: '对谁使用毒药', showPick: true }); },
   hidePick() { this.setData({ showPick: false }); },
+  // 结束后:复制整局战报(身份+过程+结果)发群
+  copyReport() {
+    const rev = this.data.reveal || {};
+    const log = this.data.gameLog || [];
+    const lines = ['【狼人杀 · 战报】', this.data.winnerText || ''];
+    lines.push('', '—— 最终身份 ——');
+    (rev.roles || []).forEach((r) => lines.push(`${r.nick}：${r.roleName}`));
+    if (log.length) {
+      lines.push('', '—— 对局回顾 ——');
+      log.forEach((it) => {
+        if (it.type === 'night') {
+          const parts = [`第${it.round}夜`, it.kill ? `狼刀「${it.kill}」` : '狼空刀'];
+          if (it.seerTarget) parts.push(`预言家验「${it.seerTarget}」→${it.seerIsWolf ? '狼' : '好人'}`);
+          if (it.saved) parts.push('女巫救人');
+          if (it.poison) parts.push(`女巫毒「${it.poison}」`);
+          parts.push(`倒牌：${(it.deaths && it.deaths.length) ? it.deaths.join('、') : '平安夜'}`);
+          lines.push(parts.join(' · '));
+        } else {
+          lines.push(`第${it.round}天：投票放逐「${it.out}」（${it.role}）`);
+        }
+      });
+    }
+    wx.setClipboardData({ data: lines.join('\n'), success: () => wx.showToast({ title: '战报已复制，去群里粘贴', icon: 'none' }) });
+  },
+  showLog() { this.setData({ showLog: true }); },
+  hideLog() { this.setData({ showLog: false }); },
   onPick(e) {
     const openid = e.currentTarget.dataset.openid;
     const nick = e.currentTarget.dataset.nick;
@@ -407,13 +452,24 @@ Page({
     if (mode === 'poison') return this._confirmAct(`对「${nick}」使用毒药？（毒药只有一瓶）`, 'wolfNightAct', { act: 'poison', target: openid }, '行动中');
   },
 
-  // 上帝：宣布天亮（结算夜晚）
+  // 上帝：宣布天亮（先本地校验角色是否都行动完,不满足即时提示）
   wolfDawn() {
-    this._confirmAct('宣布天亮？未行动的角色视为放弃，结算昨夜死讯。', 'wolfForce', {}, '结算中');
+    const g = this.data.god;
+    if (g && g.night) {
+      const pend = [];
+      if (!g.night.wolfDone) pend.push('狼人');
+      if (!g.night.seerDone) pend.push('预言家');
+      if (!g.night.witchDone) pend.push('女巫');
+      if (pend.length) return wx.showToast({ title: `还有 ${pend.join('、')} 没行动完`, icon: 'none' });
+    }
+    this._confirmAct('宣布天亮？结算昨夜死讯。', 'wolfForce', {}, '结算中');
   },
-  // 上帝：宣布天黑（按白天票数放逐最高票）
+  // 上帝：宣布天黑（先本地校验是否全员投完票,不满足即时提示）
   wolfDusk() {
-    this._confirmAct('宣布天黑？按当前投票放逐得票最高的玩家。', 'wolfDusk', {}, '结算中');
+    const alive = (this.data.players || []).filter((p) => !p.out && !p.isHost).length;
+    const left = alive - (this.data.dayVoted || 0);
+    if (left > 0) return wx.showToast({ title: `还有 ${left} 人没投票，等大家投完`, icon: 'none' });
+    this._confirmAct('宣布天黑？按投票放逐得票最高的玩家。', 'wolfDusk', {}, '结算中');
   },
   async _killConfirm() {
     try {

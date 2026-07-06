@@ -304,7 +304,7 @@ exports.main = async (event) => {
           roles[id] = i < wolves ? 'wolf' : i === wolves ? 'seer' : i === wolves + 1 ? 'witch' : 'villager';
         });
         await secrets.doc(event.roomId).set({
-          data: { roles, potions: { save: true, poison: true }, night: { wolfVotes: {} }, checks: [], createdAt: db.serverDate() },
+          data: { roles, potions: { save: true, poison: true }, night: { wolfVotes: {} }, checks: [], history: [], createdAt: db.serverDate() },
         });
         const players = (room.players || []).map((p) => ({ ...p, out: false }));
         await rooms.doc(event.roomId).update({
@@ -453,10 +453,21 @@ exports.main = async (event) => {
       const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = { type: 'dawn', round: room.round, deaths: deadNicks, peace: !deaths.length };
+      const nk = (id) => { const x = (room.players || []).find((q) => q.openid === id); return x ? x.nick : ''; };
+      const seerCk = (sec.checks || []).filter((c) => c.round === room.round)[0];
+      await secrets.doc(roomId).update({ data: { history: _.push({
+        round: room.round, type: 'night',
+        kill: night.wolfKill ? nk(night.wolfKill) : '',
+        saved: !!night.witchSave,
+        poison: night.witchPoison ? nk(night.witchPoison) : '',
+        seerTarget: seerCk ? nk(seerCk.target) : '',
+        seerIsWolf: seerCk ? !!seerCk.isWolf : null,
+        deaths: deadNicks,
+      }) } }).catch(() => {});
       let data;
       if (wolvesAlive === 0) data = { players, status: 'finished', announce, reveal: wolfRevealData(sec, players, 'good') };
       else if (wolvesAlive * 2 >= alive.length) data = { players, status: 'finished', announce, reveal: wolfRevealData(sec, players, 'wolf') };
-      else data = { players, status: 'day', announce, dayVotes: {} };
+      else data = { players, status: 'day', announce, dayBallots: {} };
       data.nightVer = _.inc(1);
       await rooms.where({ _id: roomId, status: 'night', round: room.round }).update({ data });
     };
@@ -482,6 +493,7 @@ exports.main = async (event) => {
       const myCheck = (sec.checks || []).filter((c) => c.round === room.round)[0];
       return {
         ok: true,
+        history: sec.history || [],
         potions: sec.potions || { save: true, poison: true },
         night: {
           wolfDone: night.wolfKill !== undefined,
@@ -677,11 +689,12 @@ exports.main = async (event) => {
         type: 'out', round: room.round, nick: t.nick,
         roleName: WOLF_NAMES[sec.roles[event.target]] || '平民',
       };
+      await secrets.doc(event.roomId).update({ data: { history: _.push({ round: room.round, type: 'day', out: t.nick, role: WOLF_NAMES[sec.roles[event.target]] || '平民' }) } }).catch(() => {});
       let data;
       if (wolvesAlive === 0) data = { players, status: 'finished', announce, reveal: wolfRevealData(sec, players, 'good') };
       else if (wolvesAlive * 2 >= alive.length) data = { players, status: 'finished', announce, reveal: wolfRevealData(sec, players, 'wolf') };
       else {
-        data = { players, status: 'night', round: room.round + 1, announce, dayVotes: {} };
+        data = { players, status: 'night', round: room.round + 1, announce, dayBallots: {} };
         await secrets.doc(event.roomId).update({ data: { night: _.set({ wolfVotes: {} }) } });  // 重置夜晚
       }
       data.nightVer = _.inc(1);
@@ -700,7 +713,7 @@ exports.main = async (event) => {
       if (!me || me.out) return { ok: false, msg: '你已出局，不能投票' };
       const t = (room.players || []).find((p) => p.openid === event.target);
       if (!t || t.out || t.openid === room.hostOpenid) return { ok: false, msg: '目标无效' };
-      await rooms.doc(event.roomId).update({ data: { ['dayVotes.' + OPENID]: event.target, nightVer: _.inc(1) } });
+      await rooms.doc(event.roomId).update({ data: { ['dayBallots.' + OPENID]: { r: room.round || 0, t: event.target }, nightVer: _.inc(1) } });
       return { ok: true };
     }
 
@@ -714,11 +727,12 @@ exports.main = async (event) => {
       if (!sec) return { ok: false, msg: '本局数据异常' };
       // 必须所有存活玩家都投完票才能天黑
       const alivePlayers = (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);
-      const dv = room.dayVotes || {};
-      const notVoted = alivePlayers.filter((p) => !dv[p.openid]);
+      const dv = room.dayBallots || {};
+      const validVote = (v) => v && v.r === room.round && v.t;
+      const notVoted = alivePlayers.filter((p) => !validVote(dv[p.openid]));
       if (notVoted.length) return { ok: false, msg: `还有 ${notVoted.length} 人没投票，等大家投完再天黑` };
       const cnt = {};
-      Object.values(dv).forEach((tid) => { if (tid) cnt[tid] = (cnt[tid] || 0) + 1; });
+      Object.values(dv).forEach((v) => { if (validVote(v)) cnt[v.t] = (cnt[v.t] || 0) + 1; });
       const ids = Object.keys(cnt);
       if (!ids.length) return { ok: false, msg: '还没有人投票，等大家投完再天黑' };
       let max = 0; ids.forEach((tid) => { if (cnt[tid] > max) max = cnt[tid]; });
@@ -731,11 +745,12 @@ exports.main = async (event) => {
       const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = { type: 'out', round: room.round, nick: t.nick, roleName: WOLF_NAMES[sec.roles[outId]] || '平民' };
+      await secrets.doc(event.roomId).update({ data: { history: _.push({ round: room.round, type: 'day', out: t.nick, role: WOLF_NAMES[sec.roles[outId]] || '平民' }) } }).catch(() => {});
       let data;
       if (wolvesAlive === 0) data = { players, status: 'finished', announce, reveal: wolfRevealData(sec, players, 'good') };
       else if (wolvesAlive * 2 >= alive.length) data = { players, status: 'finished', announce, reveal: wolfRevealData(sec, players, 'wolf') };
       else {
-        data = { players, status: 'night', round: room.round + 1, announce, dayVotes: {} };
+        data = { players, status: 'night', round: room.round + 1, announce, dayBallots: {} };
         await secrets.doc(event.roomId).update({ data: { night: _.set({ wolfVotes: {} }) } });
       }
       data.nightVer = _.inc(1);

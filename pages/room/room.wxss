@@ -57,3 +57,6 @@ page { background: radial-gradient(85% 45% at 50% 0%, rgba(140, 100, 255, 0.12),
 .start-btn { margin-top: 36rpx; padding: 44rpx 0; font-size: 36rpx; }
 /* 不可用态：仍可点击，点击提示差什么 */
 .btn-dim { opacity: 0.55; }
+
+/* 次要操作（解散/退出）：矮一档 */
+.btn-slim { padding: 22rpx 0; font-size: 30rpx; }

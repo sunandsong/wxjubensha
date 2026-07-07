@@ -32,13 +32,13 @@
     <view wx:if="{{!canStart}}" class="muted center rm-count">{{realCount < needPlayers ? '还差 ' + (needPlayers - realCount) + ' 名玩家 · 主持人不占角色' : '等待玩家准备 ' + readyCount + '/' + realCount}}</view>
     <button hover-class="none" class="btn start-btn {{(!canStart || starting) ? 'btn-dim' : ''}}" bindtap="startGame">开始游戏</button>
     <button hover-class="none" class="btn btn-ghost" open-type="share">分享链接 · 邀请群友</button>
-    <button hover-class="none" class="btn btn-ghost" bindtap="endGame">解散房间</button>
+    <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="endGame">解散房间</button>
   </block>
   <!-- 玩家视角 -->
   <block wx:else>
     <button hover-class="none" wx:if="{{!iAmSpectator}}" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
     <view class="muted center rm-count">{{iAmSpectator ? '你是围观，等主持人开始…' : (myReady ? '已准备，等所有人准备好主持人就开始' : '点「准备好了」，全员准备后主持人才能开始')}}</view>
-    <button hover-class="none" class="btn btn-ghost" bindtap="leaveRoom">退出房间</button>
+    <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">退出房间</button>
   </block>
 </view>
 

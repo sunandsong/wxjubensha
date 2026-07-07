@@ -1,7 +1,7 @@
 <view class="container">
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">
-    <image wx:if="{{heroUrl}}" class="lobby-hero" src="{{heroUrl}}" mode="aspectFit" binderror="onHeroErr"></image>
+    <image class="lobby-hero" src="{{heroUrl || '/assets/games/th_spy_hero.png'}}" mode="aspectFit" binderror="onHeroErr"></image>
     <view class="title">谁是卧底 🎩</view>
     <view class="subtitle">相近的两个词，轮流描述找出卧底；卧底自己也不知道自己是卧底</view>
 
@@ -87,7 +87,7 @@
       <view wx:if="{{isHost && !canStart}}" class="center muted rm-count">{{players.length < 4 ? '满 4 人才能开始' : '等所有玩家点「准备好了」'}}</view>
       <button wx:if="{{!isHost}}" hover-class="none" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
       <button hover-class="none" class="btn btn-ghost" open-type="share">分享链接 · 邀请群友</button>
-      <button hover-class="none" class="btn btn-ghost" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
+      <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
     </block>
 
     <!-- 游戏中 / 已揭晓（对齐设计稿：标题 + 旁白 + 机密卡 + 玩家卡） -->
@@ -95,19 +95,23 @@
 
     <!-- 游戏中 -->
     <block wx:if="{{status === 'playing'}}">
-      <view class="pg-title">第 {{round}} 轮</view>
-      <view class="pg-narr">有一个人，拿到的词不一样</view>
+      <view class="pg-title" wx:if="{{!isHost}}">第 {{round}} 轮</view>
+      <view class="pg-narr" wx:if="{{!isHost}}">有一个人，拿到的词不一样</view>
+
+      <!-- 房主主持词：含每轮随机描述顺序，复制发群 -->
+      <view class="card host-script-card" wx:if="{{isHost && hostScript}}">
+        <view class="host-script">{{hostScript}}</view>
+        <view class="copy-link" bindtap="copyHostScript">📋 复制主持词发到群里</view>
+      </view>
 
       <!-- 词卡：机密卡背，点击翻开（同狼人杀身份牌） -->
       <view class="idcard {{peeking ? 'open' : ''}}" bindtap="toggleWordCard">
         <view class="card-inner">
           <view class="id-face id-back">
-            <image wx:if="{{cardUrl}}" class="face-img" src="{{cardUrl}}" mode="aspectFill" binderror="onCardErr"></image>
-            <view wx:else class="face-css back-css">🎩</view>
+            <image class="face-img" src="{{cardUrl || '/assets/games/th_spy_card.jpg'}}" mode="aspectFill" binderror="onCardErr"></image>
           </view>
           <view class="id-face id-front">
-            <image wx:if="{{cardFrontUrl}}" class="face-img" src="{{cardFrontUrl}}" mode="aspectFill" binderror="onCardFrontErr"></image>
-            <view wx:else class="face-css front-css"></view>
+            <image class="face-img" src="{{cardFrontUrl || '/assets/games/th_spy_card_front.jpg'}}" mode="aspectFill" binderror="onCardFrontErr"></image>
             <view class="wd-inner">
               <view class="wd-label">你 的 词</view>
               <view class="wd-word" style="font-size:{{wdSize}}rpx">{{word}}</view>
@@ -136,7 +140,7 @@
             </view>
             <view class="out-stamp" wx:if="{{item.out}}">OUT</view>
             <view class="pname">{{item.nick}}</view>
-            <view class="ready-badge on" wx:if="{{!item.out && voting && item.voted}}">已投</view>
+            <view class="votedmark" wx:if="{{!item.out && voting && item.voted}}">✓</view>
           </view>
         </view>
       </view>
@@ -151,6 +155,10 @@
           {{myVote ? '已投给 ' + myVoteNick + ' · 点击改票' : '🗳 去投票'}}
         </button>
         <view wx:if="{{myOut}}" class="muted center rm-count">👻 你已出局，等大家投完</view>
+        <!-- 房主：投满后公布本轮结果（不再自动出结果） -->
+        <button wx:if="{{isHost}}" hover-class="none" class="btn start-btn {{votedCount < aliveCount ? 'btn-dim' : ''}}" bindtap="revealRound">
+          {{votedCount < aliveCount ? '等待投票（' + votedCount + '/' + aliveCount + '）' : '📢 公布本轮结果'}}
+        </button>
       </block>
     </block>
 
@@ -167,7 +175,7 @@
       <button wx:if="{{isHost}}" class="btn start-btn" bindtap="playAgain">再来一局</button>
     </block>
 
-    <button class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
+    <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
     </block>
   </block>
 </view>

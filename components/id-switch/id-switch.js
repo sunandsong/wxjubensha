@@ -58,6 +58,9 @@ Component({
         wx.setStorageSync('gender', t.gender);
       } else {
         app.setTestUid(null);
+        // 清掉测试身份留下的昵称/头像，避免真实账号冒名"玩家X"混进房间
+        wx.removeStorageSync('nick');
+        wx.removeStorageSync('avatar');
       }
       wx.reLaunch({ url: '/pages/hub/hub' });     // 以新身份从大厅重进（有房会自动续上）
     },

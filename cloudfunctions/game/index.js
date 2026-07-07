@@ -284,7 +284,7 @@ exports.main = async (event) => {
         await secrets.doc(event.roomId).set({ data: { words, spies, civilWord, spyWord, createdAt: db.serverDate() } });
         const players = ps.map((p) => ({ ...p, out: false }));
         await rooms.doc(event.roomId).update({
-          data: { players, status: 'playing', round: 1, votes: {}, voting: false, lastVote: _.remove() },
+          data: { players, status: 'playing', round: 1, votes: _.set({}), voting: false, lastVote: _.remove() },
         });
         return { ok: true };
       }
@@ -333,7 +333,7 @@ exports.main = async (event) => {
       const npc = meta.charIds.filter((id) => !dealt.includes(id));
 
       await rooms.doc(event.roomId).update({
-        data: { players, npcChars: npc, status: 'playing', actIndex: 0, votes: {}, searches: {} },
+        data: { players, npcChars: npc, status: 'playing', actIndex: 0, votes: _.set({}), searches: _.set({}) },
       });
       return { ok: true };
     }
@@ -398,7 +398,7 @@ exports.main = async (event) => {
       if (room.status !== 'voting') return { ok: false, msg: '当前不在投票阶段' };
       const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       const actIndex = Math.max(0, meta.actCount - 1);
-      await rooms.doc(event.roomId).update({ data: { status: 'playing', actIndex, votes: {} } });
+      await rooms.doc(event.roomId).update({ data: { status: 'playing', actIndex, votes: _.set({}) } });
       return { ok: true, status: 'playing', actIndex };
     }
 
@@ -779,7 +779,7 @@ exports.main = async (event) => {
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以开启投票' };
       if (room.status !== 'playing') return { ok: false, msg: '当前不在游戏中' };
       if (room.voting) return { ok: true };
-      await rooms.doc(event.roomId).update({ data: { voting: true, votes: {} } });
+      await rooms.doc(event.roomId).update({ data: { voting: true, votes: _.set({}) } });
       return { ok: true };
     }
 
@@ -798,15 +798,25 @@ exports.main = async (event) => {
       const target = ps.find((p) => p.openid === event.target);
       if (!target || target.out) return { ok: false, msg: '投票对象无效' };
 
-      // 记录我的票（可改票），然后重读判断是否全员已投
+      // 只记票（可改票）；是否结算由房主点「公布本轮结果」决定，不再自动出结果
       await rooms.doc(event.roomId).update({ data: { ['votes.' + OPENID]: event.target } });
-      const fresh = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
-      if (!fresh || fresh.status !== 'playing' || fresh.round !== room.round) return { ok: true };
-      const votes = fresh.votes || {};
-      const alive = (fresh.players || []).filter((p) => !p.out);
-      if (!alive.every((p) => votes[p.openid])) return { ok: true };
+      return { ok: true };
+    }
 
-      // ── 全员已投 → 结算本轮 ──
+    // ── 卧底：房主公布本轮结果（结算出局；顺带判胜负；未分则进下一轮等待再次开票）──
+    if (action === 'spyReveal') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!room) return { ok: false, msg: '房间不存在' };
+      if (room.gameType !== 'spy') return { ok: false, msg: '不是卧底局' };
+      if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以公布结果' };
+      if (room.status !== 'playing') return { ok: false, msg: '当前不在游戏中' };
+      if (!room.voting) return { ok: false, msg: '本轮还没开启投票' };
+
+      const votes = room.votes || {};
+      const alive = (room.players || []).filter((p) => !p.out);
+      if (!alive.every((p) => votes[p.openid])) return { ok: false, msg: '还有人没投票，等投满再公布' };
+
+      // ── 结算本轮：最高票出局，平票无人出局 ──
       const tally = {};
       alive.forEach((p) => { const t = votes[p.openid]; tally[t] = (tally[t] || 0) + 1; });
       let outId = null, max = 0, tie = false;
@@ -815,51 +825,41 @@ exports.main = async (event) => {
         else if (tally[id] === max) tie = true;
       });
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
-      const spies = (sec && sec.spies) || [];
-      const outP = tie ? null : (fresh.players || []).find((p) => p.openid === outId);
+      if (!sec) return { ok: false, msg: '本局数据异常' };
+      const spies = sec.spies || [];
+      const outP = tie ? null : (room.players || []).find((p) => p.openid === outId);
       const players = tie
-        ? fresh.players
-        : fresh.players.map((p) => (p.openid === outId ? { ...p, out: true } : p));
+        ? room.players
+        : room.players.map((p) => (p.openid === outId ? { ...p, out: true } : p));
       const aliveAfter = players.filter((p) => !p.out);
       const aliveSpies = aliveAfter.filter((p) => spies.includes(p.openid)).length;
       const aliveCivil = aliveAfter.length - aliveSpies;
       const lastVote = {
-        round: fresh.round || 1,
+        round: room.round || 1,
         tie: !!tie,
         outNick: outP ? outP.nick : '',
         wasSpy: outP ? spies.includes(outId) : false,
       };
       let data;
       if (aliveSpies === 0) {
-        // 卧底全部出局 → 平民胜
-        data = { players, votes: {}, lastVote, voting: false, status: 'finished',
+        data = { players, votes: _.set({}), lastVote, voting: false, status: 'finished',
           reveal: { civilWord: sec.civilWord, spyWord: sec.spyWord, spies, winner: 'civil' } };
       } else if (aliveSpies >= aliveCivil) {
-        // 卧底人数 ≥ 存活平民 → 卧底胜
-        data = { players, votes: {}, lastVote, voting: false, status: 'finished',
+        data = { players, votes: _.set({}), lastVote, voting: false, status: 'finished',
           reveal: { civilWord: sec.civilWord, spyWord: sec.spyWord, spies, winner: 'spy' } };
       } else {
-        // 继续下一轮：关闭投票，回到描述阶段
-        data = { players, votes: {}, lastVote, voting: false, round: (fresh.round || 1) + 1 };
+        // 未分胜负：进下一轮，关闭投票（等房主再点「开启投票」）
+        data = { players, votes: _.set({}), lastVote, voting: false, round: (room.round || 1) + 1 };
       }
-      // 条件更新：round/status 没变才允许结算，两个"最后投票者"并发时只有一个生效
-      await rooms.where({ _id: event.roomId, round: fresh.round, status: 'playing' }).update({ data });
+      await rooms.where({ _id: event.roomId, round: room.round, status: 'playing' }).update({ data });
       return { ok: true };
     }
 
-    // ── 卧底：房主揭晓（公布词对与卧底名单，进入 finished）──
-    if (action === 'spyReveal') {
-      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
-      if (!room) return { ok: false, msg: '房间不存在' };
-      if (room.gameType !== 'spy') return { ok: false, msg: '不是卧底局' };
-      if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以揭晓' };
-      if (room.status !== 'playing') return { ok: false, msg: '当前不在游戏中' };
-      const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
-      if (!sec) return { ok: false, msg: '本局数据异常' };
-      await rooms.doc(event.roomId).update({
-        data: { status: 'finished', reveal: { civilWord: sec.civilWord, spyWord: sec.spyWord, spies: sec.spies } },
-      });
-      return { ok: true };
+    // ── 测试用：清空所有房间与对局秘密数据（正式上线前删除本动作）──
+    if (action === 'purgeRooms') {
+      const r1 = await rooms.where({ _id: _.exists(true) }).remove();
+      const r2 = await secrets.where({ _id: _.exists(true) }).remove().catch(() => ({ stats: { removed: 0 } }));
+      return { ok: true, rooms: (r1.stats && r1.stats.removed) || 0, secrets: (r2.stats && r2.stats.removed) || 0 };
     }
 
     // ── 主持人结束游戏，解散房间 ──
@@ -880,7 +880,7 @@ exports.main = async (event) => {
       if (room.gameType === 'spy' || room.gameType === 'wolf') {
         const players = room.players.map((p) => ({ ...p, ready: false, out: false }));
         await rooms.doc(event.roomId).update({
-          data: { players, status: 'waiting', round: 0, reveal: _.remove(), announce: _.remove(), nightVer: _.remove(), votes: {}, voting: false, lastVote: _.remove() },
+          data: { players, status: 'waiting', round: 0, reveal: _.remove(), announce: _.remove(), nightVer: _.remove(), votes: _.set({}), voting: false, lastVote: _.remove() },
         });
         await secrets.doc(event.roomId).remove().catch(() => {});
         return { ok: true };
@@ -888,7 +888,7 @@ exports.main = async (event) => {
       // 再来一局：清空发牌，并把吃瓜群众转为正常等待玩家
       const players = room.players.map((p) => ({ ...p, charId: '', spectator: false }));
       await rooms.doc(event.roomId).update({
-        data: { players, status: 'waiting', actIndex: 0, votes: {}, npcChars: [], searches: {} },
+        data: { players, status: 'waiting', actIndex: 0, votes: _.set({}), npcChars: [], searches: _.set({}) },
       });
       return { ok: true };
     }

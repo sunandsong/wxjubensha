@@ -90,6 +90,13 @@ Page({
       return;
     }
     const raw = room.players || [];
+    // 乐观准备的意图锁：云端已一致就解锁；未到期且不一致时，用本地意图覆盖（防旧快照闪动）
+    const pr = this._pendingReady;
+    if (pr) {
+      const meRaw = raw.find((p) => p.openid === this.data.openid);
+      if ((meRaw && !!meRaw.ready === pr.want) || Date.now() > pr.until) this._pendingReady = null;
+      else if (meRaw) meRaw.ready = pr.want;
+    }
     const script = SCRIPTS.byId(room.scriptId);
     // 标注主持人（房主），统计真实玩家（房主、吃瓜群众不算）
     const players = raw.map((p) => ({ ...p, isModerator: p.openid === room.hostOpenid }));
@@ -145,10 +152,21 @@ Page({
   // 玩家：准备 / 取消准备
   async toggleReady() {
     wx.vibrateShort && wx.vibrateShort({ type: 'light' });
+    // 乐观更新：先让界面立刻变，watch 推送后以云端为准
+    const want = !this.data.myReady;
+    this._pendingReady = { want, until: Date.now() + 3000 };   // 3 秒内旧快照不许把我打回去
+    this.setData({
+      myReady: want,
+      players: this.data.players.map((p) => (p.openid === this.data.openid ? { ...p, ready: want } : p)),
+    });
     try {
       await app.runOnce('ready', () => app.callGame({ action: 'ready', roomId: this.data.roomId }), '');
     } catch (e) {
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+      this.setData({
+        myReady: !want,
+        players: this.data.players.map((p) => (p.openid === this.data.openid ? { ...p, ready: !want } : p)),
+      });
     }
   },
 

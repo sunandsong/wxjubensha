@@ -7,6 +7,7 @@
 
   <!-- ══ 大厅 ══ -->
   <block wx:if="{{mode === 'lobby'}}">
+    <image class="lobby-hero" src="{{heroUrl || '/assets/games/th_wolf_hero.png'}}" mode="aspectFit" binderror="onHeroErr"></image>
     <view class="title">狼人杀 🐺</view>
     <view class="subtitle">6–12 名玩家 + 上帝主持：夜晚玩家在这里行动，白天上帝带群里讨论投票</view>
 
@@ -68,12 +69,13 @@
       <view wx:if="{{isHost && !canStart}}" class="center muted rm-count">{{needReady < 6 ? '还差 ' + (6 - needReady) + ' 名玩家 · 上帝不占身份' : '等所有玩家点「准备好了」'}}</view>
       <button wx:if="{{!isHost}}" hover-class="none" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
       <button hover-class="none" class="btn btn-ghost" open-type="share">分享链接 · 邀请群友</button>
-      <button hover-class="none" class="btn btn-ghost" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
+      <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
     </block>
 
-    <!-- 阶段卡：白天/黑夜大字 + 黑夜行动说明 -->
-    <view class="card phase-card {{status === 'day' ? 'p-day' : ''}}" wx:if="{{status !== 'waiting'}}">
-      <view class="ph-big">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : status === 'day' ? '☀️ 第 ' + round + ' 天 · 天亮请睁眼' : '🃏 终局 · 请亮牌'}}</view>
+    <!-- 阶段卡：白天/黑夜大字 + 黑夜行动说明（终局只给房主留复制战报，不显示标题） -->
+    <view class="card phase-card {{status === 'day' ? 'p-day' : ''}}" wx:if="{{status === 'night' || status === 'day' || (status === 'finished' && isHost)}}">
+      <view class="ph-big" wx:if="{{status !== 'finished'}}">{{status === 'night' ? '🌙 第 ' + round + ' 夜 · 天黑请闭眼' : '☀️ 第 ' + round + ' 天 · 天亮请睁眼'}}</view>
+      <view wx:if="{{status === 'finished' && isHost}}" class="copy-link copy-link-lone" bindtap="copyReport">📋 复制战报发到群里</view>
       <!-- 上帝:主持词全文(点复制发群) -->
       <block wx:if="{{isHost && hostScript}}">
         <view class="ph-script">{{hostScript}}</view>
@@ -115,8 +117,7 @@
         <view class="id-inner">
           <!-- 背面(牌背) -->
           <view class="id-face id-back">
-            <image wx:if="{{backUrl}}" class="id-img" src="{{backUrl}}" mode="aspectFill"></image>
-            <view wx:else class="id-img id-back-css">🐺</view>
+            <image class="id-img" src="{{backUrl || '/assets/games/th_wolf_back.jpg'}}" mode="aspectFill"></image>
           </view>
           <!-- 正面(角色牌) -->
           <view class="id-face id-front">
@@ -215,7 +216,6 @@
           </view>
         </view>
       </view>
-      <button wx:if="{{isHost}}" hover-class="none" class="btn copy-report-btn" bindtap="copyReport">📋 复制战报发到群里</button>
       <button wx:if="{{isHost}}" class="btn start-btn" bindtap="playAgain">再来一局</button>
     </block>
 
@@ -223,7 +223,7 @@
     <button wx:if="{{isHost && status === 'night'}}" hover-class="none" class="btn dawn-btn" bindtap="wolfDawn">🌅 宣布天亮（结算昨夜）</button>
     <button wx:if="{{isHost && status === 'day'}}" hover-class="none" class="btn dusk-btn" bindtap="wolfDusk">🌙 宣布天黑（按票放逐）</button>
 
-    <button wx:if="{{status !== 'waiting'}}" class="btn btn-ghost start-btn" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
+    <button wx:if="{{status !== 'waiting'}}" hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
   </block>
 
   <!-- 对局记录弹框(每天/每夜) -->

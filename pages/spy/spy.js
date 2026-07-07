@@ -28,6 +28,7 @@ Page({
     showVote: false,      // 投票弹框
     voteTargets: [],      // 弹框里可投的人（存活且不是自己）
     myVoteNick: '',       // 我投的人昵称
+    hostScript: '',       // 房主主持词（含每轮随机描述顺序）
     // 我的词
     word: '', wdSize: 80, peeking: false,
     starting: false,
@@ -179,6 +180,11 @@ Page({
       wx.showToast({ title: '房间已解散', icon: 'none' });
       return;
     }
+    // 身份还没就绪就渲染，会误判 isHost/被踢出逻辑——先补登录再渲染
+    if (!this.data.openid) {
+      app.ensureLogin().then((oid) => { this.setData({ openid: oid }); this._refresh(); }).catch(() => {});
+      return;
+    }
     const me = (room.players || []).find((p) => p.openid === this.data.openid);
     // 我不在玩家列表里 → 这不是我的房间（脏的本地记录）→ 回大厅
     if (this.data.openid && !me) {
@@ -187,6 +193,13 @@ Page({
       this.setData({ mode: 'lobby', roomId: '', word: '', reveal: null, peeking: false });
       wx.showToast({ title: '你不在这个房间里', icon: 'none' });
       return;
+    }
+    // 乐观准备的意图锁：云端已一致就解锁；未到期且不一致时，用本地意图覆盖（防旧快照闪动）
+    const pr = this._pendingReady;
+    if (pr) {
+      const meRaw = (room.players || []).find((p) => p.openid === this.data.openid);
+      if ((meRaw && !!meRaw.ready === pr.want) || Date.now() > pr.until) this._pendingReady = null;
+      else if (meRaw) meRaw.ready = pr.want;
     }
     const others = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
     const readyCount = others.filter((p) => p.ready).length;
@@ -205,7 +218,23 @@ Page({
     const spyNicks = room.reveal
       ? players.filter((p) => p.isSpy).map((p) => p.nick).join('、')
       : '';
+    // 房主主持词：描述顺序每轮随机（round 或存活人数变了才重洗，轮内保持稳定）
+    let hostScript = '';
+    if (room.hostOpenid === this.data.openid && room.status === 'playing') {
+      const orderKey = (room.round || 1) + ':' + alivePs.length;
+      if (!this._speakOrder || this._orderKey !== orderKey) {
+        const arr = alivePs.map((p) => p.nick);
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        this._speakOrder = arr;
+        this._orderKey = orderKey;
+      }
+      hostScript = `【第 ${room.round || 1} 轮 · 谁是卧底】\n描述顺序（随机）：${this._speakOrder.join(' → ')}\n轮流用一句话描述自己的词，不能说出词本身\n都说完后回小程序投票，票数最多者出局`;
+    }
     this.setData({
+      hostScript,
       status: room.status || 'waiting',
       players,
       emptySlots: Array.from({ length: Math.max(0, 4 - (room.players || []).length) }, (v, i) => i),
@@ -265,12 +294,19 @@ Page({
   },
 
   async toggleReady() {
+    // 乐观更新：先让界面立刻变（按钮文案+勾章），云端后台同步，失败回滚
+    const want = !this.data.myReady;
+    this._pendingReady = { want, until: Date.now() + 3000 };   // 3 秒内旧快照不许把我打回去
+    this.setData({
+      myReady: want,
+      players: this.data.players.map((p) => (p.openid === this.data.openid ? { ...p, ready: want } : p)),
+    });
     try {
       const res = await app.runOnce('spyReady', () => app.callGame({ action: 'ready', roomId: this.data.roomId }), '');
       const r = res && res.result;
-      if (r && !r.ok) return wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
-      this._refresh();   // 不等 watch 推送，立即拉一次，防监听断线时界面无反应
-    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+      if (r && !r.ok) { wx.showToast({ title: r.msg || '操作失败', icon: 'none' }); return this._refresh(); }
+      this._refresh();   // 以云端为准对齐一次（含他人状态）
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); this._refresh(); }
   },
 
   async startGame() {
@@ -292,16 +328,42 @@ Page({
     this._refresh();   // 不干等 watch 推送，主动拉一次进入游戏界面
   },
 
+  // 复制主持词发群（含本轮随机描述顺序）
+  copyHostScript() {
+    if (!this.data.hostScript) return;
+    wx.setClipboardData({
+      data: this.data.hostScript,
+      success: () => wx.showToast({ title: '已复制，去群里粘贴', icon: 'none' }),
+    });
+  },
+
   // ── 逐轮投票（房主开启 → 弹框选人） ──
   async openVoteStart() {
     const ok = await new Promise((res) => {
-      wx.showModal({ title: '开启投票', content: '大家描述完了？开启本轮投票，全员投完自动出局一人。', confirmText: '开启', success: (r) => res(r.confirm) });
+      wx.showModal({ title: '开启投票', content: '大家描述完了？开启本轮投票，全员投完后由你公布结果。', confirmText: '开启', success: (r) => res(r.confirm) });
     });
     if (!ok) return;
     try {
       const res = await app.runOnce('spyVoteOpen', () => app.callGame({ action: 'spyVoteOpen', roomId: this.data.roomId }), '开启中');
       const r = res && res.result;
       if (r && !r.ok) return wx.showToast({ title: r.msg || '开启失败', icon: 'none' });
+      this._refresh();
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
+
+  // 房主：公布本轮结果（结算出局/胜负）
+  async revealRound() {
+    if (this.data.votedCount < this.data.aliveCount) {
+      return wx.showToast({ title: `还有 ${this.data.aliveCount - this.data.votedCount} 人没投`, icon: 'none' });
+    }
+    const ok = await new Promise((res) => {
+      wx.showModal({ title: '公布结果', content: '公布本轮投票结果，票最多的人出局并亮身份？', confirmText: '公布', success: (r) => res(r.confirm) });
+    });
+    if (!ok) return;
+    try {
+      const res = await app.runOnce('spyReveal', () => app.callGame({ action: 'spyReveal', roomId: this.data.roomId }), '公布中');
+      const r = res && res.result;
+      if (r && !r.ok) return wx.showToast({ title: r.msg || '公布失败', icon: 'none' });
       this._refresh();
     } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },

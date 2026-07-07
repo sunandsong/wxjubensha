@@ -56,6 +56,45 @@ Page({
     ]);
   },
 
+  // 测试用：清空云端所有房间（含卧底词/狼人身份等秘密数据）
+  async purgeRooms() {
+    const ok = await new Promise((res) => wx.showModal({
+      title: '清空云端房间',
+      content: '将删除 rooms 和 spySecrets 里的全部数据（所有房间立即解散）。仅测试期使用，确定？',
+      confirmText: '清空', confirmColor: '#e5484d',
+      success: (r) => res(r.confirm), fail: () => res(false),
+    }));
+    if (!ok) return;
+    wx.showLoading({ title: '清理中…', mask: true });
+    try {
+      const res = await app.callGame({ action: 'purgeRooms' });
+      wx.hideLoading();
+      const r = res && res.result;
+      wx.showModal({ title: '清理完成', content: `删除房间 ${r.rooms} 个、秘密数据 ${r.secrets} 条`, showCancel: false });
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: '清理失败，请重试', icon: 'none' });
+    }
+  },
+
+  // 狼人杀大厅立绘
+  uploadWolfHero() {
+    this._uploadAssets([['up_wolf_hero.png', 'games/wolf_hero.png']]);
+  },
+
+  // 狼人杀牌面素材（卡背 + 昼夜底图 + 四张角色牌）
+  uploadWolfCards() {
+    this._uploadAssets([
+      ['up_wolf_back.jpg', 'games/wolf_back.jpg'],
+      ['up_wolf_bg_n.jpg', 'games/wolf_bg_n.jpg'],
+      ['up_wolf_bg_d.jpg', 'games/wolf_bg_d.jpg'],
+      ['up_wolf_r3_wolf.jpg', 'games/wolf_r3_wolf.jpg'],
+      ['up_wolf_r3_seer.jpg', 'games/wolf_r3_seer.jpg'],
+      ['up_wolf_r3_witch.jpg', 'games/wolf_r3_witch.jpg'],
+      ['up_wolf_r3_villager.jpg', 'games/wolf_r3_villager.jpg'],
+    ]);
+  },
+
   // 选择一个模拟身份 → 设为当前身份，进入首页
   pick(e) {
     const uid = e.currentTarget.dataset.uid;
@@ -74,6 +113,9 @@ Page({
   useReal() {
     app.runOnce('switchIdentity', () => {
       app.setTestUid(null);
+      // 清掉测试身份留下的昵称/头像，避免真实账号冒名"玩家X"混进房间
+      wx.removeStorageSync('nick');
+      wx.removeStorageSync('avatar');
       wx.reLaunch({ url: '/pages/hub/hub' });
     }, '');
   },

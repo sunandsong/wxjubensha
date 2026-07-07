@@ -6,6 +6,7 @@ const IMGCACHE = require('../../utils/imgCache.js');
 // 牌面素材（云存储 games/）：图腾卡背 + 四张木刻角色牌
 const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
 const BACK_FID = GBASE + '/wolf_back.jpg';
+const HERO_FID = GBASE + '/wolf_hero.png';  // 大厅顶部立绘（与卧底大厅一致）
 const BGN_FID = GBASE + '/wolf_bg_n.jpg';   // 松林夜(萤火虫满月)
 const BGD_FID = GBASE + '/wolf_bg_d.jpg';   // 同一片松林的清晨
 const ROLE_FIDS = {
@@ -41,19 +42,20 @@ Page({
     dayTally: {}, myDayVote: '', dayVoted: 0, aliveVoters: 0,   // 白天投票:得票/我投的/已投人数
     hostScript: '',     // 上帝阶段卡直接展示的主持词全文(点复制即发群)
     showVote: false, voteTargets: [],   // 上帝点玩家头像：白天可手动指定出局（平票时备用；平时用「宣布天黑」按票）
+    showPick: false, pickMode: '', pickTitle: '',   // 夜晚选人弹框(狼刀/验人/毒人)
+    showLog: false, gameLog: [],   // 对局记录弹框
+    backUrl: '', roleImg: '', heroUrl: '',   // 牌背 / 我的角色牌面 / 大厅立绘
+    bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
+    starting: false,
+  },
+
+  // 上帝白天点玩家头像：手动指定出局（平票时备用；平时用「宣布天黑」按票统计）
+  // 注意：此方法曾被误放进 data{} 导致点头像无响应，必须保持在 Page 顶层
   onPlayerTap(e) {
     if (!this.data.isHost || this.data.status !== 'day') return;
     const d = e.currentTarget.dataset;
     if (d.out) return wx.showToast({ title: 'TA 已出局', icon: 'none' });
     this._confirmAct(`直接让「${d.nick}」出局？（一般用「宣布天黑」按票统计）`, 'wolfDayOut', { target: d.openid }, '执行中');
-  },
-
-  // 白天投票弹框(对齐卧底/剧本杀)
-    showPick: false, pickMode: '', pickTitle: '',   // 夜晚选人弹框(狼刀/验人/毒人)
-    showLog: false, gameLog: [],   // 对局记录弹框
-    backUrl: '', roleImg: '',   // 牌背 / 我的角色牌面
-    bgN: '', bgD: '',           // 昼夜森林底图(随局势交叉淡入)
-    starting: false,
   },
 
   watcher: null,
@@ -81,14 +83,16 @@ Page({
   // ── 大厅 ──
   // 牌面素材：本地缓存优先
   _resolveImgs() {
-    IMGCACHE.resolve([BACK_FID, BGN_FID, BGD_FID], (m) => {
+    IMGCACHE.resolve([BACK_FID, BGN_FID, BGD_FID, HERO_FID], (m) => {
       const d = {};
       if (m[BACK_FID] && m[BACK_FID] !== this.data.backUrl) d.backUrl = m[BACK_FID];
+      if (m[HERO_FID] && m[HERO_FID] !== this.data.heroUrl) d.heroUrl = m[HERO_FID];
       if (m[BGN_FID] && m[BGN_FID] !== this.data.bgN) d.bgN = m[BGN_FID];
       if (m[BGD_FID] && m[BGD_FID] !== this.data.bgD) d.bgD = m[BGD_FID];
       if (Object.keys(d).length) this.setData(d);
     });
   },
+  onHeroErr() { IMGCACHE.invalidate(HERO_FID); this.setData({ heroUrl: this.data.heroUrl !== HERO_FID ? HERO_FID : '' }); },
   _resolveRoleImg(role) {
     const fid = ROLE_FIDS[role];
     if (!fid) return this.setData({ roleImg: '' });
@@ -196,8 +200,19 @@ Page({
 
   _render(room) {
     if (!room) return this._backToLobby('房间已解散');
+    // 身份还没就绪就渲染，会误判 isHost/被踢出逻辑——先补登录再渲染
+    if (!this.data.openid) {
+      app.ensureLogin().then((oid) => { this.setData({ openid: oid }); this._refresh(); }).catch(() => {});
+      return;
+    }
     const me = (room.players || []).find((p) => p.openid === this.data.openid);
     if (this.data.openid && !me) return this._backToLobby('你不在这个房间里');
+    // 乐观准备的意图锁：云端已一致就解锁；未到期且不一致时，用本地意图覆盖（防旧快照闪动）
+    const pr = this._pendingReady;
+    if (pr) {
+      if ((me && !!me.ready === pr.want) || Date.now() > pr.until) this._pendingReady = null;
+      else if (me) me.ready = pr.want;
+    }
     const others = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
     const readyCount = others.filter((p) => p.ready).length;
     const players = (room.players || []).map((p) => ({ ...p, isHost: p.openid === room.hostOpenid }));
@@ -375,8 +390,9 @@ Page({
     if (this.data.status === 'night') {
       // 夜晚 announceText 是上一个白天的放逐结果（🪦 X 被放逐…）,第一夜为空
       const recap = (this.data.announceText || '').replace(/^🪦\s*/, '');
+      const willLineN = deaths.length ? `请 ${deaths.join('、')} 发表遗言。 发表遗言之后，天黑请闭眼\n` : '';
       const body = `🐺 狼人请睁眼，一起选定今晚要刀的人\n🔮 预言家请睁眼，查验一名玩家的身份\n🧪 女巫请睁眼，决定是否用解药 / 毒药\n其余村民请闭眼等待，行动完我会宣布天亮`;
-      return recap ? `昨天白天：${recap}\n${willLine}\n${body}` : body;
+      return recap ? `昨天白天：${recap}\n${willLineN}\n${body}` : body;
     }
     // 白天 announceText 是昨夜死讯（☀️ 天亮请睁眼——…）
     const dawn = (this.data.announceText || '').replace(/^☀️\s*天亮请睁眼——/, '').replace(/^☀️\s*/, '');
@@ -512,12 +528,19 @@ Page({
 
   // ── 等待阶段 ──
   async toggleReady() {
+    // 乐观更新：先让界面立刻变（按钮文案+勾章），云端后台同步，失败回滚
+    const want = !this.data.myReady;
+    this._pendingReady = { want, until: Date.now() + 3000 };   // 3 秒内旧快照不许把我打回去
+    this.setData({
+      myReady: want,
+      players: this.data.players.map((p) => (p.openid === this.data.openid ? { ...p, ready: want } : p)),
+    });
     try {
       const res = await app.runOnce('wolfReady', () => app.callGame({ action: 'ready', roomId: this.data.roomId }), '');
       const r = res && res.result;
-      if (r && !r.ok) return wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      if (r && !r.ok) { wx.showToast({ title: r.msg || '操作失败', icon: 'none' }); return this._refresh(); }
       this._refresh();
-    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); this._refresh(); }
   },
 
   async startGame() {

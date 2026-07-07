@@ -207,8 +207,8 @@
 .okmark {
   position: absolute; right: -6rpx; top: -6rpx; z-index: 2;
   width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center;
-  border-radius: 50%; font-size: 22rpx; color: #fff;
-  background: linear-gradient(135deg, #7b5cff, #c44dff);
+  border-radius: 50%; font-size: 22rpx; font-weight: 700; color: #c2451e;
+  background: #fff6ea;
   border: 2rpx solid #1e1830;
   box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.45);
 }
@@ -279,3 +279,21 @@
 .log-line { font-size: 23rpx; color: #ddd6ee; line-height: 1.8; }
 .log-dead { color: #ff9db4; }
 .copy-report-btn { background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff; }
+
+/* 大厅顶部立绘（与卧底大厅一致） */
+.lobby-hero { display: block; width: 300rpx; height: 300rpx; margin: 0 auto -10rpx;
+  position: relative; z-index: 1;
+  filter: drop-shadow(0 14rpx 30rpx rgba(0,0,0,0.5)); }
+
+/* 次要操作（解散/退出）：矮一档 */
+.btn-slim { padding: 22rpx 0; font-size: 30rpx; }
+
+/* 终局卡内的复制战报：文字超链接样式 */
+.copy-link {
+  margin-top: 24rpx; text-align: center;
+  font-size: 27rpx; color: #ffb347; text-decoration: underline;
+  text-underline-offset: 6rpx;
+}
+.copy-link:active { opacity: 0.7; }
+/* 终局阶段卡只剩复制链接时：去掉上边距，卡片显得紧凑 */
+.copy-link-lone { margin-top: 0; }

@@ -11,7 +11,7 @@
   <view class="rule">主持人点「生成」暗抽一颗 1~100 的炸弹数，群里轮流报数，报中的人爆炸 💥</view>
 
   <!-- 抽出的数 / 问号 -->
-  <view class="num-box {{num ? 'lit' : ''}}">
+  <view class="num-box {{num ? 'lit' : ''}} {{fx ? 'shaking' : ''}}">
     <view wx:if="{{num}}" class="num {{fx ? 'pop' : ''}}">{{num}}</view>
     <view wx:else class="num">?</view>
     <view wx:if="{{num}}" class="meta">

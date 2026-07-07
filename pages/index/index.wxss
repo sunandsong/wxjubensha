@@ -304,3 +304,6 @@
 .howto { margin-top: 40rpx; padding: 0 8rpx; }
 .howto-title { font-size: 28rpx; color: #cdbcff; margin-bottom: 16rpx; font-weight: 600; }
 .howto .muted { line-height: 2; }
+
+/* 详情浮层：去掉自绘头，封面铺满顶部（点封面可返回） */
+.detail-mask .detail-scroll { padding-top: 0; }

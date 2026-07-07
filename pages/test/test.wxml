@@ -17,16 +17,6 @@
 
   <button class="btn btn-ghost" bindtap="useReal">用真实微信账号</button>
 
-  <view class="t-tip">封面挪到云存储：先在云函数调一次 seedScripts 灌库，再点下面按钮一键上传（跑完可删掉 /assets 里的封面图，缩小代码包）。</view>
-  <button class="btn btn-ghost" bindtap="uploadCovers">⬆️ 上传封面到云存储（一次性）</button>
-
-  <view class="t-tip">卧底词卡（卡背+卡面）：上传到 games/spy_card.jpg 和 spy_card_front.jpg，传完可删 assets/games/up_spy_card*.jpg。</view>
-  <button class="btn btn-ghost" bindtap="uploadSpyCards">⬆️ 上传卧底词卡（一次性）</button>
-
-  <view class="t-tip">狼人杀大厅立绘：图片放 assets/games/up_wolf_hero.png 后点上传。</view>
-  <button class="btn btn-ghost" bindtap="uploadWolfHero">⬆️ 上传狼人杀立绘（一次性）</button>
-  <button class="btn btn-ghost" bindtap="uploadWolfCards">⬆️ 上传狼人杀牌面素材（一次性）</button>
-
   <view class="t-tip">测试期清理：删掉云端全部房间和对局数据（所有房间立即解散）。</view>
   <button class="btn btn-ghost" bindtap="purgeRooms">🗑 清空云端房间（测试用）</button>
 </view>

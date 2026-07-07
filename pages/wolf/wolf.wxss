@@ -142,9 +142,6 @@
   text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.9); }
 .word-card .mates { text-align: center; margin-top: 12rpx; }
 
-/* 一次性上传按钮（跑完删除） */
-.dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
-  background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }
 
 /* ── 墓碑:出局头顶弹出 ── */
 .tomb { position: absolute; top: -20rpx; left: 50%; margin-left: -18rpx; font-size: 36rpx; z-index: 3;
@@ -175,7 +172,7 @@
 .scene-bg.bg-day.on { opacity: 0.3; }   /* 晨光图更亮,压低一点保 UI */
 .scene-fade { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(30,24,48,0.15) 0%, rgba(30,24,48,0.55) 45%, rgba(30,24,48,0.8) 100%); }
-.title, .subtitle, .resume-bar, .card, .btn, .ready-hint, .center, .dev-upload { position: relative; z-index: 1; }
+.title, .subtitle, .resume-bar, .card, .btn, .ready-hint, .center { position: relative; z-index: 1; }
 
 /* ── 阶段卡:白天/黑夜大字 + 行动说明 ── */
 .phase-card { text-align: center; border-color: rgba(139,92,255,0.35); }

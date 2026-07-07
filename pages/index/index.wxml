@@ -116,14 +116,9 @@
 
 <!-- 剧本详情层：看完再决定是否创建房间 -->
 <view class="detail-mask" wx:if="{{showDetail}}">
-  <view class="pick-head">
-    <view class="detail-back" catchtap="closeDetail">‹ 返回</view>
-    <view class="pick-h-title">剧本详情</view>
-    <view class="pick-close" catchtap="closeDetail">✕</view>
-  </view>
   <scroll-view class="detail-scroll" scroll-y wx:if="{{detail}}">
     <!-- 封面 -->
-    <view class="detail-cover" style="background:{{detail.cover.gradient}}">
+    <view class="detail-cover" style="background:{{detail.cover.gradient}}" catchtap="closeDetail">
       <image wx:if="{{detail.cover.image}}" class="pick-cover-img" src="{{detail.cover.image}}" mode="aspectFill"></image>
       <view wx:if="{{detail.cover.image}}" class="pick-cover-scrim"></view>
       <text wx:else class="detail-emoji">{{detail.cover.emoji}}</text>

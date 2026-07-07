@@ -120,7 +120,7 @@
   background: linear-gradient(180deg, rgba(30,24,48,0) 0%, rgba(30,24,48,0.4) 34%, rgba(30,24,48,0.8) 60%, rgba(30,24,48,0.9) 100%); }
 /* 内容抬到底图/暗纱之上（WXSS 子选择器不可靠,显式列类名） */
 .title, .subtitle, .resume-bar, .card, .btn, .center, .ready-hint,
-.secret-card, .lobby-hero, .dev-upload, .wc-tip { position: relative; z-index: 1; }
+.secret-card, .lobby-hero, .wc-tip { position: relative; z-index: 1; }
 
 /* ── 大厅立绘：礼帽面具 ── */
 .lobby-hero { display: block; width: 300rpx; height: 300rpx; margin: 0 auto -10rpx;
@@ -140,9 +140,6 @@
 .secret-card.open .sc-word { color: #fff; text-shadow: 0 0 36rpx rgba(255,92,138,0.55); }
 .sc-tip { margin-top: 30rpx; font-size: 20rpx; letter-spacing: 2rpx; color: rgba(236,232,245,0.55); }
 
-/* 一次性上传按钮（跑完删除） */
-.dev-upload { margin: 40rpx auto 0; width: 80%; font-size: 26rpx; color: #fff;
-  background: rgba(255,255,255,0.14); border: 1rpx solid rgba(255,255,255,0.3); border-radius: 999rpx; }
 
 /* ══ 等待房间：布局对齐剧本杀 ══ */
 .rm-script { text-align: center; font-size: 44rpx; font-weight: 700; color: #fff; margin-top: 12rpx; letter-spacing: 4rpx; position: relative; }

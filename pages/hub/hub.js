@@ -29,6 +29,8 @@ Page({
       { id: 'soup', name: '海龟汤',   ico: '🥣', d1: '脑洞提问', d2: '神奇汤面', count: '6.3k', c: '#4db8ff', img: gimg('soup.jpg'), th: gth('soup.jpg'), ok: false },
       { id: 'bomb', name: '数字炸弹', ico: '💣', d1: '猜数字',   d2: '别踩雷',   count: '9.1k', c: '#ffce54', img: gimg('bomb_fire.jpg'), th: gth('bomb_fire.jpg'), ok: false },
     ],
+    // 强制登录门：头像 → 昵称 → 性别（缺任一就弹，填全才能进）
+    needLogin: false, loginStep: 1, loginNick: '', loginAvatar: '', loginGender: '', loginUploading: false,
   },
 
   // 云图加载完成 → 淡入盖过缩略图
@@ -97,9 +99,22 @@ Page({
   },
 
   onShow() {
+    const savedNick = wx.getStorageSync('nick') || '';
+    const savedAvatar = wx.getStorageSync('avatar') || '';
+    const savedGender = wx.getStorageSync('gender') || '';
+    // 强制登录门：头像/昵称/性别缺任一就弹（测试身份不拦，方便自测多人）
+    if (!app.getTestUid() && (!savedNick || !savedAvatar || !savedGender)) {
+      this.setData({
+        needLogin: true, loginStep: (savedAvatar ? (savedNick ? 3 : 2) : 1),
+        loginAvatar: savedAvatar, loginNick: savedNick, loginGender: savedGender,
+        nick: savedNick || '群友', avatar: savedAvatar,
+      });
+      return;   // 未登录不走续房，避免绕过登录门
+    }
     this.setData({
-      nick: wx.getStorageSync('nick') || '群友',
-      avatar: wx.getStorageSync('avatar') || '',
+      needLogin: false,
+      nick: savedNick || '群友',
+      avatar: savedAvatar,
     });
     const jb = app.getSession && app.getSession();
     const sp = app.getSpySession && app.getSpySession();
@@ -121,6 +136,44 @@ Page({
         return wx.reLaunch({ url: '/pages/wolf/wolf?resume=1' });
       }
     }
+  },
+
+  // ── 强制登录门：头像 → 昵称 → 性别 ──
+  noop() {},
+  onLoginAvatar(e) {
+    const tmp = e.detail.avatarUrl;
+    // 预览一直用本地临时图（不换 src，避免上传成功后切 cloud:// 重新加载时闪一下）
+    this.setData({ loginAvatar: tmp, loginUploading: true });
+    wx.setStorageSync('avatar', tmp);   // 先兜底存本地路径
+    const cloudPath = `avatars/${Date.now()}-${Math.floor(Math.random() * 1e6)}.png`;
+    wx.cloud.uploadFile({ cloudPath, filePath: tmp }).then((r) => {
+      this._avatarFid = r.fileID;         // 真正的 fileID 留到 loginDone 时落库
+      wx.setStorageSync('avatar', r.fileID);
+      this.setData({ loginUploading: false });
+    }).catch(() => {
+      this.setData({ loginUploading: false });   // 上传失败：storage 里已是本地路径，兜底可用
+    });
+  },
+  onLoginNick(e) { this.setData({ loginNick: e.detail.value }); },
+  pickLoginGender(e) { this.setData({ loginGender: e.currentTarget.dataset.g }); },
+  loginNext() {
+    const s = this.data.loginStep;
+    if (s === 1 && !this.data.loginAvatar) return wx.showToast({ title: '先选个头像', icon: 'none' });
+    if (s === 2 && !this.data.loginNick) return wx.showToast({ title: '先填个昵称', icon: 'none' });
+    this.setData({ loginStep: s + 1 });
+  },
+  loginBack() { this.setData({ loginStep: Math.max(1, this.data.loginStep - 1) }); },
+  loginDone() {
+    if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
+    if (!this.data.loginAvatar) return wx.showToast({ title: '先选个头像', icon: 'none' });
+    if (!this.data.loginNick) return wx.showToast({ title: '先填个昵称', icon: 'none' });
+    if (!this.data.loginGender) return wx.showToast({ title: '选一下性别', icon: 'none' });
+    const avatar = wx.getStorageSync('avatar') || this.data.loginAvatar;   // fileID 优先，兜底本地
+    wx.setStorageSync('nick', this.data.loginNick);
+    wx.setStorageSync('gender', this.data.loginGender);
+    this.setData({ needLogin: false, nick: this.data.loginNick, avatar });
+    // 登录后重跑一次 onShow 逻辑（续房等）
+    this.onShow();
   },
 
   // ── 悬浮钮：有房回房，没房快速进房 ──

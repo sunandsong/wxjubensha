@@ -61,6 +61,48 @@
     </view>
   </view>
 
+  <!-- 强制登录门：头像 → 昵称 → 性别（填全才能进） -->
+  <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop">
+    <view class="login-card">
+      <view class="login-brand">群本杀</view>
+      <view class="login-steps">{{loginStep}} / 3</view>
+
+      <block wx:if="{{loginStep === 1}}">
+        <view class="login-title">第一步 · 选择头像</view>
+        <view class="login-sub">点下方用你的微信头像</view>
+        <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
+          <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
+          <view wx:else class="la-ph">＋ 头像</view>
+        </button>
+        <button class="login-btn" bindtap="loginNext" disabled="{{loginUploading || !loginAvatar}}">{{loginUploading ? '头像上传中…' : '下一步'}}</button>
+      </block>
+
+      <block wx:elif="{{loginStep === 2}}">
+        <view class="login-title">第二步 · 填写昵称</view>
+        <view class="login-sub">点输入框，微信会带出你的昵称</view>
+        <input class="login-input" type="nickname" placeholder="点这里填写昵称" placeholder-class="login-ph"
+          value="{{loginNick}}" bindinput="onLoginNick" bindblur="onLoginNick" maxlength="8" />
+        <view class="login-row">
+          <button class="login-btn ghost" bindtap="loginBack">上一步</button>
+          <button class="login-btn" bindtap="loginNext" disabled="{{!loginNick}}">下一步</button>
+        </view>
+      </block>
+
+      <block wx:else>
+        <view class="login-title">第三步 · 选择性别</view>
+        <view class="login-sub">决定你在剧本里的角色形象</view>
+        <view class="login-gender">
+          <view class="lg-opt {{loginGender === 'm' ? 'on' : ''}}" data-g="m" bindtap="pickLoginGender">♂ 男生</view>
+          <view class="lg-opt {{loginGender === 'f' ? 'on' : ''}}" data-g="f" bindtap="pickLoginGender">♀ 女生</view>
+        </view>
+        <view class="login-row">
+          <button class="login-btn ghost" bindtap="loginBack">上一步</button>
+          <button class="login-btn" bindtap="loginDone" disabled="{{!loginGender}}">进入游戏</button>
+        </view>
+      </block>
+    </view>
+  </view>
+
 </view>
 
 <id-switch />

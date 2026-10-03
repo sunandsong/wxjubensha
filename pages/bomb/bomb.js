@@ -193,7 +193,7 @@ Page({
 
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
             ctx.font = '24px sans-serif';
-            ctx.fillText('群本杀 · 数字炸弹抽数凭证', W / 2, 1085);
+            ctx.fillText('群本玩 · 数字炸弹抽数凭证', W / 2, 1085);
 
             wx.canvasToTempFilePath({
               canvas,

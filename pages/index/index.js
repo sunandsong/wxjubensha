@@ -4,7 +4,7 @@ const SCRIPTS = require('../../utils/scriptStore.js');
 // 首页分享：5 张图 + 标题池，分享时随机组合（图固定打包；以后可换云存储）
 const HOME_SHARE_IMGS = ['/assets/app1.jpg', '/assets/app2.jpg', '/assets/app3.jpg', '/assets/app4.jpg', '/assets/app5.jpg'];
 const HOME_SHARE_TITLES = [
-  '群本杀 · 拉个群开一局，揪出真凶',
+  '群本玩 · 拉个群开一局，揪出真凶',
   '谁在说谎？拉群来一局剧本杀 🔍',
   '一局一故事，一人一面具',
   '今晚谁是凶手？进来抓一个 🕵️',

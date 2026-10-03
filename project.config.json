@@ -1,7 +1,64 @@
 {
-  "description": "群本杀",
+  "description": "群本玩",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "docs"
+      },
+      {
+        "type": "folder",
+        "value": "assets/icons"
+      },
+      {
+        "type": "glob",
+        "value": "**/*.MP4"
+      },
+      {
+        "type": "glob",
+        "value": "**/*.mp4"
+      },
+      {
+        "type": "glob",
+        "value": "**/*.zip"
+      },
+      {
+        "type": "glob",
+        "value": "**/*.html"
+      },
+      {
+        "type": "glob",
+        "value": "assets/logo*"
+      },
+      {
+        "type": "glob",
+        "value": "assets/games/chain.png"
+      },
+      {
+        "type": "glob",
+        "value": "assets/games/hero_man1.png"
+      },
+      {
+        "type": "glob",
+        "value": "assets/games/jbs.png"
+      },
+      {
+        "type": "glob",
+        "value": "assets/games/soup.png"
+      },
+      {
+        "type": "glob",
+        "value": "assets/games/spy.png"
+      },
+      {
+        "type": "glob",
+        "value": "assets/yidaimi*.jpg"
+      },
+      {
+        "type": "file",
+        "value": "README.md"
+      }
+    ],
     "include": []
   },
   "setting": {

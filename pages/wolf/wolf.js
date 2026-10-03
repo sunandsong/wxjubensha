@@ -4,7 +4,7 @@ const app = getApp();
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 牌面素材（云存储 games/）：图腾卡背 + 四张木刻角色牌
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
 const BACK_FID = GBASE + '/wolf_back.jpg';
 const HERO_FID = GBASE + '/wolf_hero.png';  // 大厅顶部立绘（与卧底大厅一致）
 const BGN_FID = GBASE + '/wolf_bg_n.jpg';   // 松林夜(萤火虫满月)

@@ -1,0 +1,366 @@
+<title>毛玻璃 · 信息不对称的形状</title>
+<style>
+  :root {
+    --page: #14101f; --ink-doc: #ece8f5; --muted-doc: #b3a6cc;
+    --card-doc: rgba(255,255,255,0.06); --card-bd-doc: rgba(255,255,255,0.1);
+    --bg1: #241d38; --bg2: #171226; --ink: #ece8f5; --mut: #9d8fbe;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink-doc);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; padding: 48px 24px 80px; line-height: 1.75; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 24px; letter-spacing: 2px; margin: 0 0 6px; font-weight: 700; }
+  h1 .tag { font-size: 12px; vertical-align: middle; letter-spacing: 3px; color: #bfe3ff;
+    border: 1px solid rgba(160,210,255,0.4); border-radius: 999px; padding: 3px 12px; margin-left: 12px; font-weight: 400; }
+  .lede { color: var(--muted-doc); font-size: 14px; max-width: 66ch; margin: 0 0 36px; }
+  .lede b { color: var(--ink-doc); }
+  h2 { font-size: 17px; margin: 52px 0 6px; letter-spacing: 1px; }
+  h2::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 4px 0;
+    background: linear-gradient(90deg, #7db8ff, #fff); border-radius: 2px; }
+  .sub { color: var(--muted-doc); font-size: 13.5px; max-width: 70ch; margin: 0 0 22px; }
+  .sub b, li b { color: var(--ink-doc); font-weight: 600; }
+  ul.pl { color: var(--muted-doc); font-size: 13.5px; padding-left: 20px; }
+  ul.pl li { margin: 6px 0; }
+
+  .stage { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+  .slot { display: flex; flex-direction: column; gap: 10px; }
+  .slot-label { text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--muted-doc); }
+  .phone { width: 330px; border-radius: 26px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+  .scr { position: relative; min-height: 640px; padding: 24px 18px; overflow: hidden;
+    background: radial-gradient(90% 50% at 50% 0%, rgba(120,150,255,0.1), transparent 60%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+    color: var(--ink); }
+
+  .head { text-align: center; padding: 4px 0 14px; }
+  .head .t { font-size: 18px; font-weight: 900; letter-spacing: 3px; color: #fff; }
+  .head .s { font-size: 10.5px; color: var(--mut); margin-top: 4px; letter-spacing: 1px; }
+  .h-row { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 2px 8px; }
+  .h-row b { font-size: 13.5px; letter-spacing: 1px; color: var(--ink); }
+  .h-row span { font-size: 10.5px; color: var(--mut); }
+
+  /* ═══ 玻璃质感基元 ═══ */
+  .pane-base { background: rgba(190,210,255,0.09); border: 1px solid rgba(220,235,255,0.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -8px 20px rgba(160,190,255,0.06), 0 8px 22px rgba(0,0,0,0.35); }
+  /* 水珠 */
+  .drop { position: absolute; width: 5px; height: 8px; border-radius: 40% 40% 55% 55%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(190,215,255,0.28));
+    animation: slide 5s ease-in infinite; opacity: 0; }
+  @keyframes slide { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: .9; }
+    70% { transform: translateY(46px); opacity: .7; } 100% { transform: translateY(64px); opacity: 0; } }
+
+  /* ① 候场：每人一格磨玻璃，就位=擦开 */
+  .seats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 4px; }
+  .seat { position: relative; text-align: center; cursor: pointer; }
+  .cell { position: relative; width: 62px; height: 74px; margin: 0 auto; border-radius: 14px; overflow: hidden; }
+  .s-av { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 30px;
+    transition: filter .7s; filter: blur(4px) brightness(.6) saturate(.4); }
+  /* 磨玻璃盖板 */
+  .pane { position: absolute; inset: 0; border-radius: 14px; transition: opacity .7s .15s;
+    background:
+      radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,0.16), transparent 55%),
+      rgba(200,218,255,0.13);
+    border: 1px solid rgba(220,235,255,0.25);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25); }
+  /* 擦拭高光带 */
+  .wipe-streak { position: absolute; top: -20%; bottom: -20%; width: 26px; left: -40px; transform: rotate(16deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); opacity: 0; }
+  .seat.ready .wipe-streak { animation: streak .55s ease .05s; }
+  @keyframes streak { 0% { left: -40px; opacity: 1; } 100% { left: 110%; opacity: .4; } }
+  .seat.ready .pane { opacity: 0; }
+  .seat.ready .s-av { filter: none; }
+  .seat.host .pane { opacity: 0; }
+  .seat.host .s-av { filter: none; }
+  .s-name { font-size: 10.5px; color: var(--mut); margin-top: 6px; }
+  .s-role { font-size: 9px; color: #9ec8ff; letter-spacing: 1px; }
+  .hint { font-size: 11px; color: var(--mut); margin-top: 13px; text-align: center; }
+
+  .btn { position: relative; z-index: 7; margin: 17px auto 0; width: 84%; height: 46px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff;
+    letter-spacing: 3px; cursor: pointer;
+    background: rgba(200,218,255,0.13); border: 1px solid rgba(220,235,255,0.3);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 22px rgba(0,0,0,0.3); }
+  .btn.primary { background: linear-gradient(135deg, rgba(125,184,255,0.85), rgba(150,140,255,0.85)); border: none;
+    box-shadow: 0 8px 24px rgba(120,160,255,0.35); }
+  .btn.ghost-btn { background: transparent; color: var(--mut); box-shadow: none; border: 1px solid rgba(255,255,255,0.14); font-weight: 600; }
+
+  /* ② 剧情：雾墙后是别人的故事，只有你的一块被擦开 */
+  .fogwall { position: relative; margin-top: 10px; border-radius: 18px; padding: 12px; overflow: hidden; }
+  /* 背后：别人的故事（骨架线，隔雾可见不可读） */
+  .ghost-stories { position: absolute; inset: 0; padding: 14px; filter: blur(5px) brightness(.75); }
+  .gline { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.14); margin: 10px 6px; }
+  .gline.w60 { width: 60%; } .gline.w85 { width: 85%; } .gline.w40 { width: 40%; } .gline.w75 { width: 75%; }
+  /* 雾墙本体 */
+  .fogpane { position: absolute; inset: 0;
+    background: radial-gradient(130% 70% at 15% 0%, rgba(255,255,255,0.13), transparent 50%), rgba(200,218,255,0.12);
+    border-radius: 18px; border: 1px solid rgba(220,235,255,0.2); }
+  /* 你的故事：擦开的一块（清晰、带玻璃边） */
+  .story { position: relative; z-index: 3; margin: 6px 2px; border-radius: 14px; padding: 16px 15px; text-align: left;
+    background: rgba(20,16,34,0.88); border: 1px solid rgba(220,235,255,0.35);
+    box-shadow: 0 0 0 5px rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.5); }
+  .story .badge { position: absolute; top: -9px; left: 14px; font-size: 9px; letter-spacing: 2px; color: #bfe3ff;
+    background: #2a2344; border: 1px solid rgba(160,210,255,0.4); border-radius: 999px; padding: 1px 10px; }
+  .st-tit { font-size: 16px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+  .st-body { font-size: 14.5px; line-height: 2.05; margin-top: 8px; color: rgba(236,232,245,0.9); }
+  .st-body .hl { background: linear-gradient(transparent 60%, rgba(125,184,255,0.35) 60%); font-weight: 700; color: #fff; }
+  .hostcard { position: relative; z-index: 3; margin-top: 12px; border-radius: 14px; padding: 12px 14px;
+    background: rgba(200,218,255,0.07); border: 1px solid rgba(220,235,255,0.16); }
+  .hc-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .hc-tit b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .hc-copy { flex: none; white-space: nowrap; font-size: 10px; color: #9ec8ff; border: 1px solid rgba(160,210,255,0.35);
+    border-radius: 999px; padding: 2px 10px; }
+  .hc-body { font-size: 10.5px; color: var(--mut); line-height: 1.8; margin-top: 6px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ② 开场过场：哈气起雾 → 一只手擦开 → 剧名清晰 */
+  .open-ov { position: absolute; inset: 0; z-index: 9; pointer-events: none; opacity: 0; transition: opacity .3s; }
+  .open-ov.show { opacity: 1; }
+  .breath { position: absolute; inset: 0; background: rgba(205,222,255,0.0); }
+  .open-ov.show .breath { animation: breathe 1s ease .1s forwards; }
+  @keyframes breathe { to { background: rgba(205,222,255,0.22); backdrop-filter: blur(3px); } }
+  .open-tit { position: absolute; left: 0; right: 0; top: 44%; text-align: center; filter: blur(8px); opacity: 0; }
+  .open-ov.show .open-tit { animation: clearup 1.2s ease 1.3s forwards; }
+  @keyframes clearup { 0% { filter: blur(8px); opacity: .4; } 100% { filter: blur(0); opacity: 1; } }
+  .open-tit .o1 { font-size: 11px; letter-spacing: 8px; color: #bfd4ff; }
+  .open-tit .o2 { font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #fff; margin-top: 8px;
+    text-shadow: 0 0 24px rgba(150,190,255,0.6); }
+  .hand-streak { position: absolute; top: 34%; height: 120px; width: 60px; left: -80px; transform: rotate(-8deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent); border-radius: 50%; opacity: 0; }
+  .open-ov.show .hand-streak { animation: handwipe 1s ease 1.15s; }
+  @keyframes handwipe { 0% { left: -80px; opacity: 1; } 100% { left: 110%; opacity: .3; } }
+
+  /* ③ 指认：雾后人影，擦开谁 = 指认谁 */
+  .lineup-zone { position: relative; margin-top: 12px; border-radius: 18px; padding: 24px 8px 18px; overflow: hidden;
+    background: rgba(200,218,255,0.06); border: 1px solid rgba(220,235,255,0.16); }
+  .lz-tit { text-align: center; font-size: 11px; letter-spacing: 6px; color: var(--mut); margin-bottom: 16px; }
+  .lineup { display: flex; justify-content: space-around; }
+  .man { position: relative; text-align: center; cursor: pointer; width: 66px; }
+  .m-cell { position: relative; width: 56px; height: 68px; margin: 0 auto; border-radius: 12px; overflow: hidden; }
+  .m-av { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px;
+    filter: blur(4px) brightness(.55) saturate(.35); transition: filter .6s; }
+  .m-pane { position: absolute; inset: 0; border-radius: 12px; transition: opacity .6s .1s;
+    background: radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,0.15), transparent 55%), rgba(200,218,255,0.13);
+    border: 1px solid rgba(220,235,255,0.22); }
+  .m-streak { position: absolute; top: -20%; bottom: -20%; width: 22px; left: -36px; transform: rotate(16deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); opacity: 0; }
+  .man.on .m-streak { animation: streak .5s ease .05s; }
+  .man.on .m-pane { opacity: 0; }
+  .man.on .m-av { filter: none; }
+  .lineup-zone.picked .man:not(.on) .m-av { filter: blur(6px) brightness(.4) saturate(.2); }
+  .man .n { font-size: 9.5px; color: var(--mut); margin-top: 6px; transition: color .4s; }
+  .man.on .n { color: #fff; font-weight: 700; }
+
+  /* ③ 真相：玻璃碎裂，全部清晰 */
+  .crack { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  .crack path { fill: none; stroke: rgba(255,255,255,0.75); stroke-width: 1.2;
+    stroke-dasharray: 400; stroke-dashoffset: 400; filter: drop-shadow(0 0 3px rgba(200,220,255,0.8)); }
+  .lineup-zone.shatter .crack path { animation: crackdraw .5s ease forwards; }
+  .lineup-zone.shatter .crack path:nth-child(2) { animation-delay: .08s; }
+  .lineup-zone.shatter .crack path:nth-child(3) { animation-delay: .16s; }
+  @keyframes crackdraw { to { stroke-dashoffset: 0; } }
+  .lineup-zone.shatter .m-pane { opacity: 0; transition-delay: .55s; }
+  .lineup-zone.shatter .m-av { filter: none !important; transition-delay: .55s; }
+  .flashwhite { position: absolute; inset: 0; z-index: 6; background: #fff; opacity: 0; pointer-events: none; }
+  .lineup-zone.shatter .flashwhite { animation: flash .5s ease .45s; }
+  @keyframes flash { 0%,100% { opacity: 0; } 30% { opacity: .5; } }
+
+  .verdict { position: relative; z-index: 3; margin-top: 14px; min-height: 140px; }
+  .v-line { text-align: center; font-size: 13px; font-weight: 900; letter-spacing: 8px; padding-top: 8px;
+    opacity: 0; transition: opacity .5s .7s; color: #fff; text-shadow: 0 0 20px rgba(150,190,255,0.7); }
+  .verdict.done .v-line { opacity: 1; }
+  .cast { margin-top: 10px; }
+  .cast-row { display: flex; justify-content: space-between; align-items: center; background: rgba(200,218,255,0.07);
+    border: 1px solid rgba(220,235,255,0.16); border-radius: 12px; padding: 8px 12px; margin-top: 6px; font-size: 12px;
+    opacity: 0; transform: translateY(14px); transition: all .45s; }
+  .verdict.done .cast-row { opacity: 1; transform: none; }
+  .verdict.done .cast-row:nth-child(1) { transition-delay: .8s; }
+  .verdict.done .cast-row:nth-child(2) { transition-delay: 1s; }
+  .cast-row .who b { font-weight: 800; color: var(--ink); }
+  .cast-row .who span { color: var(--mut); font-size: 10.5px; margin-left: 6px; }
+  .cast-row .killer { color: #fff; font-weight: 800; font-size: 10px; background: rgba(125,184,255,0.2);
+    border: 1px solid rgba(160,210,255,0.5); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+  .cast-row .cnt { color: #9ec8ff; font-weight: 800; }
+  .v-note { text-align: center; font-size: 10px; color: var(--mut); margin-top: 10px; opacity: 0; transition: opacity .4s 1.2s; }
+  .verdict.done .v-note { opacity: 1; }
+
+  .assets { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .asset { background: var(--card-doc); border: 1px solid var(--card-bd-doc); border-radius: 14px; padding: 16px 18px; }
+  .asset h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .asset .use { font-size: 12px; color: var(--muted-doc); margin-bottom: 10px; }
+  .asset pre { white-space: pre-wrap; font-size: 12px; line-height: 1.7; color: #d8ceec; background: rgba(0,0,0,0.3);
+    border-radius: 8px; padding: 10px 12px; margin: 0; font-family: inherit; }
+  .note { font-size: 12px; color: var(--muted-doc); border-left: 3px solid #7db8ff; padding-left: 12px; margin-top: 18px; }
+</style>
+
+<div class="wrap">
+  <h1>毛玻璃 <span class="tag">信息不对称的形状 · 抽象 · 零场景</span></h1>
+  <p class="lede">剧本杀的本质是<b>信息不对称</b>——每个人只知道自己的那部分。毛玻璃就是它的物理形态：<b>看得见人影，看不清脸；隔着雾能感到"别人也有故事"，但只有你的那块被擦开</b>。三个动作贯穿全程：<b>起雾（隐藏）、擦拭（获得）、碎裂（真相）</b>。没有场景、没有道具，任何本子都不出戏。</p>
+
+  <h2>三个画面（都能点）</h2>
+  <p class="sub">① 点席位，<b>一道擦痕划过，雾里的人影变清晰</b>（=已准备） ② 感受"雾墙后别人的故事隐约可见，你的那块清清楚楚"；点底部按钮看<b>哈气起雾→擦开见剧名</b>的开场 ③ 点人影 = <b>擦开谁指认谁</b>；点「公布真相」<b>玻璃碎裂</b>，全部人影瞬间清晰</p>
+  <div class="stage">
+
+    <!-- ① 候场 -->
+    <div class="slot">
+      <div class="slot-label">① 候场 · 雾里的人逐个清晰（room）</div>
+      <div class="phone"><div class="scr">
+        <div class="head">
+          <div class="t">巷往咖啡馆</div>
+          <div class="s">打烊后的咖啡馆，有人没走 · No.4721</div>
+        </div>
+        <div class="h-row"><b>雾里有 7 个人影</b><span>点席位试试「就位」</span></div>
+        <div class="seats" id="seats">
+          <div class="seat host"><div class="cell"><div class="s-av">🎩</div><div class="pane"></div></div><div class="s-name">老张</div><div class="s-role">主持</div></div>
+          <div class="seat ready"><div class="cell"><div class="s-av">🦊</div><div class="pane"></div><div class="wipe-streak"></div></div><div class="s-name">阿茶</div></div>
+          <div class="seat"><div class="cell"><div class="s-av">🐰</div><div class="pane"></div><div class="wipe-streak"></div></div><div class="s-name">大飞</div></div>
+          <div class="seat"><div class="cell"><div class="s-av">🐻</div><div class="pane"></div><div class="wipe-streak"></div></div><div class="s-name">米米</div></div>
+          <div class="seat"><div class="cell"><div class="s-av">😼</div><div class="pane"></div><div class="wipe-streak"></div></div><div class="s-name">壮壮</div></div>
+          <div class="seat"><div class="cell"><div class="s-av">🐨</div><div class="pane"></div><div class="wipe-streak"></div></div><div class="s-name">小婉</div></div>
+          <div class="seat"><div class="cell"><div class="s-av">🦉</div><div class="pane"></div><div class="wipe-streak"></div></div><div class="s-name">教授</div></div>
+          <div class="seat"><div class="cell"><div class="s-av">➕</div><div class="pane"></div></div><div class="s-name">邀请</div></div>
+        </div>
+        <div class="hint" id="ready-hint">已擦亮 1/6 · 人影都清晰了才能开始</div>
+        <div class="btn primary">开 始</div>
+        <div class="btn ghost-btn">离 开</div>
+      </div></div>
+    </div>
+
+    <!-- ② 剧情 -->
+    <div class="slot">
+      <div class="slot-label">② 剧情 · 只有你的那块被擦开（game·单幕）</div>
+      <div class="phone"><div class="scr">
+        <div class="head">
+          <div class="t" style="font-size:13px; letter-spacing:2px;">你的角色 · 阿澈（店长）</div>
+        </div>
+        <div class="fogwall">
+          <div class="ghost-stories">
+            <div class="gline w85"></div><div class="gline w60"></div><div class="gline w75"></div>
+            <div class="gline w40"></div><div class="gline w85"></div><div class="gline w60"></div>
+            <div class="gline w75"></div><div class="gline w85"></div><div class="gline w40"></div>
+            <div class="gline w60"></div><div class="gline w85"></div><div class="gline w75"></div>
+          </div>
+          <div class="fogpane"><span class="drop" style="left:12%; top:8%;"></span><span class="drop" style="left:78%; top:4%; animation-delay:2.2s;"></span><span class="drop" style="left:46%; top:14%; animation-delay:3.6s;"></span></div>
+          <div class="story">
+            <div class="badge">已为你擦开 · 仅你可见</div>
+            <div class="st-tit">巷往咖啡馆 · 你的故事</div>
+            <div class="st-body">打烊前最后一杯手冲，是老周点的。<span class="hl">可我分明看见，杯底沉着一枚不属于店里的银纽扣</span>。卷帘门拉下一半时，储物间传来了响动…</div>
+          </div>
+        </div>
+        <div class="hostcard">
+          <div class="hc-tit"><b>📋 发群内容（仅主持人）</b><span class="hc-copy">一键复制全部</span></div>
+          <div class="hc-body">【开场白】各位客人，欢迎光临巷往咖啡馆……【线索】① 一枚银纽扣…② 未打卡的考勤表…</div>
+        </div>
+        <div class="btn primary" onclick="playOpen()">重放「起雾开场」</div>
+        <div class="open-ov" id="openov">
+          <div class="breath"></div>
+          <div class="hand-streak"></div>
+          <div class="open-tit"><div class="o1">雾 后 有 真 相</div><div class="o2">巷往咖啡馆</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ③ 指认 + 碎裂 -->
+    <div class="slot">
+      <div class="slot-label">③ 擦开谁=指认谁（voting）→ 碎裂（result）</div>
+      <div class="phone"><div class="scr">
+        <div class="head">
+          <div class="t" style="font-size:13px; letter-spacing:2px;">指认真凶 · 已投 4/6</div>
+        </div>
+        <div class="lineup-zone" id="lz">
+          <div class="lz-tit">擦 开 雾 · 看 清 谁</div>
+          <div class="lineup">
+            <div class="man" onclick="pick(this)"><div class="m-cell"><div class="m-av">🧑‍🎨</div><div class="m-pane"></div><div class="m-streak"></div></div><div class="n">阿澈 · 阿茶</div></div>
+            <div class="man" onclick="pick(this)"><div class="m-cell"><div class="m-av">👨‍💼</div><div class="m-pane"></div><div class="m-streak"></div></div><div class="n">老周 · 大飞</div></div>
+            <div class="man" onclick="pick(this)"><div class="m-cell"><div class="m-av">👩‍🏫</div><div class="m-pane"></div><div class="m-streak"></div></div><div class="n">小夏 · 米米</div></div>
+            <div class="man" onclick="pick(this)"><div class="m-cell"><div class="m-av">🧓</div><div class="m-pane"></div><div class="m-streak"></div></div><div class="n">陈叔 · 教授</div></div>
+          </div>
+          <svg class="crack" viewBox="0 0 300 140" preserveAspectRatio="none">
+            <path d="M150 70 L96 34 L60 42 M96 34 L84 8"/>
+            <path d="M150 70 L210 44 L252 52 M210 44 L228 12 M150 70 L188 112 L240 124"/>
+            <path d="M150 70 L118 116 L74 122 M150 70 L138 20"/>
+          </svg>
+          <div class="flashwhite"></div>
+        </div>
+        <div class="verdict" id="vd">
+          <div class="v-line">雾 散 了</div>
+          <div class="cast">
+            <div class="cast-row"><div class="who"><b>小夏</b><span>兼职生 · 米米</span><span class="killer">真凶</span></div><div class="cnt">4 票</div></div>
+            <div class="cast-row"><div class="who"><b>老周</b><span>十年常客 · 大飞</span></div><div class="cnt">2 票</div></div>
+          </div>
+          <div class="v-note">其他玩家看不到结果 · 一键复制发群公布</div>
+        </div>
+        <div class="btn primary" onclick="closeCase()">公布真相 · 碎雾</div>
+      </div></div>
+    </div>
+
+  </div>
+
+  <h2>为什么毛玻璃和剧本杀是同一个东西</h2>
+  <ul class="pl">
+    <li><b>隐藏 = 起雾</b>：候场时所有人是雾里的人影；剧情页你能"看见"别人也有故事（雾墙后的模糊字迹），但读不了——这正是剧本杀的心理张力：我知道你藏着事。</li>
+    <li><b>获得 = 擦拭</b>：就位是擦亮自己；你的剧情是"已为你擦开·仅你可见"的一块；指认是擦开你怀疑的人。所有"知情"动作统一成一个手势。</li>
+    <li><b>真相 = 碎裂</b>：公布真相时玻璃"啪"地裂开，所有人影同时清晰——信息不对称结束的瞬间，被做成了全场最大的动效。</li>
+    <li>题材通吃：雾没有情绪立场——悬疑本的雾是紧张，欢乐本的雾是"猜猜我是谁"；tag 含恐怖可以在雾上加一个缓慢划过的手印。</li>
+  </ul>
+
+  <h2>与真实流程逐页对应</h2>
+  <ul class="pl">
+    <li><b>room</b>：ready 字段 → 擦痕划过+盖板消失；「等待玩家准备」→「雾里还有 N 个人影」。</li>
+    <li><b>game</b>：开局播一次「哈气起雾→擦开见剧名」（transShow 换皮）；玩家屏 = 雾墙+擦开的故事卡（别人的故事骨架线是纯装饰 div，不涉及真数据）；主持人发群卡照旧。</li>
+    <li><b>voting</b>：点谁擦开谁（可改票 = 上一个重新蒙雾）；已投进度照旧。</li>
+    <li><b>result</b>：主持人「公布真相」→ 裂纹画开+白闪+全部清晰+结果行升起；玩家等待页 = 「雾还没散，等主持人揭晓…」。</li>
+  </ul>
+
+  <h2>技术与降级</h2>
+  <ul class="pl">
+    <li>mockup 用「模糊头像 + 半透明盖板」模拟磨砂，<b>不依赖 backdrop-filter</b>——小程序端直接照搬就能跑，兼容性无忧。</li>
+    <li>想要"真·透过玻璃"的效果（盖板后内容实时模糊），Skyline 渲染下可用 backdrop-filter，WebView 下自动退回本方案的模拟做法——两档效果都成立。</li>
+    <li>擦痕/水珠/裂纹/白闪全是 CSS keyframes + 一段 SVG，性能与光影版同级。</li>
+  </ul>
+
+  <h2>图片素材（0 张必需，2 张可选）</h2>
+  <div class="assets">
+    <div class="asset">
+      <h3>① 磨砂玻璃噪点纹理（可选）</h3>
+      <div class="use">叠在雾面上的细颗粒（现在是纯渐变），加了更像真玻璃</div>
+      <pre>Frosted glass texture with fine grain noise and subtle condensation, translucent white on dark background, seamless tileable, 1024x1024, no text</pre>
+    </div>
+    <div class="asset">
+      <h3>② 玻璃裂纹 PNG（可选）</h3>
+      <div class="use">真相碎裂时的裂纹可从 SVG 线升级为真实裂纹图（透明底）</div>
+      <pre>Shattered glass crack pattern radiating from center, thin white fracture lines, isolated on transparent background, PNG, 1024x768, no shards falling, no text</pre>
+    </div>
+  </div>
+  <p class="note">口径提醒：对外文案走「推理/雾后有真相」，意象干净，与备案口径一致。</p>
+</div>
+
+<script>
+  document.querySelectorAll('#seats .seat').forEach((s) => {
+    if (s.classList.contains('host') || !s.querySelector('.wipe-streak')) return;
+    s.addEventListener('click', () => {
+      s.classList.toggle('ready');
+      const n = document.querySelectorAll('#seats .seat.ready').length;
+      document.getElementById('ready-hint').textContent = `已擦亮 ${n}/6 · 人影都清晰了才能开始`;
+    });
+  });
+  function playOpen() {
+    const ov = document.getElementById('openov');
+    ov.classList.remove('show'); void ov.offsetWidth;
+    ov.classList.add('show');
+    setTimeout(() => ov.classList.remove('show'), 3200);
+  }
+  function pick(el) {
+    const lz = document.getElementById('lz');
+    if (lz.classList.contains('shatter')) return;
+    lz.classList.add('picked');
+    document.querySelectorAll('#lz .man').forEach((m) => m.classList.toggle('on', m === el));
+  }
+  function closeCase() {
+    const lz = document.getElementById('lz');
+    lz.classList.remove('shatter'); void lz.offsetWidth;
+    lz.classList.add('shatter');
+    const vd = document.getElementById('vd');
+    vd.classList.remove('done'); void vd.offsetWidth;
+    vd.classList.add('done');
+  }
+</script>

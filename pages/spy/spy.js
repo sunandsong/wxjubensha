@@ -3,7 +3,7 @@ const app = getApp();
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 页面素材（云存储 games/）：聚光灯审讯室底图 / 礼帽面具立绘 / 机密卡卡面
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
 const HERO_FID = GBASE + '/spy_hero.png';
 const CARD_FID = GBASE + '/spy_card_v2.jpg';       // 卡背（v2：换名避开同名覆盖的 CDN/本地缓存）
 const CARDF_FID = GBASE + '/spy_card_front.jpg';   // 卡面（词压在上面）

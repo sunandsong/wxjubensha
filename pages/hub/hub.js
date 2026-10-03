@@ -6,7 +6,7 @@ const TITLES = ['群本玩 · 拉个群开一局，揪出真凶', '谁在说谎�
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 // 游戏图在云存储 games/ 下；包内只留 th_*.jpg 极小缩略图占位，云图 bindload 后淡入替换
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
 const gimg = (name) => `${GBASE}/${name}`;
 const gth = (name) => `/assets/games/th_${name}`;
 // 原始 fileID 常量（data 里的 img 会被缓存路径替换，取图时以这些为准）

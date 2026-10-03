@@ -9,7 +9,7 @@ App({
       return;
     }
     wx.cloud.init({
-      env: 'cloud1-d6g6wknyy4d198022',
+      env: 'cloud1-d2g7h2a2u973c9c0d',
       traceUser: true,
     });
     // 测试身份（仅开发/体验版用，模拟多玩家）：总开关关闭时一律 null

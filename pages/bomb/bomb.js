@@ -2,7 +2,7 @@
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 页面素材（云存储 games/）：氛围底图 / 炸弹立绘 / 留证卡底
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
 const BG_FID = GBASE + '/bomb_bg.jpg';
 const HERO_FID = GBASE + '/bomb_hero.png';
 const PROOF_FID = GBASE + '/bomb_proof.jpg';

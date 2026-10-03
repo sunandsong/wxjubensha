@@ -4,7 +4,7 @@ const SCRIPTS = require('../../utils/scriptStore.js');
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 光影素材：浮尘粒子（氛围）
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
 const DUST_FID = GBASE + '/dust.jpg';
 
 Page({

@@ -5,7 +5,7 @@ const IMGCACHE = require('../../utils/imgCache.js');
 const FLAVORS = { qing: '清汤', hong: '红汤' };
 
 // 酒馆素材（云存储 games/）：外星酒馆底图 / 发光特调杯
-const GBASE = 'cloud://cloud1-d6g6wknyy4d198022.636c-cloud1-d6g6wknyy4d198022-1446823337/games';
+const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
 const BG_FID = GBASE + '/soup_bg.jpg';
 const CUP_FID = GBASE + '/soup_cup.png';
 

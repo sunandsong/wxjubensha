@@ -15,3 +15,8 @@ project.private.config.json
 # 大体积素材（GitHub 单文件上限 100M）
 *.MP4
 *.mp4
+
+# 本地密钥（AppSecret 等），绝不进 git
+secrets.local.json
+server/cloudbaserc.json
+server/functions/*/node_modules/

@@ -6,7 +6,7 @@ const TITLES = ['群本玩 · 拉个群开一局，揪出真凶', '谁在说谎�
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 // 游戏图在云存储 games/ 下；包内只留 th_*.jpg 极小缩略图占位，云图 bindload 后淡入替换
-const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
+const GBASE = 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/games';
 const gimg = (name) => `${GBASE}/${name}`;
 const gth = (name) => `/assets/games/th_${name}`;
 // 原始 fileID 常量（data 里的 img 会被缓存路径替换，取图时以这些为准）
@@ -38,7 +38,7 @@ Page({
   onHeroLoad() { this.setData({ heroOk: true }); },
   onCardLoad(e) { this.setData({ [`games[${e.currentTarget.dataset.i}].ok`]: true }); },
 
-  // 缓存链接/本地文件坏了 → 清缓存，退回 cloud:// 原始地址重新加载
+  // 缓存链接/本地文件坏了 → 清缓存，退回 https 原始地址重新加载
   onBgErr() { IMGCACHE.invalidate(BG_FID); if (this.data.bg !== BG_FID) this.setData({ bg: BG_FID }); },
   onHeroErr() { IMGCACHE.invalidate(MAN_FID); if (this.data.heroMan !== MAN_FID) this.setData({ heroMan: MAN_FID }); },
   onCardErr(e) {
@@ -99,6 +99,7 @@ Page({
   },
 
   onShow() {
+    app.ensureProfile();   // 首页即保存默认昵称+头像（用户改过的不覆盖）
     const savedNick = wx.getStorageSync('nick') || '';
     const savedAvatar = wx.getStorageSync('avatar') || '';
     // 大厅不拦人：进来就能逛，资料改到「真正要进局」时才要（审核红线：不得在体验前强制填资料）
@@ -132,11 +133,10 @@ Page({
   noop() {},
   onLoginAvatar(e) {
     const tmp = e.detail.avatarUrl;
-    // 预览一直用本地临时图（不换 src，避免上传成功后切 cloud:// 重新加载时闪一下）
+    // 预览一直用本地临时图（不换 src，避免上传成功后切云端链接重新加载时闪一下）
     this.setData({ loginAvatar: tmp, loginUploading: true });
     wx.setStorageSync('avatar', tmp);   // 先兜底存本地路径
-    const cloudPath = `avatars/${Date.now()}-${Math.floor(Math.random() * 1e6)}.png`;
-    wx.cloud.uploadFile({ cloudPath, filePath: tmp }).then((r) => {
+    app.uploadFile({ filePath: tmp }).then((r) => {
       this._avatarFid = r.fileID;         // 真正的 fileID 留到 loginDone 时落库
       wx.setStorageSync('avatar', r.fileID);
       this.setData({ loginUploading: false });
@@ -155,18 +155,10 @@ Page({
   loginBack() { this.setData({ loginStep: Math.max(1, this.data.loginStep - 1) }); },
   closeLogin() { this._afterLogin = null; this.setData({ needLogin: false }); },
 
-  // 进局前的资料门：缺头像或昵称才弹（性别可跳过）。补全后自动继续原来的动作。
-  _gate(after) {
-    if (app.getTestUid()) return false;
-    const nick = wx.getStorageSync('nick') || '';
-    const avatar = wx.getStorageSync('avatar') || '';
-    if (nick && avatar) return false;
-    this._afterLogin = after || null;
-    this.setData({
-      needLogin: true, loginStep: avatar ? 2 : 1,
-      loginAvatar: avatar, loginNick: nick, loginGender: wx.getStorageSync('gender') || '',
-    });
-    return true;
+  // 资料门已取消（审核要求不得强制授权）：缺资料就补默认昵称，直接放行
+  _gate() {
+    app.ensureProfile();
+    return false;
   },
   loginDone() {
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
@@ -183,7 +175,6 @@ Page({
 
   // ── 悬浮钮：有房回房，没房快速进房 ──
   fabTap() {
-    if (this._gate(() => this.fabTap())) return;
     const jb = app.getSession && app.getSession();
     if (jb && jb.roomId) return wx.reLaunch({ url: `/pages/room/room?roomId=${jb.roomId}&roomCode=${jb.roomCode}` });
     const sp = app.getSpySession && app.getSpySession();
@@ -203,6 +194,7 @@ Page({
   },
   // 按房间类型分流：卧底 → spy 页；剧本杀 → room 页
   async _quickJoin(code) {
+    this._gate();   // 没资料补默认昵称
     if (app.blockIfInRoom()) return;
     const nick = wx.getStorageSync('nick') || '玩家';
     let res;
@@ -267,13 +259,12 @@ Page({
   tapCard(e) {
     e.currentTarget.dataset.main ? this.goScripts() : this.goGame();
   },
+  // 进各玩法页不拦资料（审核要求先体验）；剧本杀在开本/进房时才弹资料门
   goScripts() {
-    if (this._gate(() => this.goScripts())) return;
     wx.navigateTo({ url: '/pages/index/index' });
   },
   goGame(e) {
     const id = e && e.currentTarget && e.currentTarget.dataset.game;
-    if (this._gate(() => this.goGame(e))) return;
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
     if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });
     // 卧底/狼人杀：已在房间里 → 带 resume=1 直达房间，否则进大厅

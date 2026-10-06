@@ -36,7 +36,7 @@
       </view>
       <view class="auth-btns">
         <button class="btn btn-ghost" bindtap="stepBack">上一步</button>
-        <button class="btn" bindtap="confirmAuth" disabled="{{!gender}}">{{editing ? '确定' : '完成进入'}}</button>
+        <button class="btn" bindtap="confirmAuth">{{editing ? '确定' : '完成进入'}}</button>
       </view>
     </block>
   </view>

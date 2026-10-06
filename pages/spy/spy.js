@@ -3,7 +3,7 @@ const app = getApp();
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 页面素材（云存储 games/）：聚光灯审讯室底图 / 礼帽面具立绘 / 机密卡卡面
-const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
+const GBASE = 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/games';
 const HERO_FID = GBASE + '/spy_hero.png';
 const CARD_FID = GBASE + '/spy_card_v2.jpg';       // 卡背（v2：换名避开同名覆盖的 CDN/本地缓存）
 const CARDF_FID = GBASE + '/spy_card_front.jpg';   // 卡面（词压在上面）
@@ -142,26 +142,15 @@ Page({
   },
 
   async _refresh() {
-    const db = wx.cloud.database();
     try {
-      const res = await db.collection('rooms').where({ _id: this.data.roomId }).get();
-      this._render(res.data[0] || null);
+      this._render(await app.getRoom(this.data.roomId));
     } catch (e) {}
   },
 
   _startWatch() {
     if (this.watcher) return;
-    const db = wx.cloud.database();
-    this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
+    this.watcher = app.watchRoom(this.data.roomId, {
       onChange: (snap) => this._render(snap.docs && snap.docs[0]),
-      onError: () => {
-        // 监听断了：先手动拉一次兜底，稍后重建监听
-        this._closeWatch();
-        this._refresh();
-        setTimeout(() => {
-          if (this.data.mode === 'room' && this.data.roomId && !this.watcher) this._startWatch();
-        }, 2000);
-      },
     });
   },
   _closeWatch() {

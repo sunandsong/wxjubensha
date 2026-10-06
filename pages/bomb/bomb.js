@@ -2,7 +2,7 @@
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 页面素材（云存储 games/）：氛围底图 / 炸弹立绘 / 留证卡底
-const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
+const GBASE = 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/games';
 const BG_FID = GBASE + '/bomb_bg.jpg';
 const HERO_FID = GBASE + '/bomb_hero.png';
 const PROOF_FID = GBASE + '/bomb_proof.jpg';
@@ -29,7 +29,7 @@ Page({
     if (last && last.num) this.setData({ num: last.num, ts: last.ts, code: last.code });
   },
   onBgLoad() { this.setData({ bgOk: true }); },
-  // 缓存坏了退回 cloud:// 原地址；再失败就隐藏（纯色底兜底）
+  // 缓存坏了退回 https 原地址；再失败就隐藏（纯色底兜底）
   onBgErr() { IMGCACHE.invalidate(BG_FID); this.setData(this.data.bgUrl !== BG_FID ? { bgUrl: BG_FID, bgOk: false } : { bgUrl: '', bgOk: false }); },
   onHeroErr() { IMGCACHE.invalidate(HERO_FID); this.setData({ heroUrl: this.data.heroUrl !== HERO_FID ? HERO_FID : '' }); },
 

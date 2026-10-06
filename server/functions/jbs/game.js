@@ -1,7 +1,6 @@
-// 云函数 game —— 统一处理剧本杀对局的所有服务端操作
-const cloud = require('wx-server-sdk');
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-const db = cloud.database();
+// 对局业务 —— 统一处理剧本杀/卧底/狼人杀的所有服务端操作
+// 原是微信云函数 game；现在由 index.js 的 HTTP 入口调用，身份(OPENID)从 JWT 解出后传进来
+const { db, app: cloudApp } = require('./cloud');
 const _ = db.command;
 const rooms = db.collection('rooms');
 const scriptsCol = db.collection('scripts');   // 剧本内容集合（后台可配；首次以种子兜底）
@@ -115,16 +114,45 @@ async function getMeta(scriptId) {
   return SCRIPT_META[scriptId] || null;
 }
 
-exports.main = async (event) => {
-  const { OPENID: realOpenid } = cloud.getWXContext();
-  // 测试用：客户端传 uid 可模拟不同玩家身份；不传则用真实 openid
-  const OPENID = event.uid || realOpenid;
+// 存储桶公开可读，上传后直接用这个前缀拼永久链接
+const STORAGE_BASE = 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la';
+const ADMIN_ACTIONS = ['seedScripts', 'setCover', 'purgeRooms'];
+
+exports.handle = async (event, realOpenid) => {
+  // 测试用：客户端传 uid 可模拟不同玩家身份；只认 test- 开头的，防止冒充真实玩家
+  const OPENID = (typeof event.uid === 'string' && /^test-[\w-]{1,20}$/.test(event.uid)) ? event.uid : realOpenid;
   const { action } = event;
+  if (ADMIN_ACTIONS.includes(action) && (!process.env.ADMIN_KEY || event.adminKey !== process.env.ADMIN_KEY)) {
+    return { ok: false, msg: '无权限' };
+  }
 
   try {
     // ── 获取自己的 openid ──
     if (action === 'whoami') {
       return { ok: true, openid: OPENID };
+    }
+
+    // ── 拉房间（替代原来前端直连数据库的 watch / get：前端轮询这个）──
+    if (action === 'getRoom') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      return { ok: true, room };
+    }
+
+    // ── 上传凭证：图片本体由前端直传云存储（HTTP 网关请求体只有 ~100KB，图片过不去）──
+    if (action === 'uploadSign') {
+      const ext = /^(jpg|jpeg|png|webp)$/.test(event.ext) ? event.ext : 'png';
+      const cloudPath = `jbs/avatars/${OPENID}_${Date.now()}_${Math.floor(Math.random() * 1e6)}.${ext}`;
+      const meta = await cloudApp.getUploadMetadata({ cloudPath });
+      const { url, token, authorization, cosFileId } = meta.data;
+      // 凭证是按 PUT 签的（同 node-sdk 自己的 uploadFile）；wx.uploadFile 的 POST 表单会报 SignatureDoesNotMatch
+      return {
+        ok: true, url,
+        headers: {
+          'content-type': ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg',
+          authorization, 'x-cos-security-token': token, 'x-cos-meta-fileid': cosFileId,
+        },
+        fileUrl: `${STORAGE_BASE}/${cloudPath}`,
+      };
     }
 
     // ── 拉取剧本列表（客户端用）：云数据库优先，空则回退种子 ──

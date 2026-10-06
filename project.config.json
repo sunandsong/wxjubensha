@@ -92,7 +92,6 @@
   "libVersion": "3.15.2",
   "appid": "wxec921dcb7d54425b",
   "projectname": "tongxuehui-juben",
-  "cloudfunctionRoot": "cloudfunctions/",
   "condition": {},
   "simulatorPluginLibVersion": {},
   "editorSetting": {}

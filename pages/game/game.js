@@ -1,10 +1,9 @@
 const app = getApp();
-const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
 const IMGCACHE = require('../../utils/imgCache.js');
 
 // 光影素材：浮尘粒子（氛围）
-const GBASE = 'cloud://cloud1-d2g7h2a2u973c9c0d.636c-cloud1-d2g7h2a2u973c9c0d-1499571087/games';
+const GBASE = 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/games';
 const DUST_FID = GBASE + '/dust.jpg';
 
 Page({
@@ -65,9 +64,8 @@ Page({
     // 每次进入都重新请求最新数据（不依赖缓存），带 Loading
     wx.showLoading({ title: '加载中', mask: true });
     try {
-      // 用 where 查询：房间不存在时返回空数组（不会 reject）
-      const res = await db.collection('rooms').where({ _id: this.data.roomId }).get();
-      const room = res.data[0] || null;
+      // 房间不存在时返回 null（不会 reject）
+      const room = await app.getRoom(this.data.roomId);
       if (room) this.render(room);
       else { wx.hideLoading(); return this.onDissolved(); }   // 房间已解散 → 退出
     } catch (e) {
@@ -219,22 +217,11 @@ Page({
 
   startWatch() {
     if (this.watcher || this._dissolved) return;
-    this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
+    this.watcher = app.watchRoom(this.data.roomId, {
       onChange: (snap) => {
         const room = snap.docs && snap.docs[0];
         if (!room) { this.onDissolved(); return; } // 主持人结束了游戏
         this.render(room);
-      },
-      onError: (e) => {
-        // 监听断了（网络/超时）：先手动拉一次兜底，稍后重建监听
-        console.error('watch error', e);
-        this.closeWatch();
-        db.collection('rooms').where({ _id: this.data.roomId }).get()
-          .then((res) => { const room = res.data[0]; if (room) this.render(room); })
-          .catch(() => {});
-        setTimeout(() => {
-          if (!this._hidden && this.data.roomId && !this.watcher) this.startWatch();
-        }, 2000);
       },
     });
   },

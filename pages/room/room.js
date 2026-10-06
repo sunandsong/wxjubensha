@@ -1,5 +1,4 @@
 const app = getApp();
-const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
@@ -14,7 +13,7 @@ Page({
     starting: false,
     scriptTitle: '',
     scriptSub: '',
-    shareImg: '',     // 分享卡片缩略图：当前本封面的 https 临时链接（cloud:// 不能直接当分享图）
+    shareImg: '',     // 分享卡片缩略图：当前本封面的 https 链接
   },
 
   watcher: null,
@@ -37,9 +36,8 @@ Page({
     // 每次进入都重新请求最新数据（不依赖缓存），带 Loading
     wx.showLoading({ title: '加载中', mask: true });
     try {
-      // 用 where 查询：房间不存在时返回空数组（不会 reject），可与网络错误区分
-      const res = await db.collection('rooms').where({ _id: this.data.roomId }).get();
-      this.renderRoom(res.data[0] || null);   // null → 按「房间已解散」处理
+      // 房间不存在时返回 null（不会 reject），可与网络错误区分
+      this.renderRoom(await app.getRoom(this.data.roomId));   // null → 按「房间已解散」处理
     } catch (e) {
       wx.showToast({ title: '加载失败，请重试', icon: 'none' });
     } finally {
@@ -62,22 +60,13 @@ Page({
     };
   },
 
-  // 解析当前本封面为分享缩略图：cloud:// → https 临时链接；本地路径直接用
+  // 当前本封面作分享缩略图（https 永久链接 / 本地路径都能直接用）
   _resolveShareImg(script) {
     if (this.data.shareImg) return;                    // 一局内剧本固定，取一次即可
     const img = (script && script.cover && script.cover.image) || '';
-    if (!img) return;
-    if (img.indexOf('cloud://') === 0) {
-      wx.cloud.getTempFileURL({ fileList: [img] })
-        .then((r) => {
-          const url = r.fileList && r.fileList[0] && r.fileList[0].tempFileURL;
-          if (url) this.setData({ shareImg: url });
-        })
-        .catch(() => {});
-    } else {
-      this.setData({ shareImg: img });
-    }
+    if (img) this.setData({ shareImg: img });
   },
+
 
   renderRoom(room) {
     if (!room) {
@@ -130,18 +119,8 @@ Page({
 
   startWatch() {
     if (this.watcher || this._dissolved) return;
-    this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
+    this.watcher = app.watchRoom(this.data.roomId, {
       onChange: (snap) => this.renderRoom(snap.docs && snap.docs[0]),
-      onError: (e) => {
-        // 监听断了（网络/超时）：先手动拉一次兜底，稍后重建监听
-        console.error('watch error', e);
-        this.closeWatch();
-        db.collection('rooms').where({ _id: this.data.roomId }).get()
-          .then((res) => this.renderRoom(res.data[0] || null)).catch(() => {});
-        setTimeout(() => {
-          if (!this._hidden && this.data.roomId && !this.watcher) this.startWatch();
-        }, 2000);
-      },
     });
   },
 

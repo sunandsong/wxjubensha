@@ -1,5 +1,6 @@
 const app = getApp();
 const SCRIPTS = require('../../utils/scriptStore.js');
+const IMGCACHE = require('../../utils/imgCache.js');
 
 // 首页分享：5 张图 + 标题池，分享时随机组合（图固定打包；以后可换云存储）
 const HOME_SHARE_IMGS = ['/assets/app1.jpg', '/assets/app2.jpg', '/assets/app3.jpg', '/assets/app4.jpg', '/assets/app5.jpg'];
@@ -12,7 +13,7 @@ const HOME_SHARE_TITLES = [
 ];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// 剧本 → 首页卡片数据；coverFid 留住原始 cloud:// 以便转 https 直链
+// 剧本 → 首页卡片数据；coverFid 留住原始 https 链接，作为本地缓存的 key
 const toCard = (s) => ({
   id: s.id, title: s.title, subtitle: s.subtitle, tag: s.tag,
   cover: { ...(s.cover || {}) },
@@ -94,54 +95,13 @@ Page({
     this.setData({ scripts }, () => this._resolveCovers());
   },
 
-  // 封面三级缓存：本地文件(永久,秒显) > https 临时链接(1小时) > cloud:// 现取
-  // 首次用临时链接显示并后台下载落盘，之后每次直接读本地文件，不再重复下载
+  // 封面两级缓存（见 utils/imgCache.js）：本地文件(永久,秒显) > https 永久链接，首次显示同时后台落盘
   _resolveCovers() {
-    const CK = 'coverUrlMapV1';    // fileID → https 临时链接
-    const LK = 'coverLocalMapV1';  // fileID → 已落盘的本地文件路径
-    const fs = wx.getFileSystemManager();
-    const dir = `${wx.env.USER_DATA_PATH}/covers`;
-    const local = wx.getStorageSync(LK) || {};
-    // 0) 本地文件已被系统清理的，从映射里剔除
-    Object.keys(local).forEach((fid) => {
-      try { fs.accessSync(local[fid]); } catch (e) { delete local[fid]; }
-    });
-    const c = wx.getStorageSync(CK);
-    const map = (c && c.ts && (Date.now() - c.ts < 3600000) && c.map) || {};
-    const best = (fid) => local[fid] || map[fid] || '';
-    // 1) 本地/链接缓存命中的立刻替换
-    const apply = () => this.data.scripts.map((s) => {
-      const u = s.coverFid && best(s.coverFid);
-      return u ? { ...s, cover: { ...s.cover, image: u } } : s;
-    });
-    this.setData({ scripts: apply() });
-    // 2) 后台把还没落盘的封面下载到本地，下次秒开
-    const download = (fid, url) => wx.downloadFile({
-      url,
-      success: (r) => {
-        if (r.statusCode !== 200) return;
-        try { fs.mkdirSync(dir, true); } catch (e) {}
-        const dest = `${dir}/${fid.split('/').pop()}`;
-        fs.saveFile({
-          tempFilePath: r.tempFilePath, filePath: dest,
-          success: () => { local[fid] = dest; wx.setStorageSync(LK, local); },
-        });
-      },
-    });
-    const toSave = (m) => [...new Set(this.data.scripts
-      .filter((s) => s.coverFid && s.coverFid.indexOf('cloud://') === 0 && !local[s.coverFid])
-      .map((s) => s.coverFid))].forEach((fid) => m[fid] && download(fid, m[fid]));
-    // 3) 连临时链接都没有的，批量取一次再显示+落盘
-    const need = [...new Set(this.data.scripts
-      .filter((s) => s.coverFid && s.coverFid.indexOf('cloud://') === 0 && !best(s.coverFid))
-      .map((s) => s.coverFid))];
-    if (!need.length) { toSave(map); return; }
-    wx.cloud.getTempFileURL({ fileList: need }).then((res) => {
-      (res.fileList || []).forEach((f) => { if (f.fileID && f.tempFileURL) map[f.fileID] = f.tempFileURL; });
-      wx.setStorageSync(CK, { ts: Date.now(), map });
-      this.setData({ scripts: apply() });
-      toSave(map);
-    }).catch(() => {});
+    const fids = [...new Set(this.data.scripts.map((s) => s.coverFid).filter(Boolean))];
+    if (!fids.length) return;
+    IMGCACHE.resolve(fids, (m) => this.setData({
+      scripts: this.data.scripts.map((s) => (m[s.coverFid] ? { ...s, cover: { ...s.cover, image: m[s.coverFid] } } : s)),
+    }));
   },
 
   // 编辑资料：重新打开三步向导（带出当前头像/昵称/性别，改完再确认）
@@ -150,12 +110,10 @@ Page({
     this.setData({ needAuth: true, authStep: 1, editing: true });
   },
 
-  // 需要资料才能做的动作（开本/进房）：没资料先弹向导，完成后自动执行
+  // 开本/进房：不弹授权向导，没资料就用默认昵称直接执行（想改资料自己点编辑）
   _requireAuth(fn) {
-    if (app.getTestUid() || (this.data.nick && this.data.avatar && this.data.gender)) return fn();
-    this._pendingAuthAction = fn;
-    this._orig = null;
-    this.setData({ needAuth: true, authStep: 1, editing: false, nick: '' });
+    if (!app.getTestUid()) this.setData(app.ensureProfile());
+    return fn();
   },
 
   // 取消编辑 / 取消授权：还原原值与缓存，关闭向导
@@ -203,11 +161,7 @@ Page({
     const tmp = e.detail.avatarUrl;
     this.setData({ avatar: tmp, uploading: true });   // 先本地预览
     try {
-      const openid = await app.ensureLogin();
-      const up = await wx.cloud.uploadFile({
-        cloudPath: `avatars/${openid}_${Date.now()}.png`,
-        filePath: tmp,
-      });
+      const up = await app.uploadFile({ filePath: tmp });
       this.setData({ avatar: up.fileID });
       wx.setStorageSync('avatar', up.fileID);
     } catch (err) {
@@ -219,10 +173,8 @@ Page({
 
   // 第三步完成：三项齐全才能进入（缺哪步回哪步）
   confirmAuth() {
-    if (!this.data.avatar) return this.setData({ authStep: 1 });
     const nick = (this.data.nick || '').trim().slice(0, 8);
     if (!nick) return this.setData({ authStep: 2 });
-    if (!this.data.gender) return wx.showToast({ title: '请选择性别', icon: 'none' });
     wx.setStorageSync('nick', nick);
     this.setData({ nick, needAuth: false, editing: false });
     // 资料完善后，执行刚才被挡下的动作（开本/进房）
@@ -269,7 +221,7 @@ Page({
     const id = e.currentTarget.dataset.id;
     const s = SCRIPTS.byId(id);
     if (!s) return;
-    // 复用列表里已转好的 https 封面，避免详情页又拉一次 cloud://
+    // 复用列表里已转好的 https 封面，避免详情页再下载一次
     const card = this.data.scripts.find((c) => c.id === id);
     const cover = (card && card.cover) || { ...(s.cover || {}) };
     this.setData({

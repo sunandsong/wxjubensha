@@ -1,0 +1,22 @@
+{
+  "version": "2.0",
+  "envId": "renshengqingdan-d9fc03opf3bac6ba",
+  "functionRoot": "./functions",
+  "functions": [
+    {
+      "name": "jbs",
+      "timeout": 20,
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "installDependency": true,
+      "memorySize": 256,
+      "envVariables": {
+        "CLOUDBASE_ENV_ID": "renshengqingdan-d9fc03opf3bac6ba",
+        "WX_APPID": "wxec921dcb7d54425b",
+        "WX_APPSECRET": "<见 secrets.local.json 的 WX_APPSECRET>",
+        "JWT_SECRET": "<见 secrets.local.json 的 JWT_SECRET>",
+        "ADMIN_KEY": "<见 secrets.local.json 的 ADMIN_KEY>"
+      }
+    }
+  ]
+}

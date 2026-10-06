@@ -1,5 +1,4 @@
 const app = getApp();
-const db = wx.cloud.database();
 const SCRIPTS = require('../../utils/scriptStore.js');
 
 Page({
@@ -85,9 +84,8 @@ Page({
     wx.showLoading({ title: '加载中', mask: true });
     let room;
     try {
-      // 用 where 查询：房间不存在时返回空数组（不会 reject）
-      const res = await db.collection('rooms').where({ _id: this.data.roomId }).get();
-      room = res.data[0] || null;
+      // 房间不存在时返回 null（不会 reject）
+      room = await app.getRoom(this.data.roomId);
     } catch (e) {
       wx.hideLoading();
       return wx.showToast({ title: '加载失败，请重试', icon: 'none' });
@@ -170,7 +168,7 @@ Page({
 
   watchReset() {
     if (this.watcher) return;
-    this.watcher = db.collection('rooms').doc(this.data.roomId).watch({
+    this.watcher = app.watchRoom(this.data.roomId, {
       onChange: (snap) => {
         const room = snap.docs && snap.docs[0];
         if (!room) {                       // 房主结束游戏、房间被解散
@@ -183,13 +181,6 @@ Page({
           this.closeWatch();
           wx.redirectTo({ url: `/pages/room/room?roomId=${this.data.roomId}&roomCode=${this.data.roomCode}` });
         }
-      },
-      onError: () => {
-        // 监听断了：稍后重建（本页 watch 只为感知解散/重开，无需手动拉取）
-        this.closeWatch();
-        setTimeout(() => {
-          if (!this._hidden && this.data.roomId && !this.watcher) this.watchReset();
-        }, 2000);
       },
     });
   },

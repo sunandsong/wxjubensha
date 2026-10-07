@@ -1,7 +1,7 @@
 const app = getApp();
 const IMGCACHE = require('../../utils/imgCache.js');
 
-const IMGS = ['/assets/app1.jpg', '/assets/app2.jpg', '/assets/app3.jpg', '/assets/app4.jpg', '/assets/app5.jpg'];
+const IMGS = ['https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/share/app1.jpg', 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/share/app2.jpg', 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/share/app3.jpg', 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/share/app4.jpg', 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/share/app5.jpg'];
 const TITLES = ['群本玩 · 拉个群开一局，揪出真凶', '谁在说谎？拉群来一局剧本杀 🔍', '一局一故事，一人一面具'];
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 

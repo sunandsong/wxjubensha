@@ -56,7 +56,7 @@ Page({
     return {
       title: `「${this.data.scriptTitle || '剧本杀'}」房间 ${code}，点我直接进房`,
       path: `/pages/index/index?joinCode=${code}`,
-      imageUrl: this.data.shareImg || '/assets/app1.jpg',   // 本封面优先，没拿到回退通用图
+      imageUrl: this.data.shareImg || 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/share/app1.jpg',   // 本封面优先，没拿到回退通用图
     };
   },
 

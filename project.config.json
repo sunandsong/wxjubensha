@@ -28,10 +28,6 @@
       },
       {
         "type": "glob",
-        "value": "assets/logo*"
-      },
-      {
-        "type": "glob",
         "value": "assets/games/chain.png"
       },
       {

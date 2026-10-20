@@ -11,7 +11,7 @@
       <image wx:if="{{avatar}}" class="ub-img" src="{{avatar}}" mode="aspectFill" />
       <view wx:else class="ub-img ub-ph">🐱</view>
     </view>
-    <view class="ub-hi">Hi，{{nick}} <text class="ub-wave">👋</text></view>
+    <view class="ub-hi" bindtap="editProfile">Hi，{{nick}} <text class="ub-wave">👋</text></view>
   </view>
 
   <!-- 剧本杀 · 招牌大横幅 -->
@@ -70,12 +70,14 @@
 
       <block wx:if="{{loginStep === 1}}">
         <view class="login-title">第一步 · 选择头像</view>
-        <view class="login-sub">点下方用你的微信头像，不选就用默认头像</view>
+        <view class="login-sub">点下方用你的微信头像</view>
         <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
           <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
           <view wx:else class="la-ph">＋ 头像</view>
         </button>
-        <button class="login-btn" bindtap="loginNext" disabled="{{loginUploading}}">{{loginUploading ? '头像上传中…' : (loginAvatar ? '下一步' : '跳过')}}</button>
+        <!-- 还没选头像时，「下一步」直接拉起选头像 -->
+        <button wx:if="{{!loginAvatar}}" class="login-btn" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">下一步</button>
+        <button wx:else class="login-btn" bindtap="loginNext" disabled="{{loginUploading}}">{{loginUploading ? '头像上传中…' : '下一步'}}</button>
       </block>
 
       <block wx:elif="{{loginStep === 2}}">
@@ -85,12 +87,12 @@
           value="{{loginNick}}" bindinput="onLoginNick" bindblur="onLoginNick" maxlength="8" />
         <view class="login-row">
           <button class="login-btn ghost" bindtap="loginBack">上一步</button>
-          <button class="login-btn" bindtap="loginNext">{{loginNick ? '下一步' : '跳过'}}</button>
+          <button class="login-btn" bindtap="loginNext">下一步</button>
         </view>
       </block>
 
       <block wx:else>
-        <view class="login-title">第三步 · 选择性别（可跳过）</view>
+        <view class="login-title">第三步 · 选择性别</view>
         <view class="login-sub">决定你在剧本里的角色形象</view>
         <view class="login-gender">
           <view class="lg-opt {{loginGender === 'm' ? 'on' : ''}}" data-g="m" bindtap="pickLoginGender">♂ 男生</view>
@@ -98,11 +100,12 @@
         </view>
         <view class="login-row">
           <button class="login-btn ghost" bindtap="loginBack">上一步</button>
-          <button class="login-btn" bindtap="loginDone">{{loginGender ? '进入游戏' : '跳过，进入游戏'}}</button>
+          <button class="login-btn" bindtap="loginDone">进入游戏</button>
         </view>
       </block>
 
-      <view class="login-skip" bindtap="closeLogin">暂不设置，以后可点头像修改</view>
+      <!-- 每步都可跳过（审核要求不得强制），做成不显眼的小字 -->
+      <view class="login-skip" bindtap="loginSkip">跳过</view>
     </view>
   </view>
 

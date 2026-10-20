@@ -137,6 +137,17 @@ Page({
     this.setData({ needLogin: true, loginStep: 1, loginNick: '', loginAvatar: '', loginGender: wx.getStorageSync('gender') || '' });
   },
 
+  // 点「Hi，昵称」→ 打开同一个资料弹窗改头像昵称，带上当前值
+  editProfile() {
+    if (app.getTestUid()) return;
+    this.setData({
+      needLogin: true, loginStep: 1,
+      loginAvatar: app.isDefaultAvatar() ? '' : wx.getStorageSync('avatar'),
+      loginNick: wx.getStorageSync('nick') || '',
+      loginGender: wx.getStorageSync('gender') || '',
+    });
+  },
+
   // ── 资料设置：头像 → 昵称 → 性别，每步可跳过 ──
   noop() {},
   onLoginAvatar(e) {
@@ -156,7 +167,16 @@ Page({
   pickLoginGender(e) { this.setData({ loginGender: e.currentTarget.dataset.g }); },
   loginNext() {
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
-    this.setData({ loginStep: this.data.loginStep + 1 });   // 没选/没填就是跳过这步
+    if (this.data.loginStep === 2 && !(this.data.loginNick || '').trim()) return wx.showToast({ title: '先填个昵称', icon: 'none' });
+    this.setData({ loginStep: this.data.loginStep + 1 });
+  },
+  // 小字「跳过」：跳过当前这步，最后一步跳过就直接进
+  loginSkip() {
+    const s = this.data.loginStep;
+    if (s === 1) return this.setData({ loginStep: 2 });
+    if (s === 2) return this.setData({ loginStep: 3, loginNick: '' });
+    this.setData({ loginGender: '' });
+    this.loginDone();
   },
   loginBack() { this.setData({ loginStep: Math.max(1, this.data.loginStep - 1) }); },
   closeLogin() {

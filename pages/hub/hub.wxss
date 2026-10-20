@@ -254,6 +254,8 @@ page { background: #2b2436; }
 .login-row { display: flex; gap: 22rpx; }
 .login-row .login-btn { flex: 1; }
 
+.login-skip { margin-top: 28rpx; text-align: center; font-size: 26rpx; color: #8f84a8; }
+
 /* 资料门右上角关闭：门不再强制，随时可退回大厅 */
 .login-close {
   position: absolute; top: 16rpx; right: 24rpx;

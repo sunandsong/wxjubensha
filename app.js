@@ -200,6 +200,11 @@ App({
     }
     return { nick, avatar, gender: wx.getStorageSync('gender') || '' };
   },
+  // 还在用默认头像（没自己设过）
+  isDefaultAvatar() {
+    const av = wx.getStorageSync('avatar');
+    return !av || av === DEFAULT_AVATAR;
+  },
 
   setLogin(openid) {
     if (!openid || this.globalData.testUid) return; // 测试身份不污染真实 openid 缓存

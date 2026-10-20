@@ -61,7 +61,7 @@
     </view>
   </view>
 
-  <!-- 进局前的资料门：头像 → 昵称 → 性别(可跳过)；可关闭，大厅照常逛 -->
+  <!-- 首次进入的资料设置：头像 → 昵称 → 性别，每步可跳过；可关闭，大厅照常逛 -->
   <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop">
     <view class="login-card">
       <view class="login-close" bindtap="closeLogin">✕</view>
@@ -70,12 +70,12 @@
 
       <block wx:if="{{loginStep === 1}}">
         <view class="login-title">第一步 · 选择头像</view>
-        <view class="login-sub">点下方用你的微信头像</view>
+        <view class="login-sub">点下方用你的微信头像，不选就用默认头像</view>
         <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
           <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
           <view wx:else class="la-ph">＋ 头像</view>
         </button>
-        <button class="login-btn" bindtap="loginNext" disabled="{{loginUploading || !loginAvatar}}">{{loginUploading ? '头像上传中…' : '下一步'}}</button>
+        <button class="login-btn" bindtap="loginNext" disabled="{{loginUploading}}">{{loginUploading ? '头像上传中…' : (loginAvatar ? '下一步' : '跳过')}}</button>
       </block>
 
       <block wx:elif="{{loginStep === 2}}">
@@ -85,7 +85,7 @@
           value="{{loginNick}}" bindinput="onLoginNick" bindblur="onLoginNick" maxlength="8" />
         <view class="login-row">
           <button class="login-btn ghost" bindtap="loginBack">上一步</button>
-          <button class="login-btn" bindtap="loginNext" disabled="{{!loginNick}}">下一步</button>
+          <button class="login-btn" bindtap="loginNext">{{loginNick ? '下一步' : '跳过'}}</button>
         </view>
       </block>
 
@@ -101,6 +101,8 @@
           <button class="login-btn" bindtap="loginDone">{{loginGender ? '进入游戏' : '跳过，进入游戏'}}</button>
         </view>
       </block>
+
+      <view class="login-skip" bindtap="closeLogin">暂不设置，以后可点头像修改</view>
     </view>
   </view>
 

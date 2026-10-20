@@ -127,9 +127,17 @@ Page({
         return wx.reLaunch({ url: '/pages/wolf/wolf?resume=1' });
       }
     }
+    this._maybeAskProfile();
   },
 
-  // ── 强制登录门：头像 → 昵称 → 性别 ──
+  // 首次进入弹一次资料设置；每步都可跳过、可关闭（审核红线：不得强制），跳过就用默认昵称+头像
+  _maybeAskProfile() {
+    if (this.data.needLogin || app.getTestUid() || wx.getStorageSync('profileAsked')) return;
+    if (!app.isDefaultAvatar()) return wx.setStorageSync('profileAsked', 1);   // 老用户已设过资料
+    this.setData({ needLogin: true, loginStep: 1, loginNick: '', loginAvatar: '', loginGender: wx.getStorageSync('gender') || '' });
+  },
+
+  // ── 资料设置：头像 → 昵称 → 性别，每步可跳过 ──
   noop() {},
   onLoginAvatar(e) {
     const tmp = e.detail.avatarUrl;
@@ -147,13 +155,16 @@ Page({
   onLoginNick(e) { this.setData({ loginNick: e.detail.value }); },
   pickLoginGender(e) { this.setData({ loginGender: e.currentTarget.dataset.g }); },
   loginNext() {
-    const s = this.data.loginStep;
-    if (s === 1 && !this.data.loginAvatar) return wx.showToast({ title: '先选个头像', icon: 'none' });
-    if (s === 2 && !this.data.loginNick) return wx.showToast({ title: '先填个昵称', icon: 'none' });
-    this.setData({ loginStep: s + 1 });
+    if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
+    this.setData({ loginStep: this.data.loginStep + 1 });   // 没选/没填就是跳过这步
   },
   loginBack() { this.setData({ loginStep: Math.max(1, this.data.loginStep - 1) }); },
-  closeLogin() { this._afterLogin = null; this.setData({ needLogin: false }); },
+  closeLogin() {
+    wx.setStorageSync('profileAsked', 1);
+    this._afterLogin = null;
+    this.setData({ needLogin: false });
+    this.onShow();   // 可能已选了头像，刷新大厅显示
+  },
 
   // 资料门已取消（审核要求不得强制授权）：缺资料就补默认昵称，直接放行
   _gate() {
@@ -162,12 +173,13 @@ Page({
   },
   loginDone() {
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
-    if (!this.data.loginAvatar) return wx.showToast({ title: '先选个头像', icon: 'none' });
-    if (!this.data.loginNick) return wx.showToast({ title: '先填个昵称', icon: 'none' });
-    const avatar = wx.getStorageSync('avatar') || this.data.loginAvatar;   // fileID 优先，兜底本地
-    wx.setStorageSync('nick', this.data.loginNick);
-    if (this.data.loginGender) wx.setStorageSync('gender', this.data.loginGender);   // 性别可跳过
-    this.setData({ needLogin: false, nick: this.data.loginNick, avatar });
+    // 三项都可跳过：没填的保留默认值（头像在 onLoginAvatar 里已落 storage）
+    const nick = (this.data.loginNick || '').trim().slice(0, 8);
+    if (nick) wx.setStorageSync('nick', nick);
+    if (this.data.loginGender) wx.setStorageSync('gender', this.data.loginGender);
+    wx.setStorageSync('profileAsked', 1);
+    app.ensureProfile();
+    this.setData({ needLogin: false, nick: wx.getStorageSync('nick'), avatar: wx.getStorageSync('avatar') });
     const after = this._afterLogin; this._afterLogin = null;
     if (after) return after();          // 补完资料接着做刚才那件事
     this.onShow();

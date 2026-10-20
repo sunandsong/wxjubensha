@@ -55,6 +55,10 @@
         "value": "README.md"
       },
       {
+        "type": "file",
+        "value": "CLAUDE.md"
+      },
+      {
         "type": "folder",
         "value": "server"
       },

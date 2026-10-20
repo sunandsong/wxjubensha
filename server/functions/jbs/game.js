@@ -104,6 +104,19 @@ async function getRoomByCode(code) {
   return room && !isStale(room) ? room : null;
 }
 
+const MAX_SPECTATORS = 30;
+// 占座人数：房主（卧底房主虽参与，也沿用原口径不算）、旁观者都不算
+function seatedCount(room) {
+  return (room.players || []).filter((p) => !p.spectator && p.openid !== room.hostOpenid).length;
+}
+
+// 玩家上限：派对房 12 名（不含房主）；剧本杀 = 该本角色数（主持人不占角色）
+async function seatLimit(room) {
+  if (room.gameType === 'spy' || room.gameType === 'wolf') return 12;
+  const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
+  return (meta && meta.charIds && meta.charIds.length) || 6;
+}
+
 const isDuplicateKey = (e) => /duplicate|E11000/i.test(`${(e && e.code) || ''} ${(e && e.message) || e}`);
 
 // 抽一个空闲房间号并插入房间：号被过期房间占着就先回收；并发撞号靠唯一索引报错后重抽
@@ -262,23 +275,37 @@ exports.handle = async (event, realOpenid) => {
       if (!room) return { ok: false, msg: '房间不存在' };
       const already = room.players.find((p) => p.openid === OPENID);
       if (already) return { ok: true, roomId: room._id, roomCode: room.roomCode, gameType: room.gameType || '', spectator: !!already.spectator };
-      // 派对房（卧底/狼人杀）：开局后不能进（身份已发完），最多 12 人
-      if (room.gameType === 'spy' || room.gameType === 'wolf') {
-        if (room.status !== 'waiting') return { ok: false, msg: '本局已开始，等下一局再来' };
-        if (room.players.filter((p) => p.openid !== room.hostOpenid).length >= 12) return { ok: false, msg: '房间已满（最多 12 名玩家）' };
-        await rooms.doc(room._id).update({
-          data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', ready: false, out: false }) },
-        });
-        return { ok: true, roomId: room._id, roomCode: room.roomCode, gameType: room.gameType, openid: OPENID };
+      // 旁观者：进房时主动选，或开局后才进来（lateJoin，下一局自动转玩家）
+      const started = !!(room.status && room.status !== 'waiting');
+      const asSpectator = started || !!event.spectator;
+      if (asSpectator && room.players.filter((p) => p.spectator).length >= MAX_SPECTATORS) return { ok: false, msg: '旁观人数已满' };
+      const isParty = room.gameType === 'spy' || room.gameType === 'wolf';
+      const cap = await seatLimit(room);
+      if (!asSpectator && seatedCount(room) >= cap) {
+        return { ok: false, msg: `玩家已满（本局最多 ${cap} 名玩家${isParty ? '' : '，主持人不算'}），可以选旁观进入` };
       }
-      // 游戏开始后进来的，一律作为「吃瓜群众」：只能看第一幕、不参与搜证/投票
-      const asSpectator = !!(room.status && room.status !== 'waiting');
-      if (!asSpectator && room.players.length >= 6) return { ok: false, msg: '房间已满（最多 6 人）' };
-      if (asSpectator && room.players.length >= 30) return { ok: false, msg: '围观人数已满' };
-      await rooms.doc(room._id).update({
-        data: { players: _.push({ openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '', spectator: asSpectator }) },
-      });
-      return { ok: true, roomId: room._id, roomCode: room.roomCode, openid: OPENID, spectator: asSpectator };
+      const p = { openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', ready: false, spectator: asSpectator, lateJoin: started };
+      if (isParty) p.out = false;
+      else { p.gender = event.gender || ''; p.charId = ''; }
+      await rooms.doc(room._id).update({ data: { players: _.push(p) } });
+      return { ok: true, roomId: room._id, roomCode: room.roomCode, gameType: room.gameType || '', openid: OPENID, spectator: asSpectator };
+    }
+
+    // ── 等待阶段：玩家 ⇄ 旁观 互换（房主不能旁观）──
+    if (action === 'setSpectator') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!room) return { ok: false, msg: '房间不存在' };
+      if (room.status && room.status !== 'waiting') return { ok: false, msg: '游戏已开始，等下一局再换' };
+      if (room.hostOpenid === OPENID) return { ok: false, msg: '房主不能旁观' };
+      const me = (room.players || []).find((p) => p.openid === OPENID);
+      if (!me) return { ok: false, msg: '你不在这个房间里' };
+      const want = !!event.spectator;
+      if (!!me.spectator === want) return { ok: true };
+      if (!want && seatedCount(room) >= (await seatLimit(room))) return { ok: false, msg: '玩家已满，暂时上不了桌' };
+      if (want && room.players.filter((p) => p.spectator).length >= MAX_SPECTATORS) return { ok: false, msg: '旁观人数已满' };
+      const players = room.players.map((p) => (p.openid === OPENID ? { ...p, spectator: want, lateJoin: false, ready: false } : p));
+      await rooms.doc(event.roomId).update({ data: { players } });
+      return { ok: true };
     }
 
     // ── 离开房间 ──
@@ -293,18 +320,17 @@ exports.handle = async (event, realOpenid) => {
       }
       // 游戏已开始（非等待）：真实玩家退出 → 直接解散，本局结束
       if (room.status && room.status !== 'waiting') {
-        await rooms.doc(event.roomId).remove();
-        if (room.gameType === 'spy') await secrets.doc(event.roomId).remove().catch(() => {});
+        await removeRoom(event.roomId);
         return { ok: true, dissolved: true };
       }
       const players = room.players.filter((p) => p.openid !== OPENID);
-      if (players.length === 0) {
-        await rooms.doc(event.roomId).remove();
-        if (room.gameType === 'spy') await secrets.doc(event.roomId).remove().catch(() => {});
+      const nextHost = players.find((p) => !p.spectator);   // 房主只能转给玩家，不转给旁观者
+      if (!nextHost) {
+        await removeRoom(event.roomId);
         return { ok: true, dissolved: true };
       }
       const data = { players };
-      if (room.hostOpenid === OPENID) data.hostOpenid = players[0].openid; // 房主退出则转移房主
+      if (room.hostOpenid === OPENID) data.hostOpenid = nextHost.openid; // 房主退出则转移房主
       await rooms.doc(event.roomId).update({ data });
       return { ok: true };
     }
@@ -314,6 +340,8 @@ exports.handle = async (event, realOpenid) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room) return { ok: false, msg: '房间不存在' };
       if (room.status && room.status !== 'waiting') return { ok: false, msg: '游戏已开始' };
+      const meR = (room.players || []).find((p) => p.openid === OPENID);
+      if (meR && meR.spectator) return { ok: false, msg: '旁观者不用准备' };
       const players = (room.players || []).map((p) =>
         p.openid === OPENID ? { ...p, ready: !p.ready } : p
       );
@@ -329,8 +357,8 @@ exports.handle = async (event, realOpenid) => {
       // 卧底局：随机词对+随机卧底，词写入 spySecrets（不进 room 文档，防 watch 泄底）
       if (room.gameType === 'spy') {
         if (room.status !== 'waiting') return { ok: false, msg: '游戏已开始' };
-        const ps = room.players || [];
-        if (ps.length < 4) return { ok: false, msg: `至少 4 人才能开始（现在 ${ps.length} 人）` };
+        const ps = (room.players || []).filter((p) => !p.spectator);   // 旁观者不发词
+        if (ps.length < 4) return { ok: false, msg: `至少 4 人才能开始（现在 ${ps.length} 人，旁观不算）` };
         const notReady = ps.filter((p) => p.openid !== room.hostOpenid && !p.ready);
         if (notReady.length) return { ok: false, msg: `还有 ${notReady.length} 名玩家未点准备` };
         let spyCount = room.spyCount === 2 ? 2 : 1;
@@ -343,7 +371,7 @@ exports.handle = async (event, realOpenid) => {
         const words = {};
         ps.forEach((p) => { words[p.openid] = spies.includes(p.openid) ? spyWord : civilWord; });
         await secrets.doc(event.roomId).set({ data: { words, spies, civilWord, spyWord, createdAt: db.serverDate() } });
-        const players = ps.map((p) => ({ ...p, out: false }));
+        const players = room.players.map((p) => ({ ...p, out: false }));
         await rooms.doc(event.roomId).update({
           data: { players, status: 'playing', round: 1, votes: _.set({}), voting: false, lastVote: _.remove() },
         });
@@ -354,8 +382,8 @@ exports.handle = async (event, realOpenid) => {
       if (room.gameType === 'wolf') {
         if (room.status !== 'waiting') return { ok: false, msg: '游戏已开始' };
         // 上帝模式：房主是上帝，不发身份、不计入人数
-        const ps = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
-        if (ps.length < 6) return { ok: false, msg: `至少 6 名玩家才能开始（上帝不算，现在 ${ps.length} 人）` };
+        const ps = (room.players || []).filter((p) => p.openid !== room.hostOpenid && !p.spectator);
+        if (ps.length < 6) return { ok: false, msg: `至少 6 名玩家才能开始（上帝和旁观不算，现在 ${ps.length} 人）` };
         const notReady = ps.filter((p) => !p.ready);
         if (notReady.length) return { ok: false, msg: `还有 ${notReady.length} 名玩家未点准备` };
         const wolves = ps.length >= 10 ? 3 : 2;   // 6–9人=2狼，10–12人=3狼；神职固定：预言家+女巫
@@ -403,6 +431,8 @@ exports.handle = async (event, realOpenid) => {
     if (action === 'search') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid === OPENID) return { ok: false, msg: '主持人不参与搜证' };
+      const searcher = (room.players || []).find((p) => p.openid === OPENID);
+      if (searcher && searcher.spectator) return { ok: false, msg: '旁观者不能搜证' };
       if (room.status !== 'playing') return { ok: false, msg: '当前不在剧情阶段' };
       const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       const idx = room.actIndex || 0;
@@ -483,9 +513,24 @@ exports.handle = async (event, realOpenid) => {
       return { ok: true, word };
     }
 
+    // ── 卧底：旁观者上帝视角（每人的词 + 谁是卧底；只给旁观者，玩家拿不到）──
+    if (action === 'spyGod') {
+      const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!room || room.gameType !== 'spy') return { ok: false, msg: '房间不存在' };
+      const me = (room.players || []).find((p) => p.openid === OPENID);
+      if (!me || !me.spectator) return { ok: false, msg: '只有旁观者能看' };
+      const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
+      if (!sec) return { ok: false, msg: '本局还没发词' };
+      const spies = sec.spies || [];
+      const list = (room.players || []).filter((p) => sec.words && sec.words[p.openid]).map((p) => ({
+        openid: p.openid, nick: p.nick, word: sec.words[p.openid], isSpy: spies.includes(p.openid),
+      }));
+      return { ok: true, civilWord: sec.civilWord, spyWord: sec.spyWord, list };
+    }
+
     // ═══════════ 狼人杀（无上帝：夜晚收集行动自动结算，白天群里讨论、房主点人出局） ═══════════
     const WOLF_NAMES = { wolf: '狼人', seer: '预言家', witch: '女巫', villager: '平民' };
-    const wolfAliveOf = (room) => (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算存活
+    const wolfAliveOf = (room) => (room.players || []).filter((p) => !p.out && !p.spectator && p.openid !== room.hostOpenid);   // 上帝、旁观不算存活
     // 夜晚是否收集完毕：狼刀已定 && 预言家已查(或已死) && 女巫已动(或已死)
     const wolfNightComplete = (room, sec) => {
       const night = sec.night || {};
@@ -496,7 +541,7 @@ exports.handle = async (event, realOpenid) => {
     };
     const wolfRevealData = (sec, players, winner) => ({
       winner,
-      roles: (players || []).map((p) => ({
+      roles: (players || []).filter((p) => sec.roles[p.openid]).map((p) => ({
         openid: p.openid, nick: p.nick,
         role: sec.roles[p.openid] || 'villager',
         roleName: WOLF_NAMES[sec.roles[p.openid]] || '平民',
@@ -511,7 +556,7 @@ exports.handle = async (event, realOpenid) => {
       if (night.witchPoison && deaths.indexOf(night.witchPoison) < 0) deaths.push(night.witchPoison);
       const players = (room.players || []).map((p) => (deaths.indexOf(p.openid) >= 0 ? { ...p, out: true } : p));
       const deadNicks = players.filter((p) => deaths.indexOf(p.openid) >= 0).map((p) => p.nick);
-      const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算
+      const alive = wolfAliveOf({ ...room, players });
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = { type: 'dawn', round: room.round, deaths: deadNicks, peace: !deaths.length };
       const nk = (id) => { const x = (room.players || []).find((q) => q.openid === id); return x ? x.nick : ''; };
@@ -538,11 +583,13 @@ exports.handle = async (event, realOpenid) => {
       await rooms.doc(roomId).update({ data: { nightVer: _.inc(1) } }).catch(() => {});
     };
 
-    // ── 狼人杀：上帝面板（仅房主可见：全员身份 + 夜晚进度 + 药水）──
+    // ── 狼人杀：上帝面板（房主 + 旁观者可见：夜晚进度 + 药水；旁观者额外带全员身份）──
     if (action === 'wolfGod') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room || room.gameType !== 'wolf') return { ok: false, msg: '房间不存在' };
-      if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有上帝能看' };
+      const viewer = (room.players || []).find((p) => p.openid === OPENID);
+      const isSpec = !!(viewer && viewer.spectator);
+      if (room.hostOpenid !== OPENID && !isSpec) return { ok: false, msg: '只有上帝能看' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局还没发身份' };
       // 主持台：给上帝夜晚行动实况(刀谁/验谁结果/用药),但不给开局身份表
@@ -555,6 +602,9 @@ exports.handle = async (event, realOpenid) => {
       return {
         ok: true,
         history: sec.history || [],
+        roles: isSpec ? (room.players || []).filter((q) => sec.roles[q.openid]).map((q) => ({
+          openid: q.openid, role: sec.roles[q.openid], roleName: WOLF_NAMES[sec.roles[q.openid]],
+        })) : undefined,
         potions: sec.potions || { save: true, poison: true },
         night: {
           wolfDone: night.wolfKill !== undefined,
@@ -575,6 +625,7 @@ exports.handle = async (event, realOpenid) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room || room.gameType !== 'wolf') return { ok: false, msg: '房间不存在' };
       if (room.hostOpenid === OPENID) return { ok: true, role: 'god', mates: [] };   // 上帝
+      if ((room.players || []).some((p) => p.openid === OPENID && p.spectator)) return { ok: true, role: 'spectator', mates: [] };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局还没发身份' };
       const role = sec.roles[OPENID];
@@ -740,11 +791,11 @@ exports.handle = async (event, realOpenid) => {
       if (room.status !== 'day') return { ok: false, msg: '现在不是白天' };
       if (event.target === room.hostOpenid) return { ok: false, msg: '上帝不能出局' };
       const t = (room.players || []).find((p) => p.openid === event.target);
-      if (!t || t.out) return { ok: false, msg: '目标无效' };
+      if (!t || t.out || t.spectator) return { ok: false, msg: '目标无效' };
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局数据异常' };
       const players = (room.players || []).map((p) => (p.openid === event.target ? { ...p, out: true } : p));
-      const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);   // 上帝不算
+      const alive = wolfAliveOf({ ...room, players });
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = {
         type: 'out', round: room.round, nick: t.nick,
@@ -771,9 +822,10 @@ exports.handle = async (event, realOpenid) => {
       if (room.status !== 'day') return { ok: false, msg: '现在不是投票时间' };
       if (OPENID === room.hostOpenid) return { ok: false, msg: '上帝不参与投票' };
       const me = (room.players || []).find((p) => p.openid === OPENID);
+      if (me && me.spectator) return { ok: false, msg: '旁观者不能投票' };
       if (!me || me.out) return { ok: false, msg: '你已出局，不能投票' };
       const t = (room.players || []).find((p) => p.openid === event.target);
-      if (!t || t.out || t.openid === room.hostOpenid) return { ok: false, msg: '目标无效' };
+      if (!t || t.out || t.spectator || t.openid === room.hostOpenid) return { ok: false, msg: '目标无效' };
       await rooms.doc(event.roomId).update({ data: { ['dayBallots.' + OPENID]: { r: room.round || 0, t: event.target }, nightVer: _.inc(1) } });
       return { ok: true };
     }
@@ -787,7 +839,7 @@ exports.handle = async (event, realOpenid) => {
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局数据异常' };
       // 必须所有存活玩家都投完票才能天黑
-      const alivePlayers = (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);
+      const alivePlayers = wolfAliveOf(room);
       const dv = room.dayBallots || {};
       const validVote = (v) => v && v.r === room.round && v.t;
       const notVoted = alivePlayers.filter((p) => !validVote(dv[p.openid]));
@@ -803,7 +855,7 @@ exports.handle = async (event, realOpenid) => {
       const t = (room.players || []).find((p) => p.openid === outId);
       if (!t || t.out) return { ok: false, msg: '票选目标无效' };
       const players = (room.players || []).map((p) => (p.openid === outId ? { ...p, out: true } : p));
-      const alive = players.filter((p) => !p.out && p.openid !== room.hostOpenid);
+      const alive = wolfAliveOf({ ...room, players });
       const wolvesAlive = alive.filter((p) => sec.roles[p.openid] === 'wolf').length;
       const announce = { type: 'out', round: room.round, nick: t.nick, roleName: WOLF_NAMES[sec.roles[outId]] || '平民' };
       await secrets.doc(event.roomId).update({ data: { history: _.push({ round: room.round, type: 'day', out: t.nick, role: WOLF_NAMES[sec.roles[outId]] || '平民' }) } }).catch(() => {});
@@ -854,10 +906,11 @@ exports.handle = async (event, realOpenid) => {
       const ps = room.players || [];
       const me = ps.find((p) => p.openid === OPENID);
       if (!me) return { ok: false, msg: '你不在本局中' };
+      if (me.spectator) return { ok: false, msg: '旁观者不能投票' };
       if (me.out) return { ok: false, msg: '你已出局，不能投票' };
       if (event.target === OPENID) return { ok: false, msg: '不能投自己' };
       const target = ps.find((p) => p.openid === event.target);
-      if (!target || target.out) return { ok: false, msg: '投票对象无效' };
+      if (!target || target.out || target.spectator) return { ok: false, msg: '投票对象无效' };
 
       // 只记票（可改票）；是否结算由房主点「公布本轮结果」决定，不再自动出结果
       await rooms.doc(event.roomId).update({ data: { ['votes.' + OPENID]: event.target } });
@@ -874,7 +927,7 @@ exports.handle = async (event, realOpenid) => {
       if (!room.voting) return { ok: false, msg: '本轮还没开启投票' };
 
       const votes = room.votes || {};
-      const alive = (room.players || []).filter((p) => !p.out);
+      const alive = (room.players || []).filter((p) => !p.out && !p.spectator);
       if (!alive.every((p) => votes[p.openid])) return { ok: false, msg: '还有人没投票，等投满再公布' };
 
       // ── 结算本轮：最高票出局，平票无人出局 ──
@@ -892,7 +945,7 @@ exports.handle = async (event, realOpenid) => {
       const players = tie
         ? room.players
         : room.players.map((p) => (p.openid === outId ? { ...p, out: true } : p));
-      const aliveAfter = players.filter((p) => !p.out);
+      const aliveAfter = players.filter((p) => !p.out && !p.spectator);
       const aliveSpies = aliveAfter.filter((p) => spies.includes(p.openid)).length;
       const aliveCivil = aliveAfter.length - aliveSpies;
       const lastVote = {
@@ -928,8 +981,7 @@ exports.handle = async (event, realOpenid) => {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!room) return { ok: true };
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有主持人可以结束游戏' };
-      await rooms.doc(event.roomId).remove();
-      if (room.gameType === 'spy') await secrets.doc(event.roomId).remove().catch(() => {});
+      await removeRoom(event.roomId);
       return { ok: true, dissolved: true };
     }
 
@@ -939,15 +991,15 @@ exports.handle = async (event, realOpenid) => {
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以重开' };
       // 派对局重开（卧底/狼人杀）：清准备/出局状态，删上局的秘密数据
       if (room.gameType === 'spy' || room.gameType === 'wolf') {
-        const players = room.players.map((p) => ({ ...p, ready: false, out: false }));
+        const players = room.players.map((p) => ({ ...p, ready: false, out: false, spectator: !!p.spectator && !p.lateJoin, lateJoin: false }));
         await rooms.doc(event.roomId).update({
           data: { players, status: 'waiting', round: 0, reveal: _.remove(), announce: _.remove(), nightVer: _.remove(), votes: _.set({}), voting: false, lastVote: _.remove() },
         });
         await secrets.doc(event.roomId).remove().catch(() => {});
         return { ok: true };
       }
-      // 再来一局：清空发牌，并把吃瓜群众转为正常等待玩家
-      const players = room.players.map((p) => ({ ...p, charId: '', spectator: false }));
+      // 再来一局：清空发牌；开局后才进来的吃瓜群众转为正常等待玩家，主动旁观的继续旁观
+      const players = room.players.map((p) => ({ ...p, charId: '', spectator: !!p.spectator && !p.lateJoin, lateJoin: false }));
       await rooms.doc(event.roomId).update({
         data: { players, status: 'waiting', actIndex: 0, votes: _.set({}), npcChars: [], searches: _.set({}) },
       });

@@ -80,6 +80,7 @@
     <view class="join-sub muted">输入房主给的 4 位房间号</view>
     <input class="join-input" type="number" maxlength="4" value="{{joinInput}}"
       bindinput="onJoinInput" placeholder="0000" placeholder-class="join-ph" focus="{{showJoin}}" />
+    <view class="spec-toggle {{joinSpec ? 'on' : ''}}" bindtap="toggleJoinSpec"><view class="spec-box">{{joinSpec ? '✓' : ''}}</view>👀 只旁观（不参与游戏）</view>
     <button class="btn join-go" bindtap="confirmJoin" disabled="{{joinInput.length !== 4}}">进入房间</button>
   </view>
 </view>

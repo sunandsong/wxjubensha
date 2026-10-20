@@ -1,11 +1,11 @@
 
 <view class="container">
   <image wx:if="{{dustUrl && !isHost}}" class="fx-dust" src="{{dustUrl}}" mode="aspectFill"></image>
-  <!-- ============ 吃瓜群众：游戏开始后进来的，只围观第一幕、无任何操作 ============ -->
+  <!-- ============ 旁观者（主动旁观 / 开局后进来）：只围观第一幕、无任何操作 ============ -->
   <block wx:if="{{isSpectator}}">
     <view class="card mychar">
       <view class="act-title">{{script.title}}</view>
-      <view class="muted tip">👀 你是吃瓜群众 · 游戏已经开始，你只能围观第一幕的剧情，不参与搜证和投票。</view>
+      <view class="muted tip">👀 你在旁观 · 只能看第一幕的剧情，不参与搜证和投票。</view>
       <view class="pre">{{actNarration}}</view>
     </view>
   </block>

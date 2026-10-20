@@ -27,6 +27,16 @@
     </view>
   </view>
 
+  <!-- 旁观席：不占角色 -->
+  <view class="spec-strip" wx:if="{{spectators.length}}">
+    <view class="spec-title">👀 旁观（{{spectators.length}}）</view>
+    <view class="spec-list">
+      <view class="spec-chip" wx:for="{{spectators}}" wx:key="openid">
+        <view class="spec-av"><image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" /><block wx:else>{{item.nick[0]}}</block></view>{{item.nick}}
+      </view>
+    </view>
+  </view>
+
   <!-- 房主视角 -->
   <block wx:if="{{isHost}}">
     <view wx:if="{{!canStart}}" class="muted center rm-count">{{realCount < needPlayers ? '还差 ' + (needPlayers - realCount) + ' 名玩家 · 主持人不占角色' : '等待玩家准备 ' + readyCount + '/' + realCount}}</view>
@@ -37,7 +47,9 @@
   <!-- 玩家视角 -->
   <block wx:else>
     <button hover-class="none" wx:if="{{!iAmSpectator}}" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
-    <view class="muted center rm-count">{{iAmSpectator ? '你是围观，等主持人开始…' : (myReady ? '已准备，等所有人准备好主持人就开始' : '点「准备好了」，全员准备后主持人才能开始')}}</view>
+    <view class="muted center rm-count">{{iAmSpectator ? '👀 你在旁观，等主持人开始…' : (myReady ? '已准备，等所有人准备好主持人就开始' : '点「准备好了」，全员准备后主持人才能开始')}}</view>
+    <button hover-class="none" wx:if="{{iAmSpectator}}" class="btn start-btn" bindtap="toggleSpectator">上桌参与</button>
+    <view wx:else class="spec-link" bindtap="toggleSpectator">不想玩？改为旁观</view>
     <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">退出房间</button>
   </block>
 </view>

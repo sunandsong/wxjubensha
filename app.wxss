@@ -95,3 +95,33 @@ page {
   font-size: 24rpx; padding: 12rpx 24rpx; border-radius: 999rpx;
   box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.4);
 }
+
+/* ── 旁观者（三个游戏共用）── */
+/* 进房弹框里的「只旁观」开关 */
+.spec-toggle { display: flex; align-items: center; justify-content: center; gap: 12rpx; margin-top: 22rpx;
+  font-size: 26rpx; color: #b3a6cc; }
+.spec-box { width: 34rpx; height: 34rpx; border-radius: 8rpx; border: 2rpx solid rgba(255,255,255,0.35);
+  display: flex; align-items: center; justify-content: center; font-size: 24rpx; color: #fff; }
+.spec-toggle.on { color: #ece8f5; }
+.spec-toggle.on .spec-box { background: #7b5cff; border-color: #7b5cff; }
+/* 等待房间里的旁观席 */
+.spec-strip { position: relative; z-index: 1; margin: 26rpx 0 0; text-align: center; }
+.spec-title { font-size: 23rpx; color: #8a7fa6; letter-spacing: 2rpx; }
+.spec-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 14rpx; margin-top: 14rpx; }
+.spec-chip { display: flex; align-items: center; gap: 8rpx; padding: 6rpx 16rpx 6rpx 6rpx; border-radius: 999rpx;
+  background: rgba(255,255,255,0.06); font-size: 22rpx; color: #cfc6e4; }
+.spec-av { width: 40rpx; height: 40rpx; border-radius: 50%; background: #3a3052; display: flex; align-items: center;
+  justify-content: center; font-size: 20rpx; overflow: hidden; }
+.spec-av image { width: 40rpx; height: 40rpx; display: block; }
+/* 玩家 ⇄ 旁观 切换小字 */
+.spec-link { position: relative; z-index: 1; margin-top: 18rpx; text-align: center; font-size: 24rpx; color: #8f84a8; }
+/* 旁观者游戏中的上帝视角卡 */
+.god-tag { display: inline-block; margin-left: 10rpx; padding: 2rpx 12rpx; border-radius: 8rpx; font-size: 20rpx;
+  background: rgba(255,179,71,0.18); color: #ffb347; vertical-align: middle; }
+.god-row { display: flex; align-items: center; justify-content: space-between; padding: 14rpx 0;
+  border-bottom: 1rpx dashed rgba(255,255,255,0.08); font-size: 27rpx; color: #ddd6ee; }
+.god-row:last-child { border-bottom: none; }
+.god-row .gv { font-weight: 700; color: #fff; }
+.god-row .gv.warn { color: #ffb347; }
+.god-row.out { opacity: 0.45; }
+.player .god-tag { margin: 6rpx 0 0; }

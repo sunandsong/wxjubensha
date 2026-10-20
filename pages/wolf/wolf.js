@@ -22,13 +22,15 @@ const ROLE_TEXT = { wolf: '狼人', seer: '预言家', witch: '女巫', villager
 Page({
   data: {
     mode: 'lobby',      // lobby=大厅 | room=已在房间
-    showJoin: false, joinInput: '',
+    showJoin: false, joinInput: '', joinSpec: false,   // joinSpec：加入弹框里勾了「只旁观」
     resumeId: '', resumeCode: '',   // 有未退出的房间时，大厅显示回去横幅
     roomId: '', roomCode: '', openid: '',
     // 房间态（来自 watch）
     status: 'waiting', round: 0, players: [],
     isHost: false, myReady: false, readyCount: 0, needReady: 0, canStart: false,
     myOut: false,
+    iAmSpectator: false, spectators: [],   // 旁观者：不发身份、不投票，上帝视角
+    godRoles: {},       // 旁观者看到的全员身份 { openid: '狼人' }
     // 我的身份
     role: '', roleName: '', matesText: '', peeking: false,
     // 夜晚态（wolfNightState，按角色裁剪）
@@ -125,24 +127,25 @@ Page({
     this._enterRoom(r.roomId, r.roomCode);
   },
 
-  showJoinModal() { this.setData({ showJoin: true, joinInput: '' }); },
+  showJoinModal() { this.setData({ showJoin: true, joinInput: '', joinSpec: false }); },
+  toggleJoinSpec() { this.setData({ joinSpec: !this.data.joinSpec }); },
   hideJoinModal() { this.setData({ showJoin: false }); },
   onJoinInput(e) {
     const v = e.detail.value.replace(/\D/g, '').slice(0, 4);
     this.setData({ joinInput: v });
     if (v.length === 4) {
       this.setData({ showJoin: false });
-      this._join(v);
+      this._join(v, this.data.joinSpec);
     }
   },
 
-  async _join(code) {
+  async _join(code, spectator) {
     if (app.blockIfInRoom()) return;
     const nick = await this._getNick();
     let res;
     try {
       res = await app.runOnce('wolfJoin', () => app.callGame({
-        action: 'join', roomCode: String(code),
+        action: 'join', roomCode: String(code), spectator: !!spectator,
         nick, avatar: wx.getStorageSync('avatar') || '',
       }), '进入中');
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
@@ -203,9 +206,13 @@ Page({
       if ((me && !!me.ready === pr.want) || Date.now() > pr.until) this._pendingReady = null;
       else if (me) me.ready = pr.want;
     }
-    const others = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
+    // 旁观者单独一排，不占玩家位、不发身份、不投票
+    const seated = (room.players || []).filter((p) => !p.spectator);
+    const spectators = (room.players || []).filter((p) => p.spectator);
+    const iAmSpectator = !!(me && me.spectator);
+    const others = seated.filter((p) => p.openid !== room.hostOpenid);
     const readyCount = others.filter((p) => p.ready).length;
-    const players = (room.players || []).map((p) => ({ ...p, isHost: p.openid === room.hostOpenid }));
+    const players = seated.map((p) => ({ ...p, isHost: p.openid === room.hostOpenid }));
     const a = room.announce;
     let announceText = '';
     let lastDeaths = [];
@@ -218,7 +225,7 @@ Page({
     }
     const rv = room.reveal || null;
     const dayBallots = room.dayBallots || {};
-    const alivePs = (room.players || []).filter((p) => !p.out && p.openid !== room.hostOpenid);
+    const alivePs = others.filter((p) => !p.out);
     const aliveSet = {};
     alivePs.forEach((p) => { aliveSet[p.openid] = 1; });
     // 只算「本轮 + 存活玩家投给存活目标」的有效票,上一轮旧票/出局者票不计
@@ -241,6 +248,8 @@ Page({
       status: room.status || 'waiting',
       round: room.round || 0,
       players,
+      spectators,
+      iAmSpectator,
       emptySlots: Array.from({ length: Math.max(0, 6 - others.length) }, (v, i) => i),
       isHost: room.hostOpenid === this.data.openid,
       myReady: !!(me && me.ready),
@@ -255,23 +264,23 @@ Page({
     });
     if (room.status !== 'day' && this.data.showVote) this.setData({ showVote: false });
     // 回到等待（再来一局）：清掉上一局身份
-    if (room.status === 'waiting' && this.data.role) {
-      this.setData({ role: '', roleName: '', matesText: '', night: null, reveal: null, peeking: false, pickPoison: false, god: null, seerLog: [] });
+    if (room.status === 'waiting' && (this.data.role || this.data.god)) {
+      this.setData({ role: '', roleName: '', matesText: '', night: null, reveal: null, peeking: false, pickPoison: false, god: null, godRoles: {}, seerLog: [] });
       this._godKey = '';
     }
-    // 游戏中还没拿到身份 → 拉一次
-    if (room.status !== 'waiting' && room.status !== 'finished' && !this.data.role) this._fetchRole();
+    // 游戏中还没拿到身份 → 拉一次（旁观者没有身份）
+    if (!iAmSpectator && room.status !== 'waiting' && room.status !== 'finished' && !this.data.role) this._fetchRole();
     // 夜晚数据有更新（nightVer 变化）→ 重新拉角色视角
     const nv = room.nightVer || 0;
     if (room.status === 'night') {
-      if (nv !== this._nightVer) { this._nightVer = nv; this._fetchNight(); }
+      if (nv !== this._nightVer) { this._nightVer = nv; if (!iAmSpectator) this._fetchNight(); }
     } else {
       this._nightVer = nv;
       if (this.data.night) this.setData({ night: null, pickPoison: false });
       this._clearWolfTimer();
     }
-    // 上帝面板：开局后随状态/夜晚版本刷新
-    if (room.hostOpenid === this.data.openid && room.status !== 'waiting') {
+    // 上帝面板（上帝 + 旁观者）：开局后随状态/夜晚版本刷新
+    if ((room.hostOpenid === this.data.openid || iAmSpectator) && room.status !== 'waiting') {
       const gk = room.status + ':' + nv;
       if (gk !== this._godKey) { this._godKey = gk; this._fetchGod(); }
     }
@@ -284,7 +293,11 @@ Page({
     try {
       const res = await app.callGame({ action: 'wolfGod', roomId: this.data.roomId });
       const r = res && res.result;
-      if (r && r.ok) this.setData({ god: r, gameLog: r.history || [] });
+      if (r && r.ok) {
+        const godRoles = {};
+        (r.roles || []).forEach((x) => { godRoles[x.openid] = x.roleName; });
+        this.setData({ god: r, gameLog: r.history || [], godRoles });
+      }
     } catch (e) {}
     this._fetchingGod = false;
     this._deriveTips();
@@ -292,12 +305,12 @@ Page({
 
   // 顶部操作提示 + 我已选目标的高亮
   _deriveTips() {
-    const { status, role, night, isHost, myOut } = this.data;
+    const { status, role, night, isHost, myOut, iAmSpectator } = this.data;
     let actTip = '';
     if (status === 'night' && !myOut && night) {
       if (role === 'wolf' && !night.done) actTip = '🐺 狼人请睁眼——选择今晚要刀的人';
       else if (role === 'seer' && !night.done) actTip = '🔮 预言家请睁眼——查验一名玩家';
-    } else if (status === 'night' && isHost) {
+    } else if (status === 'night' && (isHost || iAmSpectator)) {
       const g = this.data.god;
       actTip = g && g.night
         ? `🌙 狼人${g.night.wolfDone ? '✓' : '…'} 预言家${g.night.seerDone ? '✓' : '…'} 女巫${g.night.witchDone ? '✓' : '…'}（都行动后点「宣布天亮」）`
@@ -535,7 +548,7 @@ Page({
 
   async startGame() {
     if (!this.data.canStart) {
-      if (this.data.players.length < 6) return wx.showToast({ title: '至少 6 人才能开始', icon: 'none' });
+      if (this.data.needReady < 6) return wx.showToast({ title: '至少 6 名玩家才能开始（上帝和旁观不算）', icon: 'none' });
       return wx.showToast({ title: '等所有玩家点准备', icon: 'none' });
     }
     this.setData({ starting: true });
@@ -623,12 +636,24 @@ Page({
     } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },
 
+  // 等待阶段：玩家 ⇄ 旁观
+  async toggleSpectator() {
+    const want = !this.data.iAmSpectator;
+    try {
+      const res = await app.runOnce('wolfSpec', () => app.callGame({ action: 'setSpectator', roomId: this.data.roomId, spectator: want }), '');
+      const r = res && res.result;
+      if (r && !r.ok) wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      this._refresh();
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
+
   async leaveRoom() {
     const isHost = this.data.isHost;
+    const spec = this.data.iAmSpectator;
     const ok = await new Promise((res) => {
       wx.showModal({
         title: isHost ? '解散房间' : '退出房间',
-        content: isHost ? '你是房主，退出将解散房间，确定吗？' : '游戏中退出会解散本局，确定退出吗？',
+        content: isHost ? '你是房主，退出将解散房间，确定吗？' : (spec ? '确定退出旁观吗？' : '游戏中退出会解散本局，确定退出吗？'),
         success: (r) => res(r.confirm),
       });
     });

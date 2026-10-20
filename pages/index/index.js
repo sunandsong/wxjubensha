@@ -38,6 +38,7 @@ Page({
     showGuide: false,  // 新手指引弹层
     showJoin: false,   // 进入房间弹层
     joinInput: '',     // 房间号输入
+    joinSpec: false,   // 勾了「只旁观」
     uploading: false,
   },
 
@@ -251,17 +252,19 @@ Page({
   // 「进入房间」→ 弹窗输入房间号再加入
   enterRoom() {
     if (this.data.loading) return;
-    this.setData({ showJoin: true, joinInput: '' });
+    this.setData({ showJoin: true, joinInput: '', joinSpec: false });
   },
   closeJoin() { this.setData({ showJoin: false }); },
+  toggleJoinSpec() { this.setData({ joinSpec: !this.data.joinSpec }); },
   onJoinInput(e) {
     this.setData({ joinInput: (e.detail.value || '').replace(/\D/g, '').slice(0, 4) });
   },
   confirmJoin() {
     const code = (this.data.joinInput || '').trim();
     if (!/^\d{4}$/.test(code)) return wx.showToast({ title: '请输入 4 位房间号', icon: 'none' });
+    const spectator = this.data.joinSpec;
     this.setData({ showJoin: false });
-    this._requireAuth(() => this.joinRoom(code));
+    this._requireAuth(() => this.joinRoom(code, spectator));
   },
 
   async createRoom(scriptId) {
@@ -286,7 +289,7 @@ Page({
     wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
   },
 
-  async joinRoom(code) {
+  async joinRoom(code, spectator) {
     if (app.blockIfInRoom()) return;
     const nick = (this.data.nick || '神秘玩家').slice(0, 8);
     const avatar = this.data.avatar;
@@ -294,7 +297,7 @@ Page({
     this.setData({ loading: true });
     let res;
     try {
-      res = await app.runOnce('join', () => app.callGame({ action: 'join', roomCode: code, nick, avatar, gender }), '加入中');
+      res = await app.runOnce('join', () => app.callGame({ action: 'join', roomCode: code, spectator: !!spectator, nick, avatar, gender }), '加入中');
     } catch (e) {
       this.setData({ loading: false });
       return wx.showToast({ title: '网络异常，请重试', icon: 'none' });

@@ -56,7 +56,8 @@
       <view class="j-title">进入房间</view>
       <input class="j-input" type="number" maxlength="4" placeholder="4 位房间号"
         value="{{quickCode}}" bindinput="onQuickInput" focus="{{showQuickJoin}}" />
-      <view class="j-tip">输满 4 位自动进入 · 卧底/剧本杀房间都可以</view>
+      <view class="spec-toggle {{joinSpec ? 'on' : ''}}" bindtap="toggleJoinSpec"><view class="spec-box">{{joinSpec ? '✓' : ''}}</view>👀 只旁观（不参与游戏）</view>
+      <view class="j-tip">输满 4 位自动进入 · 卧底/狼人杀/剧本杀房间都可以</view>
       <button class="j-cancel" bindtap="hideQuickJoin">取消</button>
     </view>
   </view>

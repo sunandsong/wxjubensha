@@ -19,7 +19,7 @@ Page({
     nick: '', avatar: '',
     fabRoom: false,              // 悬浮钮形态：true=回房间 false=进房间
     fabX: 0, fabY: 0,            // 悬浮钮位置（可拖动，本地记忆）
-    showQuickJoin: false, quickCode: '',
+    showQuickJoin: false, quickCode: '', joinSpec: false,   // joinSpec：快速进房勾了「只旁观」
     manShift: '', bgShift: '',   // 陀螺仪视差位移(裸眼3D)
     bg: gimg('hero_bg.jpg'), bgTh: gth('hero_bg.jpg'), bgOk: false,           // 全屏夜幕背景
     heroMan: gimg('hero_man.png'), heroManTh: gth('hero_man.png'), heroOk: false, // 侦探立绘
@@ -213,26 +213,27 @@ Page({
     if (sp && sp.roomId) return wx.navigateTo({ url: '/pages/spy/spy?resume=1' });
     const wf = app.getWolfSession && app.getWolfSession();
     if (wf && wf.roomId) return wx.navigateTo({ url: '/pages/wolf/wolf?resume=1' });
-    this.setData({ showQuickJoin: true, quickCode: '' });
+    this.setData({ showQuickJoin: true, quickCode: '', joinSpec: false });
   },
+  toggleJoinSpec() { this.setData({ joinSpec: !this.data.joinSpec }); },
   hideQuickJoin() { this.setData({ showQuickJoin: false }); },
   onQuickInput(e) {
     const v = e.detail.value.replace(/\D/g, '').slice(0, 4);
     this.setData({ quickCode: v });
     if (v.length === 4) {
       this.setData({ showQuickJoin: false });
-      this._quickJoin(v);
+      this._quickJoin(v, this.data.joinSpec);
     }
   },
   // 按房间类型分流：卧底 → spy 页；剧本杀 → room 页
-  async _quickJoin(code) {
+  async _quickJoin(code, spectator) {
     this._gate();   // 没资料补默认昵称
     if (app.blockIfInRoom()) return;
     const nick = wx.getStorageSync('nick') || '玩家';
     let res;
     try {
       res = await app.runOnce('hubJoin', () => app.callGame({
-        action: 'join', roomCode: String(code),
+        action: 'join', roomCode: String(code), spectator: !!spectator,
         nick, avatar: wx.getStorageSync('avatar') || '', gender: wx.getStorageSync('gender') || '',
       }), '进入中');
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }

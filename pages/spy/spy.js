@@ -13,6 +13,7 @@ Page({
     mode: 'lobby',      // lobby=大厅 | room=已在房间
     spyCountSel: 1,     // 建房选项：卧底人数
     showJoin: false,    // 加入弹框
+    joinSpec: false,    // 加入弹框里勾了「只旁观」
     resumeId: '', resumeCode: '',   // 有未退出的房间时，大厅显示回去横幅
     joinInput: '',
     // 房间态（来自 watch）
@@ -22,6 +23,8 @@ Page({
     reveal: null,       // finished 后云端公布 {civilWord, spyWord, spies, winner}
     spyNicks: '',       // 卧底昵称串
     iAmSpy: false,
+    iAmSpectator: false, spectators: [],   // 旁观者（不发词、不投票）
+    godView: null,      // 旁观者上帝视角 {civilWord, spyWord, list:[{nick, word, isSpy}]}
     // 逐轮投票态
     myOut: false, myVote: '', votedCount: 0, aliveCount: 0, lastVoteText: '',
     voting: false,        // 房主已开启本轮投票
@@ -105,7 +108,8 @@ Page({
     this._enterRoom(r.roomId, r.roomCode);
   },
 
-  showJoinModal() { this.setData({ showJoin: true, joinInput: '' }); },
+  showJoinModal() { this.setData({ showJoin: true, joinInput: '', joinSpec: false }); },
+  toggleJoinSpec() { this.setData({ joinSpec: !this.data.joinSpec }); },
   hideJoinModal() { this.setData({ showJoin: false }); },
   onJoinInput(e) {
     const v = e.detail.value.replace(/\D/g, '').slice(0, 4);
@@ -113,16 +117,16 @@ Page({
     // 输满 4 位直接进房，不用再点「进入」
     if (v.length === 4) {
       this.setData({ showJoin: false });
-      this._join(v);
+      this._join(v, this.data.joinSpec);
     }
   },
-  async _join(code) {
+  async _join(code, spectator) {
     if (app.blockIfInRoom()) return;
     const nick = await this._getNick();
     let res;
     try {
       res = await app.runOnce('spyJoin', () => app.callGame({
-        action: 'join', roomCode: String(code),
+        action: 'join', roomCode: String(code), spectator: !!spectator,
         nick, avatar: wx.getStorageSync('avatar') || '',
       }), '进入中');
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
@@ -136,7 +140,7 @@ Page({
   _enterRoom(roomId, roomCode) {
     app.saveSpySession({ roomId, roomCode });
     app.globalData.roomAutoResumed = true;   // 已在房间里，后退回大厅不要再弹回来
-    this.setData({ mode: 'room', roomId, roomCode, word: '' });
+    this.setData({ mode: 'room', roomId, roomCode, word: '', godView: null });
     this._refresh();
     this._startWatch();
   },
@@ -190,10 +194,14 @@ Page({
       if ((meRaw && !!meRaw.ready === pr.want) || Date.now() > pr.until) this._pendingReady = null;
       else if (meRaw) meRaw.ready = pr.want;
     }
-    const others = (room.players || []).filter((p) => p.openid !== room.hostOpenid);
+    // 旁观者单独一排，不占玩家位、不发词、不投票
+    const seated = (room.players || []).filter((p) => !p.spectator);
+    const spectators = (room.players || []).filter((p) => p.spectator);
+    const iAmSpectator = !!(me && me.spectator);
+    const others = seated.filter((p) => p.openid !== room.hostOpenid);
     const readyCount = others.filter((p) => p.ready).length;
     const votes = room.votes || {};
-    const players = (room.players || []).map((p) => ({
+    const players = seated.map((p) => ({
       ...p,
       isHost: p.openid === room.hostOpenid,
       isSpy: !!(room.reveal && room.reveal.spies && room.reveal.spies.includes(p.openid)),
@@ -226,13 +234,15 @@ Page({
       hostScript,
       status: room.status || 'waiting',
       players,
-      emptySlots: Array.from({ length: Math.max(0, 4 - (room.players || []).length) }, (v, i) => i),
+      emptySlots: Array.from({ length: Math.max(0, 4 - seated.length) }, (v, i) => i),
+      spectators,
+      iAmSpectator,
       round: room.round || 0,
       isHost: room.hostOpenid === this.data.openid,
       myReady: !!(me && me.ready),
       readyCount,
       needReady: others.length,
-      canStart: (room.players || []).length >= 4 && readyCount === others.length,
+      canStart: seated.length >= 4 && readyCount === others.length,
       reveal: room.reveal || null,
       spyNicks,
       iAmSpy: !!(room.reveal && room.reveal.spies && room.reveal.spies.includes(this.data.openid)),
@@ -250,9 +260,36 @@ Page({
     // 本轮投票已结算 → 自动收起投票弹框
     if (!room.voting && this.data.showVote) this.setData({ showVote: false });
     // 回到等待中（再来一局）→ 清掉上一局的词，否则下一局不会去取新词
-    if (room.status === 'waiting' && this.data.word) this.setData({ word: '', wdSize: 80, peeking: false });
+    if (room.status === 'waiting' && (this.data.word || this.data.godView)) this.setData({ word: '', wdSize: 80, peeking: false, godView: null });
+    if (iAmSpectator) {
+      // 旁观者：拉上帝视角（一局内词不变，拉一次即可）
+      if (room.status !== 'waiting' && !this.data.godView) this._fetchGod();
+      return;
+    }
     // 游戏中且还没拿到词 → 拉自己的词
     if (room.status === 'playing' && !this.data.word) this._fetchWord();
+  },
+
+  async _fetchGod() {
+    if (this._fetchingGod) return;
+    this._fetchingGod = true;
+    try {
+      const res = await app.callGame({ action: 'spyGod', roomId: this.data.roomId });
+      const r = res && res.result;
+      if (r && r.ok) this.setData({ godView: r });
+    } catch (e) {}
+    this._fetchingGod = false;
+  },
+
+  // 等待阶段：玩家 ⇄ 旁观
+  async toggleSpectator() {
+    const want = !this.data.iAmSpectator;
+    try {
+      const res = await app.runOnce('spySpec', () => app.callGame({ action: 'setSpectator', roomId: this.data.roomId, spectator: want }), '');
+      const r = res && res.result;
+      if (r && !r.ok) wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      this._refresh();
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },
 
   async _fetchWord(showErr) {
@@ -300,7 +337,7 @@ Page({
 
   async startGame() {
     if (!this.data.canStart) {
-      if (this.data.players.length < 4) return wx.showToast({ title: '至少 4 人才能开始', icon: 'none' });
+      if (this.data.players.length < 4) return wx.showToast({ title: '至少 4 名玩家才能开始（旁观不算）', icon: 'none' });
       return wx.showToast({ title: '等所有玩家点准备', icon: 'none' });
     }
     this.setData({ starting: true });
@@ -389,7 +426,7 @@ Page({
     try {
       const res = await app.runOnce('spyReset', () => app.callGame({ action: 'reset', roomId: this.data.roomId }), '重开中');
       const r = res && res.result;
-      if (r && r.ok) this.setData({ word: '', wdSize: 80, peeking: false });
+      if (r && r.ok) this.setData({ word: '', wdSize: 80, peeking: false, godView: null });
       else if (r) wx.showToast({ title: r.msg || '重开失败', icon: 'none' });
     } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
   },

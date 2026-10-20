@@ -31,6 +31,7 @@
       <view class="m-title">加入房间</view>
       <input class="m-input" type="number" maxlength="4" placeholder="4 位房间号"
         value="{{joinInput}}" bindinput="onJoinInput" focus="{{showJoin}}" />
+      <view class="spec-toggle {{joinSpec ? 'on' : ''}}" bindtap="toggleJoinSpec"><view class="spec-box">{{joinSpec ? '✓' : ''}}</view>👀 只旁观（上帝视角，不参与游戏）</view>
       <view class="m-tip">输满 4 位自动进入</view>
       <view class="m-btns">
         <button class="m-cancel" bindtap="hideJoinModal">取消</button>
@@ -65,9 +66,26 @@
         </view>
       </view>
 
+      <!-- 旁观席：不占玩家位 -->
+      <view class="spec-strip" wx:if="{{spectators.length}}">
+        <view class="spec-title">👀 旁观（{{spectators.length}}）</view>
+        <view class="spec-list">
+          <view class="spec-chip" wx:for="{{spectators}}" wx:key="openid">
+            <view class="spec-av"><image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" /><block wx:else>{{item.nick[0]}}</block></view>{{item.nick}}
+          </view>
+        </view>
+      </view>
+
       <button wx:if="{{isHost}}" hover-class="none" class="btn start-btn {{(starting || !canStart) ? 'btn-dim' : ''}}" bindtap="startGame" disabled="{{starting || !canStart}}">开始游戏</button>
       <view wx:if="{{isHost && !canStart}}" class="center muted rm-count">{{needReady < 6 ? '还差 ' + (6 - needReady) + ' 名玩家 · 上帝不占身份' : '等所有玩家点「准备好了」'}}</view>
-      <button wx:if="{{!isHost}}" hover-class="none" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
+      <block wx:if="{{!isHost && iAmSpectator}}">
+        <view class="center muted rm-count">👀 你在旁观，开局后能看到所有人的身份和夜晚行动</view>
+        <button hover-class="none" class="btn start-btn" bindtap="toggleSpectator">上桌参与</button>
+      </block>
+      <block wx:elif="{{!isHost}}">
+        <button hover-class="none" class="btn start-btn {{myReady ? 'btn-ghost' : ''}}" bindtap="toggleReady">{{myReady ? '已准备（点击取消）' : '准备好了'}}</button>
+        <view class="spec-link" bindtap="toggleSpectator">不想玩？改为旁观</view>
+      </block>
       <button hover-class="none" class="btn btn-ghost" open-type="share">分享链接 · 邀请群友</button>
       <button hover-class="none" class="btn btn-ghost btn-slim" bindtap="leaveRoom">{{isHost ? '解散房间' : '退出房间'}}</button>
     </block>
@@ -84,18 +102,18 @@
       <!-- 玩家:简短说明 -->
       <block wx:else>
         <view class="ph-sub" wx:if="{{status === 'night'}}">天黑请闭眼 · 对应角色在小程序里悄悄行动</view>
-        <view class="ph-sub" wx:if="{{status === 'day'}}">讨论发言 · 点你要放逐的人投票（可改票）</view>
+        <view class="ph-sub" wx:if="{{status === 'day'}}">{{iAmSpectator ? '大家讨论投票中 · 旁观者不投票' : '讨论发言 · 点你要放逐的人投票（可改票）'}}</view>
       </block>
     </view>
 
 
     <!-- 玩家白天：投票按钮（点开弹框选人,对齐卧底/剧本杀） -->
-    <button wx:if="{{!isHost && status === 'day' && !myOut}}" hover-class="none" class="btn vote-open-btn" bindtap="showVoteSheet">🗳 投票放逐{{myDayVote ? '（已投,可改）' : ''}}</button>
+    <button wx:if="{{!isHost && !iAmSpectator && status === 'day' && !myOut}}" hover-class="none" class="btn vote-open-btn" bindtap="showVoteSheet">🗳 投票放逐{{myDayVote ? '（已投,可改）' : ''}}</button>
 
-    <!-- 主持台：夜晚行动实况 + 白天投票（只有上帝可见,不含开局身份表） -->
-    <view class="card host-board" wx:if="{{isHost && status !== 'waiting'}}">
+    <!-- 主持台：夜晚行动实况 + 白天投票（上帝 + 旁观者可见；旁观者另在玩家网格上看身份） -->
+    <view class="card host-board" wx:if="{{(isHost || iAmSpectator) && status !== 'waiting'}}">
       <view class="hb-head">
-        <text class="sec-title">🎬 主持台（只有你能看到）</text>
+        <text class="sec-title">{{iAmSpectator ? '👀 上帝视角（只有旁观者能看到）' : '🎬 主持台（只有你能看到）'}}</text>
         <text class="log-btn" bindtap="showLog">📜 记录</text>
       </view>
       <block wx:if="{{status === 'night' && god && god.night}}">
@@ -111,7 +129,7 @@
     </view>
 
     <!-- 我的身份卡（玩家）：图腾卡背,长按翻开角色牌 -->
-    <view class="card word-card" wx:if="{{status !== 'waiting' && !isHost}}">
+    <view class="card word-card" wx:if="{{status !== 'waiting' && !isHost && !iAmSpectator}}">
       <view class="sec-title">我的身份{{myOut ? '（已出局 👻）' : ''}}</view>
       <view class="idcard {{peeking ? 'open' : ''}}" bindtap="toggleCard">
         <view class="id-inner">
@@ -136,9 +154,9 @@
       <view class="board-line" wx:for="{{seerLog}}" wx:key="round">第 {{item.round}} 夜：{{item.nick}} — <text class="{{item.isWolf ? 'chk-wolf' : 'chk-good'}}">{{item.isWolf ? '狼人 🐺' : '好人 🙂'}}</text></view>
     </view>
 
-    <!-- 上帝：玩家网格（直观看投票票数 / 出局） -->
-    <view class="card" wx:if="{{status !== 'waiting' && isHost}}">
-      <view class="sec-title">{{status === 'day' ? '🗳 投票情况' : '👥 玩家'}}（{{players.length}}）</view>
+    <!-- 上帝 / 旁观者：玩家网格（直观看投票票数 / 出局；旁观者额外看身份） -->
+    <view class="card" wx:if="{{status !== 'waiting' && (isHost || iAmSpectator)}}">
+      <view class="sec-title">{{status === 'day' ? '🗳 投票情况' : '👥 玩家'}}（{{players.length}}）<text class="muted" wx:if="{{spectators.length}}"> · 👀 {{spectators.length}} 人旁观</text></view>
       <view class="players game-players">
         <view class="player {{item.out ? 'out' : ''}}" wx:for="{{players}}" wx:key="openid"
           data-openid="{{item.openid}}" data-nick="{{item.nick}}" data-out="{{item.out}}" bindtap="onPlayerTap">
@@ -148,6 +166,7 @@
             <block wx:else>{{item.nick[0]}}</block>
           </view>
           <view class="pname">{{item.nick}}</view>
+          <view class="god-tag" wx:if="{{iAmSpectator && godRoles[item.openid]}}">{{godRoles[item.openid]}}</view>
           <view class="tomb" wx:if="{{item.out}}">🪦</view>
           <view class="votebadge" wx:if="{{status === 'day' && !item.out && dayTally[item.openid]}}">{{dayTally[item.openid]}}票</view>
         </view>

@@ -87,8 +87,9 @@ Page({
       else if (meRaw) meRaw.ready = pr.want;
     }
     const script = SCRIPTS.byId(room.scriptId);
-    // 标注主持人（房主），统计真实玩家（房主、吃瓜群众不算）
-    const players = raw.map((p) => ({ ...p, isModerator: p.openid === room.hostOpenid }));
+    // 标注主持人（房主），统计真实玩家（房主、吃瓜群众不算）；旁观者单独一排
+    const players = raw.filter((p) => !p.spectator).map((p) => ({ ...p, isModerator: p.openid === room.hostOpenid }));
+    const spectators = raw.filter((p) => p.spectator);
     const realPlayers = raw.filter((p) => p.openid !== room.hostOpenid && !p.spectator);
     const realCount = realPlayers.length;
     const needPlayers = (script.characters || []).length;
@@ -97,6 +98,7 @@ Page({
     const me = raw.find((p) => p.openid === this.data.openid);
     this.setData({
       players,
+      spectators,
       realCount,
       needPlayers,
       emptySlots: Array.from({ length: Math.max(0, needPlayers - realCount) }, (v, i) => i),
@@ -167,6 +169,17 @@ Page({
     if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
   },
 
+
+  // 等待阶段：玩家 ⇄ 旁观
+  async toggleSpectator() {
+    const want = !this.data.iAmSpectator;
+    try {
+      const res = await app.runOnce('spec', () => app.callGame({ action: 'setSpectator', roomId: this.data.roomId, spectator: want }), '');
+      const r = res && res.result;
+      if (r && !r.ok) wx.showToast({ title: r.msg || '操作失败', icon: 'none' });
+      this.renderRoom(await app.getRoom(this.data.roomId));
+    } catch (e) { wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
+  },
 
   copyCode() {
     wx.setClipboardData({ data: this.data.roomCode, success: () => wx.showToast({ title: '房间号已复制' }) });

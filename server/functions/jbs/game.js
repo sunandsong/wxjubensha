@@ -83,9 +83,48 @@ function shuffle(arr) {
   return a;
 }
 
+// 房间号只有 9000 个，超过这个时长的房间视为已废弃：号可回收，也不能再加入
+const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_CODE_TRIES = 20;
+
+function isStale(room) {
+  const t = room && room.createdAt ? new Date(room.createdAt.$date || room.createdAt).getTime() : NaN;
+  return !(t > Date.now() - ROOM_TTL_MS); // 没有/解析不了 createdAt 的旧数据也按过期处理
+}
+
+async function removeRoom(id) {
+  await rooms.doc(id).remove().catch(() => {});
+  await secrets.doc(id).remove().catch(() => {}); // 卧底/狼人杀的底牌，没有也无妨
+}
+
+// roomCode 在库里有唯一索引，最多一条；过期的当作不存在
 async function getRoomByCode(code) {
   const res = await rooms.where({ roomCode: code }).limit(1).get();
-  return res.data[0];
+  const room = res.data[0];
+  return room && !isStale(room) ? room : null;
+}
+
+const isDuplicateKey = (e) => /duplicate|E11000/i.test(`${(e && e.code) || ''} ${(e && e.message) || e}`);
+
+// 抽一个空闲房间号并插入房间：号被过期房间占着就先回收；并发撞号靠唯一索引报错后重抽
+async function addRoomWithCode(data) {
+  for (let i = 0; i < MAX_CODE_TRIES; i++) {
+    const code = genCode();
+    const res = await rooms.where({ roomCode: code }).limit(1).get();
+    const old = res.data[0];
+    if (old) {
+      if (!isStale(old)) continue;
+      await removeRoom(old._id);
+    }
+    try {
+      const add = await rooms.add({ data: { ...data, roomCode: code } });
+      return { roomId: add._id, roomCode: code };
+    } catch (e) {
+      if (isDuplicateKey(e)) continue;
+      throw e;
+    }
+  }
+  return null;
 }
 
 // 从一份完整剧本对象派生发牌所需的元数据
@@ -186,15 +225,10 @@ exports.handle = async (event, realOpenid) => {
 
     // ── 创建房间 ──
     if (action === 'create') {
-      let code, exists;
-      do {
-        code = genCode();
-        exists = await getRoomByCode(code);
-      } while (exists);
+      const busy = { ok: false, msg: '房间太多了，请稍后再试' };
       // 派对房间（谁是卧底/狼人杀）：无剧本，房主也是玩家
       if (event.gameType === 'spy' || event.gameType === 'wolf') {
         const data = {
-          roomCode: code,
           hostOpenid: OPENID,
           gameType: event.gameType,
           status: 'waiting',
@@ -203,24 +237,23 @@ exports.handle = async (event, realOpenid) => {
           createdAt: db.serverDate(),
         };
         if (event.gameType === 'spy') data.spyCount = event.spyCount === 2 ? 2 : 1;
-        const add = await rooms.add({ data });
-        return { ok: true, roomId: add._id, roomCode: code, openid: OPENID };
+        const added = await addRoomWithCode(data);
+        if (!added) return busy;
+        return { ok: true, ...added, openid: OPENID };
       }
       const player = { openid: OPENID, nick: event.nick || '玩家', avatar: event.avatar || '', gender: event.gender || '', charId: '' };
       const scriptId = (await getMeta(event.scriptId)) ? event.scriptId : DEFAULT_SCRIPT;
-      const add = await rooms.add({
-        data: {
-          roomCode: code,
-          hostOpenid: OPENID,
-          scriptId,
-          status: 'waiting',
-          players: [player],
-          revealedClues: [],
-          votes: {},
-          createdAt: db.serverDate(),
-        },
+      const added = await addRoomWithCode({
+        hostOpenid: OPENID,
+        scriptId,
+        status: 'waiting',
+        players: [player],
+        revealedClues: [],
+        votes: {},
+        createdAt: db.serverDate(),
       });
-      return { ok: true, roomId: add._id, roomCode: code, openid: OPENID };
+      if (!added) return busy;
+      return { ok: true, ...added, openid: OPENID };
     }
 
     // ── 加入房间 ──

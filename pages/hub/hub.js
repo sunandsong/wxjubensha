@@ -127,14 +127,6 @@ Page({
         return wx.reLaunch({ url: '/pages/wolf/wolf?resume=1' });
       }
     }
-    this._maybeAskProfile();
-  },
-
-  // 首次进入弹一次资料设置；每步都可跳过、可关闭（审核红线：不得强制），跳过就用默认昵称+头像
-  _maybeAskProfile() {
-    if (this.data.needLogin || app.getTestUid() || wx.getStorageSync('profileAsked')) return;
-    if (!app.isDefaultAvatar()) return wx.setStorageSync('profileAsked', 1);   // 老用户已设过资料
-    this.setData({ needLogin: true, loginStep: 1, loginNick: '', loginAvatar: '', loginGender: wx.getStorageSync('gender') || '' });
   },
 
   // 点「Hi，昵称」→ 打开同一个资料弹窗改头像昵称，带上当前值
@@ -181,15 +173,26 @@ Page({
   loginBack() { this.setData({ loginStep: Math.max(1, this.data.loginStep - 1) }); },
   closeLogin() {
     wx.setStorageSync('profileAsked', 1);
-    this._afterLogin = null;
+    const after = this._afterLogin; this._afterLogin = null;
+    wx.setStorageSync('profileAsked', 1);   // 关掉也算问过，不再打扰
     this.setData({ needLogin: false });
+    if (after) return after();
     this.onShow();   // 可能已选了头像，刷新大厅显示
   },
 
-  // 资料门已取消（审核要求不得强制授权）：缺资料就补默认昵称，直接放行
-  _gate() {
+  // 进游戏前问一次资料（首页不弹，审核红线是「不得强制」而非「不得询问」）：
+  // 每步可跳过、右上角可关闭，跳过即用默认昵称+头像，照样进得去。问过一次就不再问。
+  // 返回 true 表示已弹窗、调用方应中断；补完或跳过后自动继续原动作。
+  _gate(after) {
     app.ensureProfile();
-    return false;
+    if (app.getTestUid() || wx.getStorageSync('profileAsked')) return false;
+    if (!app.isDefaultAvatar()) { wx.setStorageSync('profileAsked', 1); return false; }   // 老用户已设过
+    this._afterLogin = after || null;
+    this.setData({
+      needLogin: true, loginStep: 1, loginNick: '', loginAvatar: '',
+      loginGender: wx.getStorageSync('gender') || '',
+    });
+    return true;
   },
   loginDone() {
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
@@ -207,6 +210,7 @@ Page({
 
   // ── 悬浮钮：有房回房，没房快速进房 ──
   fabTap() {
+    if (this._gate(() => this.fabTap())) return;
     const jb = app.getSession && app.getSession();
     if (jb && jb.roomId) return wx.reLaunch({ url: `/pages/room/room?roomId=${jb.roomId}&roomCode=${jb.roomCode}` });
     const sp = app.getSpySession && app.getSpySession();
@@ -227,7 +231,7 @@ Page({
   },
   // 按房间类型分流：卧底 → spy 页；剧本杀 → room 页
   async _quickJoin(code, spectator) {
-    this._gate();   // 没资料补默认昵称
+    if (this._gate(() => this._quickJoin(code, spectator))) return;
     if (app.blockIfInRoom()) return;
     const nick = wx.getStorageSync('nick') || '玩家';
     let res;
@@ -294,10 +298,12 @@ Page({
   },
   // 进各玩法页不拦资料（审核要求先体验）；剧本杀在开本/进房时才弹资料门
   goScripts() {
+    if (this._gate(() => this.goScripts())) return;
     wx.navigateTo({ url: '/pages/index/index' });
   },
   goGame(e) {
     const id = e && e.currentTarget && e.currentTarget.dataset.game;
+    if (this._gate(() => this.goGame(e))) return;
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
     if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });
     // 卧底/狼人杀：已在房间里 → 带 resume=1 直达房间，否则进大厅

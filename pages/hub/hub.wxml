@@ -63,50 +63,33 @@
   </view>
 
   <!-- 首次进入的资料设置：头像 → 昵称 → 性别，每步可跳过；可关闭，大厅照常逛 -->
+  <!-- 资料弹窗：头像 / 昵称 / 性别同屏。进游戏必须有名字，头像性别可留空 -->
   <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop">
     <view class="login-card">
-      <view class="login-close" bindtap="closeLogin">✕</view>
+      <!-- 进游戏的资料门不给关：必须起名。从「Hi，昵称」点进来改资料时才有叉号 -->
+      <view wx:if="{{!needNick}}" class="login-close" bindtap="closeLogin">✕</view>
       <view class="login-brand">群本玩</view>
-      <view class="login-steps">{{loginStep}} / 3</view>
+      <view class="login-sub">用微信头像和昵称，点一下就好</view>
 
-      <block wx:if="{{loginStep === 1}}">
-        <view class="login-title">第一步 · 选择头像</view>
-        <view class="login-sub">点下方用你的微信头像</view>
-        <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
-          <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
-          <view wx:else class="la-ph">＋ 头像</view>
-        </button>
-        <!-- 还没选头像时，「下一步」直接拉起选头像 -->
-        <button wx:if="{{!loginAvatar}}" class="login-btn" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">下一步</button>
-        <button wx:else class="login-btn" bindtap="loginNext" disabled="{{loginUploading}}">{{loginUploading ? '头像上传中…' : '下一步'}}</button>
-      </block>
+      <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
+        <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
+        <view wx:else class="la-ph">＋ 头像</view>
+      </button>
 
-      <block wx:elif="{{loginStep === 2}}">
-        <view class="login-title">第二步 · 填写昵称</view>
-        <view class="login-sub">点输入框，微信会带出你的昵称</view>
-        <input class="login-input" type="nickname" placeholder="点这里填写昵称" placeholder-class="login-ph"
-          value="{{loginNick}}" bindinput="onLoginNick" bindblur="onLoginNick" maxlength="8" />
-        <view class="login-row">
-          <button class="login-btn ghost" bindtap="loginBack">上一步</button>
-          <button class="login-btn" bindtap="loginNext">下一步</button>
-        </view>
-      </block>
+      <input class="login-input" type="nickname" placeholder="点这里填昵称" placeholder-class="login-ph"
+        value="{{loginNick}}" bindinput="onLoginNick" bindblur="onLoginNick" maxlength="8" />
 
-      <block wx:else>
-        <view class="login-title">第三步 · 选择性别</view>
-        <view class="login-sub">决定你在剧本里的角色形象</view>
-        <view class="login-gender">
-          <view class="lg-opt {{loginGender === 'm' ? 'on' : ''}}" data-g="m" bindtap="pickLoginGender">♂ 男生</view>
-          <view class="lg-opt {{loginGender === 'f' ? 'on' : ''}}" data-g="f" bindtap="pickLoginGender">♀ 女生</view>
-        </view>
-        <view class="login-row">
-          <button class="login-btn ghost" bindtap="loginBack">上一步</button>
-          <button class="login-btn" bindtap="loginDone">进入游戏</button>
-        </view>
-      </block>
+      <view class="login-gender">
+        <view class="lg-opt {{loginGender === 'm' ? 'on' : ''}}" data-g="m" bindtap="pickLoginGender">♂ 男生</view>
+        <view class="lg-opt {{loginGender === 'f' ? 'on' : ''}}" data-g="f" bindtap="pickLoginGender">♀ 女生</view>
+      </view>
 
-      <!-- 头像和性别可跳过；进游戏时昵称那步不给跳（同房间的人要靠名字认人） -->
-      <view wx:if="{{!(needNick && loginStep === 2)}}" class="login-skip" bindtap="loginSkip">跳过</view>
+      <button class="login-btn" bindtap="loginDone" disabled="{{loginUploading}}">
+        {{loginUploading ? '头像上传中…' : (needNick ? '进入游戏' : '保存')}}
+      </button>
+
+      <!-- 名字是进游戏的必填项，不给跳；只改资料时可以直接关 -->
+      <view wx:if="{{!needNick}}" class="login-skip" bindtap="closeLogin">跳过</view>
     </view>
   </view>
 

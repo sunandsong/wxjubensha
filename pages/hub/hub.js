@@ -30,7 +30,7 @@ Page({
       { id: 'bomb', name: '数字炸弹', ico: '💣', d1: '猜数字',   d2: '别踩雷',   count: '9.1k', c: '#ffce54', img: gimg('bomb_fire.jpg'), th: gth('bomb_fire.jpg'), ok: false },
     ],
     // 强制登录门：头像 → 昵称 → 性别（缺任一就弹，填全才能进）
-    needLogin: false, needNick: false, loginStep: 1, loginNick: '', loginAvatar: '', loginGender: '', loginUploading: false,
+    needLogin: false, needNick: false, loginNick: '', loginAvatar: '', loginGender: '', loginUploading: false,
   },
 
   // 云图加载完成 → 淡入盖过缩略图
@@ -133,7 +133,7 @@ Page({
   editProfile() {
     if (app.getTestUid()) return;
     this.setData({
-      needLogin: true, needNick: false, loginStep: 1,
+      needLogin: true, needNick: false,
       loginAvatar: app.isDefaultAvatar() ? '' : wx.getStorageSync('avatar'),
       loginNick: wx.getStorageSync('nick') || '',
       loginGender: wx.getStorageSync('gender') || '',
@@ -157,30 +157,6 @@ Page({
   },
   onLoginNick(e) { this.setData({ loginNick: e.detail.value }); },
   pickLoginGender(e) { this.setData({ loginGender: e.currentTarget.dataset.g }); },
-  loginNext() {
-    if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
-    if (this.data.loginStep === 2 && !(this.data.loginNick || '').trim()) return wx.showToast({ title: '先填个昵称', icon: 'none' });
-    this.setData({ loginStep: this.data.loginStep + 1 });
-  },
-  // 小字「跳过」：跳过当前这步，最后一步跳过就直接进
-  loginSkip() {
-    const s = this.data.loginStep;
-    if (s === 1) return this.setData({ loginStep: 2 });
-    if (s === 2 && this.data.needNick) return wx.showToast({ title: '起个名字才能进游戏', icon: 'none' });
-    if (s === 2) return this.setData({ loginStep: 3, loginNick: '' });
-    this.setData({ loginGender: '' });
-    this.loginDone();
-  },
-  loginBack() { this.setData({ loginStep: Math.max(1, this.data.loginStep - 1) }); },
-  // ✕ 关闭：留在大厅，不进游戏。
-  // 名字门下不能执行 after——那会再次触发 _gate 把弹窗拉回来，死循环。
-  closeLogin() {
-    const after = this._afterLogin; this._afterLogin = null;
-    const gated = this.data.needNick;
-    this.setData({ needLogin: false, needNick: false });
-    if (after && !gated) return after();
-    this.onShow();   // 可能已选了头像，刷新大厅显示
-  },
 
   // 进游戏前问一次资料（首页不弹，审核红线是「不得强制」而非「不得询问」）：
   // 每步可跳过、右上角可关闭，跳过即用默认昵称+头像，照样进得去。问过一次就不再问。
@@ -190,8 +166,11 @@ Page({
     if (app.getTestUid()) return false;
     if (!app.isDefaultNick()) return false;        // 已经自己起过名，放行
     this._afterLogin = after || null;
+    const cur = wx.getStorageSync('nick') || '';
     this.setData({
-      needLogin: true, needNick: true, loginStep: 1, loginNick: '', loginAvatar: '',
+      needLogin: true, needNick: true,
+      loginNick: app.isAutoNick(cur) ? '' : cur,                       // 老用户预填，点一下就过
+      loginAvatar: app.isDefaultAvatar() ? '' : wx.getStorageSync('avatar'),
       loginGender: wx.getStorageSync('gender') || '',
     });
     return true;
@@ -200,9 +179,7 @@ Page({
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
     const nick = (this.data.loginNick || '').trim().slice(0, 8);
     // 头像和性别可跳过；进游戏必须有名字——同房间的人要靠它认人
-    if (!nick && this.data.needNick) {
-      return this.setData({ loginStep: 2 }, () => wx.showToast({ title: '起个名字才能进游戏', icon: 'none' }));
-    }
+    if (!nick && this.data.needNick) return wx.showToast({ title: '起个名字才能进游戏', icon: 'none' });
     if (nick) { wx.setStorageSync('nick', nick); wx.setStorageSync('nickSet', 1); }
     if (this.data.loginGender) wx.setStorageSync('gender', this.data.loginGender);
     app.ensureProfile();

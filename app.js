@@ -200,12 +200,16 @@ App({
     }
     return { nick, avatar, gender: wx.getStorageSync('gender') || '' };
   },
-  // 还在用系统随机补的「玩家XX」（没自己起过名）。
-  // nickSet 是用户真正设过名字的标记；老用户没有这个标记，就按昵称形态兜底判断。
+  // 没在资料弹窗里真正确认过名字。只认 nickSet 标记，不靠昵称长相去猜——
+  // 猜的办法漏过了测试身份留下的「玩家F」这类值。老用户会被问一次，
+  // 弹窗里已预填当前昵称，点一下「进入游戏」就过，之后不再问。
   isDefaultNick() {
-    if (wx.getStorageSync('nickSet')) return false;
-    const n = wx.getStorageSync('nick') || '';
-    return !n || /^玩家\d{2}$/.test(n);
+    return !wx.getStorageSync('nickSet');
+  },
+
+  // 系统自动补的占位昵称（ensureProfile 的「玩家37」、测试身份的「玩家F」），不值得预填
+  isAutoNick(n) {
+    return !n || /^玩家[A-Z0-9]{1,2}$/.test(n);
   },
 
   // 还在用默认头像（没自己设过）

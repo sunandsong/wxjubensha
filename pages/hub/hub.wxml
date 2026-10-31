@@ -105,8 +105,8 @@
         </view>
       </block>
 
-      <!-- 每步都可跳过（审核要求不得强制），做成不显眼的小字 -->
-      <view class="login-skip" bindtap="loginSkip">跳过</view>
+      <!-- 头像和性别可跳过；进游戏时昵称那步不给跳（同房间的人要靠名字认人） -->
+      <view wx:if="{{!(needNick && loginStep === 2)}}" class="login-skip" bindtap="loginSkip">跳过</view>
     </view>
   </view>
 

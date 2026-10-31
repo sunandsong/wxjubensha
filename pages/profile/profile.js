@@ -48,6 +48,7 @@ Page({
     if (!nick) return wx.showToast({ title: '请填写昵称', icon: 'none' });
     if (this.data.avatar) wx.setStorageSync('avatar', this.data.avatar);
     wx.setStorageSync('nick', nick);
+    wx.setStorageSync('nickSet', 1);
     if (this.data.gender) wx.setStorageSync('gender', this.data.gender);
     wx.showToast({ title: '已保存', icon: 'success' });
     setTimeout(() => wx.navigateBack(), 400);

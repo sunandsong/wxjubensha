@@ -200,6 +200,14 @@ App({
     }
     return { nick, avatar, gender: wx.getStorageSync('gender') || '' };
   },
+  // 还在用系统随机补的「玩家XX」（没自己起过名）。
+  // nickSet 是用户真正设过名字的标记；老用户没有这个标记，就按昵称形态兜底判断。
+  isDefaultNick() {
+    if (wx.getStorageSync('nickSet')) return false;
+    const n = wx.getStorageSync('nick') || '';
+    return !n || /^玩家\d{2}$/.test(n);
+  },
+
   // 还在用默认头像（没自己设过）
   isDefaultAvatar() {
     const av = wx.getStorageSync('avatar');

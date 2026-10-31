@@ -318,10 +318,32 @@ exports.handle = async (event, realOpenid) => {
         await rooms.doc(event.roomId).update({ data: { players: room.players.filter((p) => p.openid !== OPENID) } });
         return { ok: true };
       }
-      // 游戏已开始（非等待）：真实玩家退出 → 直接解散，本局结束
+      // 游戏已开始：退出者的位置留下来交给机器人托管，本局继续。
+      // 机器人仍是合法目标（能被刀/被投/被查，胜负照算），但不投票、不做夜间行动。
+      // 只有主持人解散、或真人全退光，本局才结束。
       if (room.status && room.status !== 'waiting') {
-        await removeRoom(event.roomId);
-        return { ok: true, dissolved: true };
+        const players = (room.players || []).map((p) =>
+          p.openid === OPENID ? { ...p, bot: true, ready: false } : p
+        );
+        const humansLeft = players.filter((p) => !p.bot && !p.spectator && p.openid !== room.hostOpenid);
+        const hostGone = room.hostOpenid === OPENID;
+        // 主持人退出 → 顺位转给还在的真人；没有真人可转 → 本局到此为止
+        if (hostGone) {
+          const nextHost = humansLeft[0];
+          if (!nextHost) {
+            await removeRoom(event.roomId);
+            return { ok: true, dissolved: true };
+          }
+          // 新主持人不再占位当玩家：原来是机器人托管的话取消托管
+          await rooms.doc(event.roomId).update({ data: { players, hostOpenid: nextHost.openid } });
+          return { ok: true, hostTransferred: true };
+        }
+        if (!humansLeft.length) {   // 玩家全退光，只剩主持人和机器人，没得玩了
+          await removeRoom(event.roomId);
+          return { ok: true, dissolved: true };
+        }
+        await rooms.doc(event.roomId).update({ data: { players } });
+        return { ok: true, bot: true };
       }
       const players = room.players.filter((p) => p.openid !== OPENID);
       const nextHost = players.find((p) => !p.spectator);   // 房主只能转给玩家，不转给旁观者
@@ -532,12 +554,16 @@ exports.handle = async (event, realOpenid) => {
     const WOLF_NAMES = { wolf: '狼人', seer: '预言家', witch: '女巫', villager: '平民' };
     const wolfAliveOf = (room) => (room.players || []).filter((p) => !p.out && !p.spectator && p.openid !== room.hostOpenid);   // 上帝、旁观不算存活
     // 夜晚是否收集完毕：狼刀已定 && 预言家已查(或已死) && 女巫已动(或已死)
+    // 机器人托管的角色不会行动：神职当作已行动，狼全是机器人时当作空刀，
+    // 否则「宣布天亮」会永远卡在等它们。
     const wolfNightComplete = (room, sec) => {
       const night = sec.night || {};
-      const alive = wolfAliveOf(room);
-      const seerAlive = alive.some((p) => sec.roles[p.openid] === 'seer');
-      const witchAlive = alive.some((p) => sec.roles[p.openid] === 'witch');
-      return night.wolfKill !== undefined && (night.seerDone || !seerAlive) && (night.witchDone || !witchAlive);
+      const acting = wolfAliveOf(room).filter((p) => !p.bot);
+      const seerAlive = acting.some((p) => sec.roles[p.openid] === 'seer');
+      const witchAlive = acting.some((p) => sec.roles[p.openid] === 'witch');
+      const wolfAlive = acting.some((p) => sec.roles[p.openid] === 'wolf');
+      const killDone = night.wolfKill !== undefined || !wolfAlive;
+      return killDone && (night.seerDone || !seerAlive) && (night.witchDone || !witchAlive);
     };
     const wolfRevealData = (sec, players, winner) => ({
       winner,
@@ -770,11 +796,12 @@ exports.handle = async (event, realOpenid) => {
       // 必须各角色都行动完才能天亮
       if (!wolfNightComplete(room, sec)) {
         const night = sec.night || {};
-        const alive = wolfAliveOf(room);
+        const alive = wolfAliveOf(room).filter((p) => !p.bot);   // 机器人不行动，别算进待办
         const seerAlive = alive.some((p) => sec.roles[p.openid] === 'seer');
         const witchAlive = alive.some((p) => sec.roles[p.openid] === 'witch');
+        const wolfAlive = alive.some((p) => sec.roles[p.openid] === 'wolf');
         const pend = [];
-        if (night.wolfKill === undefined) pend.push('狼人');
+        if (wolfAlive && night.wolfKill === undefined) pend.push('狼人');
         if (seerAlive && !night.seerDone) pend.push('预言家');
         if (witchAlive && !night.witchDone) pend.push('女巫');
         return { ok: false, msg: `还有 ${pend.join('、')} 没行动完，无法天亮` };
@@ -839,7 +866,7 @@ exports.handle = async (event, realOpenid) => {
       const sec = await secrets.doc(event.roomId).get().then((r) => r.data).catch(() => null);
       if (!sec) return { ok: false, msg: '本局数据异常' };
       // 必须所有存活玩家都投完票才能天黑
-      const alivePlayers = wolfAliveOf(room);
+      const alivePlayers = wolfAliveOf(room).filter((p) => !p.bot);   // 机器人不投票
       const dv = room.dayBallots || {};
       const validVote = (v) => v && v.r === room.round && v.t;
       const notVoted = alivePlayers.filter((p) => !validVote(dv[p.openid]));
@@ -928,11 +955,12 @@ exports.handle = async (event, realOpenid) => {
 
       const votes = room.votes || {};
       const alive = (room.players || []).filter((p) => !p.out && !p.spectator);
-      if (!alive.every((p) => votes[p.openid])) return { ok: false, msg: '还有人没投票，等投满再公布' };
+      const voters = alive.filter((p) => !p.bot);   // 机器人不投票，但仍可被投
+      if (!voters.every((p) => votes[p.openid])) return { ok: false, msg: '还有人没投票，等投满再公布' };
 
       // ── 结算本轮：最高票出局，平票无人出局 ──
       const tally = {};
-      alive.forEach((p) => { const t = votes[p.openid]; tally[t] = (tally[t] || 0) + 1; });
+      voters.forEach((p) => { const t = votes[p.openid]; tally[t] = (tally[t] || 0) + 1; });
       let outId = null, max = 0, tie = false;
       Object.keys(tally).forEach((id) => {
         if (tally[id] > max) { max = tally[id]; outId = id; tie = false; }

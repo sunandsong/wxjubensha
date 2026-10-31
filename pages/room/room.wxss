@@ -60,3 +60,9 @@ page { background: radial-gradient(85% 45% at 50% 0%, rgba(140, 100, 255, 0.12),
 
 /* 次要操作（解散/退出）：矮一档 */
 .btn-slim { padding: 22rpx 0; font-size: 30rpx; }
+
+/* 中途退出、由机器人托管的位置 */
+.bot-tag {
+  margin-left: 8rpx; padding: 0 8rpx; border-radius: 6rpx;
+  font-size: 20rpx; color: #b3a6cc; background: rgba(255,255,255,0.10);
+}

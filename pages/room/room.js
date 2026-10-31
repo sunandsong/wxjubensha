@@ -201,7 +201,12 @@ Page({
 
   async leaveRoom() {
     const ok = await new Promise((res) => {
-      wx.showModal({ title: '退出房间', content: '确定退出当前房间吗？', success: (r) => res(r.confirm) });
+      const playing = this.data.status && this.data.status !== 'waiting';
+      wx.showModal({
+        title: '退出房间',
+        content: playing ? '退出后你的角色交给机器人托管，本局继续。确定退出吗？' : '确定退出当前房间吗？',
+        success: (r) => res(r.confirm),
+      });
     });
     if (!ok) return;
     await app.runOnce('leave', async () => {

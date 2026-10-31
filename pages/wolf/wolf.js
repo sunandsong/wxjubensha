@@ -653,7 +653,7 @@ Page({
     const ok = await new Promise((res) => {
       wx.showModal({
         title: isHost ? '解散房间' : '退出房间',
-        content: isHost ? '你是房主，退出将解散房间，确定吗？' : (spec ? '确定退出旁观吗？' : '游戏中退出会解散本局，确定退出吗？'),
+        content: isHost ? '你是房主，退出将解散房间，确定吗？' : (spec ? '确定退出旁观吗？' : '退出后你的位置交给机器人托管，本局继续（它会被当成目标，但不投票）。确定退出吗？'),
         success: (r) => res(r.confirm),
       });
     });

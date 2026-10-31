@@ -19,7 +19,7 @@
         <view class="okmark" wx:if="{{item.ready && !item.isModerator && !item.spectator}}">✓</view>
       </view>
       <view class="host-badge" wx:if="{{item.isModerator}}">主持人</view>
-      <view class="pname">{{item.nick}}</view>
+      <view class="pname">{{item.nick}}<text wx:if="{{item.bot}}" class="bot-tag">托管</text></view>
     </view>
     <view class="player" wx:for="{{emptySlots}}" wx:key="*this">
       <view class="avatar slot-empty">?</view>

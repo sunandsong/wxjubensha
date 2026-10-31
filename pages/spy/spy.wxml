@@ -47,7 +47,7 @@
             <image wx:if="{{item.avatar}}" class="vt-img" src="{{item.avatar}}" mode="aspectFill" />
             <block wx:else>{{item.nick[0]}}</block>
           </view>
-          <view class="vt-nick">{{item.nick}}</view>
+          <view class="vt-nick">{{item.nick}}<text wx:if="{{item.bot}}" class="bot-tag">托管</text></view>
           <view class="vt-check" wx:if="{{item.openid === myVote}}">✓ 我投的</view>
         </view>
       </view>
@@ -76,7 +76,7 @@
             <view class="okmark" wx:if="{{item.ready && !item.isHost}}">✓</view>
           </view>
           <view class="host-badge" wx:if="{{item.isHost}}">房主</view>
-          <view class="pname">{{item.nick}}</view>
+          <view class="pname">{{item.nick}}<text wx:if="{{item.bot}}" class="bot-tag">托管</text></view>
         </view>
         <view class="player" wx:for="{{emptySlots}}" wx:key="*this">
           <view class="avatar slot-empty">?</view>
@@ -168,7 +168,7 @@
               <block wx:else>{{item.nick[0]}}</block>
             </view>
             <view class="out-stamp" wx:if="{{item.out}}">OUT</view>
-            <view class="pname">{{item.nick}}</view>
+            <view class="pname">{{item.nick}}<text wx:if="{{item.bot}}" class="bot-tag">托管</text></view>
             <view class="votedmark" wx:if="{{!item.out && voting && item.voted}}">✓</view>
           </view>
         </view>

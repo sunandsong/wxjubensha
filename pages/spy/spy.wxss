@@ -264,3 +264,9 @@
   border: 2rpx solid #1e1830;
   box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.45);
 }
+
+/* 中途退出、由机器人托管的位置 */
+.bot-tag {
+  margin-left: 8rpx; padding: 0 8rpx; border-radius: 6rpx;
+  font-size: 20rpx; color: #b3a6cc; background: rgba(255,255,255,0.10);
+}

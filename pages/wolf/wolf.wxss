@@ -294,3 +294,9 @@
 .copy-link:active { opacity: 0.7; }
 /* 终局阶段卡只剩复制链接时：去掉上边距，卡片显得紧凑 */
 .copy-link-lone { margin-top: 0; }
+
+/* 中途退出、由机器人托管的位置 */
+.bot-tag {
+  margin-left: 8rpx; padding: 0 8rpx; border-radius: 6rpx;
+  font-size: 20rpx; color: #b3a6cc; background: rgba(255,255,255,0.10);
+}

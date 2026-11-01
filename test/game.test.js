@@ -298,12 +298,111 @@ async function oneWolfLeavesStillKills() {
   console.log('  ✅ 狼人杀：两狼走一只，剩下的狼照常刀人');
 }
 
+// ── 再来一局：上一局退出的人（机器人）不该占着座位 ──
+async function resetClearsBots() {
+  const { game, db } = loadGame();
+  const H = 'rh';
+  const P = ['r1', 'r2', 'r3', 'r4'];
+  const c = ok(await game.handle({ action: 'create', gameType: 'spy', nick: '房主' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+
+  const sec = Object.values(db._store.spySecrets)[0];
+  const quitter = P.find((id) => !sec.spies.includes(id));   // 退平民，避免触发「卧底全退」收局
+  ok(await game.handle({ action: 'leave', roomId: c.roomId }, quitter), `${quitter} 退出`);
+  ok(await game.handle({ action: 'reset', roomId: c.roomId }, H), '再来一局');
+
+  const ps = room(db).players;
+  assert.ok(!ps.some((p) => p.bot), '❌ 再来一局后机器人还占着座位');
+  assert.ok(!ps.some((p) => p.openid === quitter), '❌ 已退出的人不该留在房间里');
+
+  // 剩下的人准备后必须能正常开下一局（机器人不点准备会把开局卡死）
+  for (const id of P.filter((x) => x !== quitter)) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  const st = await game.handle({ action: 'start', roomId: c.roomId }, H);
+  assert.ok(st.ok, `❌ 上一局的机器人把下一局开局卡住了: ${st.msg}`);
+  console.log('  ✅ 再来一局：上局退出的人被清掉，能正常开下一局');
+}
+
+// ── 主持人中途退出：转给还在的真人，本局继续 ──
+async function hostLeaveTransfers() {
+  const { game, db } = loadGame();
+  const H = 'hh';
+  const P = ['h1', 'h2', 'h3'];
+  const c = ok(await game.handle({ action: 'create', scriptId: 'test', nick: '主持人' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+
+  const r = ok(await game.handle({ action: 'leave', roomId: c.roomId }, H), '主持人退出');
+  assert.ok(!r.dissolved, '❌ 主持人退出就解散了，应先转移');
+  const after = room(db);
+  assert.ok(after, '❌ 房间没了');
+  assert.notStrictEqual(after.hostOpenid, H, '❌ 主持人没转移');
+  assert.ok(P.includes(after.hostOpenid), '❌ 新主持人应是还在的真人');
+
+  // 新主持人要真的能推进流程
+  const adv = await game.handle({ action: 'advance', roomId: c.roomId }, after.hostOpenid);
+  assert.ok(adv.ok, `❌ 新主持人推进不了: ${adv.msg}`);
+  console.log('  ✅ 主持人退出：转给真人，新主持人能推进');
+}
+
+// ── 旁观者：不占座、不准备、不投票；等待阶段可上桌 ──
+async function spectatorFlow() {
+  const { game, db } = loadGame();
+  const H = 'ph';
+  const P = ['q1', 'q2'];   // 卧底局房主也算玩家：房主+2=3，差一个才够 4
+  const c = ok(await game.handle({ action: 'create', gameType: 'spy', nick: '房主' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: '吃瓜', spectator: true }, 'spec'), '旁观进房');
+
+  const spec = room(db).players.find((p) => p.openid === 'spec');
+  assert.strictEqual(spec.spectator, true, '应标记为旁观');
+  assert.strictEqual(await game.handle({ action: 'ready', roomId: c.roomId }, 'spec').then((x) => x.ok), false, '旁观者不该能准备');
+
+  // 人不够（房主+2 个玩家=3，旁观不算）：开局应被拒
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  const bad = await game.handle({ action: 'start', roomId: c.roomId }, H);
+  assert.ok(!bad.ok, '❌ 旁观者被算进人数了，3 人不该能开局');
+
+  // 上桌后人数够了
+  ok(await game.handle({ action: 'setSpectator', roomId: c.roomId, spectator: false }, 'spec'), '上桌');
+  assert.strictEqual(room(db).players.find((p) => p.openid === 'spec').spectator, false, '应变成玩家');
+  ok(await game.handle({ action: 'ready', roomId: c.roomId }, 'spec'), '上桌后能准备');
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开局');
+  console.log('  ✅ 旁观者：不占座、不能准备、上桌后计入人数');
+}
+
+// ── 开局后进来的人自动旁观，再来一局转为玩家 ──
+async function lateJoinBecomesPlayer() {
+  const { game, db } = loadGame();
+  const H = 'lh';
+  const P = ['l1', 'l2', 'l3', 'l4'];
+  const c = ok(await game.handle({ action: 'create', gameType: 'spy', nick: '房主' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+
+  const j = ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: '迟到' }, 'late'), '开局后进房');
+  assert.strictEqual(j.spectator, true, '开局后进来的应自动旁观');
+  assert.strictEqual(await game.handle({ action: 'spyVote', roomId: c.roomId, target: P[0] }, 'late').then((x) => x.ok), false, '旁观者不该能投票');
+
+  ok(await game.handle({ action: 'reset', roomId: c.roomId }, H), '再来一局');
+  const after = room(db).players.find((p) => p.openid === 'late');
+  assert.strictEqual(after.spectator, false, '❌ 迟到的人下一局应转为玩家');
+  console.log('  ✅ 旁观者：开局后进来自动旁观，下一局转玩家');
+}
+
 (async () => {
   await normalSpyGame();
   await normalWolfGame();
   await normalScriptGame();
   await scriptBotDoesNotBlockReveal();
   await oneWolfLeavesStillKills();
+  await resetClearsBots();
+  await hostLeaveTransfers();
+  await spectatorFlow();
+  await lateJoinBecomesPlayer();
   await spyBotTakeover();
   await autoWinWhenThreatLeaves();
   await wolfBotTakeover();

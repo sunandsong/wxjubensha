@@ -1045,17 +1045,21 @@ exports.handle = async (event, realOpenid) => {
     if (action === 'reset') {
       const room = await rooms.doc(event.roomId).get().then((r) => r.data);
       if (room.hostOpenid !== OPENID) return { ok: false, msg: '只有房主可以重开' };
-      // 派对局重开（卧底/狼人杀）：清准备/出局状态，删上局的秘密数据
+      // 派对局重开（卧底/狼人杀）：清准备/出局状态，删上局的秘密数据。
+      // 机器人是上一局退出者的占位，人早就走了：下一局直接剔除，否则他永远不点准备，房主开不了局
       if (room.gameType === 'spy' || room.gameType === 'wolf') {
-        const players = room.players.map((p) => ({ ...p, ready: false, out: false, spectator: !!p.spectator && !p.lateJoin, lateJoin: false }));
+        const players = room.players.filter((p) => !p.bot)
+          .map((p) => ({ ...p, ready: false, out: false, spectator: !!p.spectator && !p.lateJoin, lateJoin: false }));
         await rooms.doc(event.roomId).update({
           data: { players, status: 'waiting', round: 0, reveal: _.remove(), announce: _.remove(), nightVer: _.remove(), votes: _.set({}), voting: false, lastVote: _.remove() },
         });
         await secrets.doc(event.roomId).remove().catch(() => {});
         return { ok: true };
       }
-      // 再来一局：清空发牌；开局后才进来的吃瓜群众转为正常等待玩家，主动旁观的继续旁观
-      const players = room.players.map((p) => ({ ...p, charId: '', spectator: !!p.spectator && !p.lateJoin, lateJoin: false }));
+      // 再来一局：清空发牌；开局后才进来的吃瓜群众转为正常等待玩家，主动旁观的继续旁观；
+      // 上一局退出者的机器人占位一并剔除
+      const players = room.players.filter((p) => !p.bot)
+        .map((p) => ({ ...p, charId: '', spectator: !!p.spectator && !p.lateJoin, lateJoin: false }));
       await rooms.doc(event.roomId).update({
         data: { players, status: 'waiting', actIndex: 0, votes: _.set({}), npcChars: [], searches: _.set({}) },
       });

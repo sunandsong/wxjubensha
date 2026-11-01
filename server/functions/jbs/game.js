@@ -517,9 +517,9 @@ exports.handle = async (event, realOpenid) => {
       const meta = (await getMeta(room.scriptId)) || (await getMeta(DEFAULT_SCRIPT));
       const data = {};
       if (room.status === 'voting') {
-        // 必须全部玩家投完才能公布真相（房主不参与）
+        // 必须全部玩家投完才能公布真相（房主不参与；机器人托管的位置不投票，不计入）
         const voted = Object.keys(room.votes || {}).length;
-        const total = (room.players || []).filter((p) => p.openid !== room.hostOpenid && !p.spectator).length;
+        const total = (room.players || []).filter((p) => p.openid !== room.hostOpenid && !p.spectator && !p.bot).length;
         if (voted < total) return { ok: false, msg: `还有 ${total - voted} 人没投票` };
         data.status = 'finished';                              // 公布真相
       } else if (room.status !== 'finished') {
@@ -707,7 +707,7 @@ exports.handle = async (event, realOpenid) => {
       const base = { ok: true, phase: 'night', role, meOut };
       if (meOut) return base;
       if (role === 'wolf') {
-        const aliveWolves = alive.filter((p) => sec.roles[p.openid] === 'wolf');
+        const aliveWolves = alive.filter((p) => sec.roles[p.openid] === 'wolf' && !p.bot);   // 托管的狼不参与选刀
         const votes = aliveWolves.map((p) => ({ nick: p.nick, target: nickOf((night.wolfVotes || {})[p.openid]) }));
         const allVoted = aliveWolves.every((p) => (night.wolfVotes || {})[p.openid]);
         const voteSig = aliveWolves.map((p) => p.openid + ':' + ((night.wolfVotes || {})[p.openid] || '')).join('|');
@@ -763,7 +763,8 @@ exports.handle = async (event, realOpenid) => {
         if (!s2) return { ok: false, msg: '本局数据异常' };
         const n2 = s2.night || {};
         if (n2.wolfKill !== undefined) return { ok: true };   // 已定,幂等
-        const aliveWolves = wolfAliveOf(room).filter((p) => s2.roles[p.openid] === 'wolf');
+        // 托管的狼不会选目标，不计入「是否都选完」，否则剩下的真人狼永远确认不了刀
+        const aliveWolves = wolfAliveOf(room).filter((p) => s2.roles[p.openid] === 'wolf' && !p.bot);
         if (!aliveWolves.every((p) => (n2.wolfVotes || {})[p.openid])) return { ok: false, msg: '还有狼没选目标' };
         const votes = aliveWolves.map((p) => ({ t: (n2.wolfVotes || {})[p.openid], ts: (n2.wolfTs || {})[p.openid] || 0 }));
         const uniq = [...new Set(votes.map((v) => v.t))];

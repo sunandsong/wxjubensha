@@ -160,7 +160,150 @@ async function autoWinWhenThreatLeaves() {
   console.log('  ✅ 威胁方全退出：狼全退判好人胜、卧底全退判平民胜');
 }
 
+// ── 正常局：没人退出，流程必须和加机器人之前完全一样 ──
+async function normalSpyGame() {
+  const { game, db } = loadGame();
+  const H = 'nh';
+  const P = ['n1', 'n2', 'n3', 'n4'];
+  const c = ok(await game.handle({ action: 'create', gameType: 'spy', nick: '房主' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+
+  const sec = Object.values(db._store.spySecrets)[0];
+  const all = [H, ...P];
+  assert.strictEqual(Object.keys(sec.words).length, all.length, '每人都该发到词（房主也参与）');
+
+  // 全员投同一个平民出局，然后公布
+  const victim = all.find((id) => !sec.spies.includes(id));
+  ok(await game.handle({ action: 'spyVoteOpen', roomId: c.roomId }, H), '开启投票');
+  for (const id of all.filter((x) => x !== victim)) {
+    ok(await game.handle({ action: 'spyVote', roomId: c.roomId, target: victim }, id), `${id} 投票`);
+  }
+  ok(await game.handle({ action: 'spyVote', roomId: c.roomId, target: all.find((x) => x !== victim) }, victim), '被投者也投票');
+  ok(await game.handle({ action: 'spyReveal', roomId: c.roomId }, H), '公布结果');
+  const r = room(db);
+  assert.ok(r.players.find((p) => p.openid === victim).out, '最高票应出局');
+  assert.ok(!r.players.some((p) => p.bot), '正常局不该出现机器人');
+  console.log('  ✅ 卧底正常局：全员发词、投票、公布、出局都正常');
+}
+
+async function normalWolfGame() {
+  const { game, db } = loadGame();
+  const H = 'ng';
+  const P = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'];
+  const c = ok(await game.handle({ action: 'create', gameType: 'wolf', nick: '上帝' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+
+  const sec = Object.values(db._store.spySecrets)[0];
+  const roleOf = (id) => sec.roles[id];
+  const wolves = P.filter((id) => roleOf(id) === 'wolf');
+  const seer = P.find((id) => roleOf(id) === 'seer');
+  const witch = P.find((id) => roleOf(id) === 'witch');
+  assert.ok(wolves.length >= 2 && seer && witch, '6 人局应有 2 狼 + 预言家 + 女巫');
+
+  const prey = P.find((id) => roleOf(id) === 'villager');
+  for (const w of wolves) ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'kill', target: prey }, w), `${w} 选刀`);
+  ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'killConfirm' }, wolves[0]), '确认刀');
+  ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'check', target: wolves[0] }, seer), '预言家查验');
+  ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'skip' }, witch), '女巫跳过');
+  ok(await game.handle({ action: 'wolfForce', roomId: c.roomId }, H), '宣布天亮');
+
+  const r1 = room(db);
+  assert.strictEqual(r1.status, 'day', '应进入白天');
+  assert.ok(r1.players.find((p) => p.openid === prey).out, '被刀的人应出局');
+  assert.ok(!r1.players.some((p) => p.bot), '正常局不该出现机器人');
+
+  const alive = r1.players.filter((p) => !p.out && p.openid !== H).map((p) => p.openid);
+  for (const id of alive) ok(await game.handle({ action: 'wolfVote', roomId: c.roomId, target: wolves[0] }, id), `${id} 投票`);
+  ok(await game.handle({ action: 'wolfDusk', roomId: c.roomId }, H), '宣布天黑');
+  assert.ok(['night', 'finished'].includes(room(db).status), '天黑后应入夜或已分胜负');
+  console.log('  ✅ 狼人杀正常局：刀/查/药、天亮出局、白天投票、天黑都正常');
+}
+
+async function normalScriptGame() {
+  const { game, db } = loadGame();
+  const H = 'sh';
+  const P = ['s1', 's2', 's3'];
+  const c = ok(await game.handle({ action: 'create', scriptId: 'test', nick: '主持人' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+  assert.ok(room(db).players.filter((p) => p.openid !== H).every((p) => p.charId), '每个玩家都该发到角色');
+
+  for (let i = 0; i < 10 && room(db).status !== 'voting'; i++) {
+    ok(await game.handle({ action: 'advance', roomId: c.roomId }, H), '推进');
+  }
+  assert.strictEqual(room(db).status, 'voting', '末幕后应进入投票');
+
+  const chars = room(db).players.filter((p) => p.openid !== H).map((p) => p.charId);
+  for (const id of P) ok(await game.handle({ action: 'vote', roomId: c.roomId, charId: chars[0] }, id), `${id} 投票`);
+  ok(await game.handle({ action: 'advance', roomId: c.roomId }, H), '公布真相');
+  assert.strictEqual(room(db).status, 'finished', '应公布真相结束');
+  console.log('  ✅ 剧本杀正常局：发角色、逐幕推进、投票、公布真相都正常');
+}
+
+// 剧本杀有人退出后，主持人仍能公布真相（机器人不该把投票数卡住）
+async function scriptBotDoesNotBlockReveal() {
+  const { game, db } = loadGame();
+  const H = 'sh2';
+  const P = ['t1', 't2', 't3'];
+  const c = ok(await game.handle({ action: 'create', scriptId: 'test', nick: '主持人' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+  ok(await game.handle({ action: 'leave', roomId: c.roomId }, 't3'), 't3 退出');
+
+  for (let i = 0; i < 10 && room(db).status !== 'voting'; i++) {
+    ok(await game.handle({ action: 'advance', roomId: c.roomId }, H), '推进');
+  }
+  const chars = room(db).players.filter((p) => p.openid !== H).map((p) => p.charId);
+  for (const id of ['t1', 't2']) ok(await game.handle({ action: 'vote', roomId: c.roomId, charId: chars[0] }, id), `${id} 投票`);
+  const rev = await game.handle({ action: 'advance', roomId: c.roomId }, H);
+  assert.ok(rev.ok, `❌ 机器人把公布真相卡住了: ${rev.msg}`);
+  assert.strictEqual(room(db).status, 'finished', '应公布真相结束');
+  console.log('  ✅ 剧本杀：有人托管也能公布真相');
+}
+
+// 两狼中一只托管：剩下的真人狼必须还能正常刀人（否则夜晚死锁）
+async function oneWolfLeavesStillKills() {
+  const { game, db } = loadGame();
+  const H = 'g3';
+  const P = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
+  const c = ok(await game.handle({ action: 'create', gameType: 'wolf', nick: '上帝' }, H), '建房');
+  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+
+  const sec = Object.values(db._store.spySecrets)[0];
+  const roleOf = (id) => sec.roles[id];
+  const wolves = P.filter((id) => roleOf(id) === 'wolf');
+  assert.ok(wolves.length >= 2, '6 人局应有 2 狼');
+  const seer = P.find((id) => roleOf(id) === 'seer');
+  const witch = P.find((id) => roleOf(id) === 'witch');
+
+  ok(await game.handle({ action: 'leave', roomId: c.roomId }, wolves[0]), '一只狼退出');
+  assert.strictEqual(room(db).status, 'night', '只走一只狼不该结束本局');
+
+  const prey = P.find((id) => roleOf(id) === 'villager');
+  ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'kill', target: prey }, wolves[1]), '剩下的狼选刀');
+  const conf = await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'killConfirm' }, wolves[1]);
+  assert.ok(conf.ok, `❌ 托管的狼把确认刀卡住了: ${conf.msg}`);
+  ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'check', target: wolves[1] }, seer), '预言家查验');
+  ok(await game.handle({ action: 'wolfNightAct', roomId: c.roomId, act: 'skip' }, witch), '女巫跳过');
+  ok(await game.handle({ action: 'wolfForce', roomId: c.roomId }, H), '宣布天亮');
+  assert.ok(room(db).players.find((p) => p.openid === prey).out, '被刀的人应出局');
+  console.log('  ✅ 狼人杀：两狼走一只，剩下的狼照常刀人');
+}
+
 (async () => {
+  await normalSpyGame();
+  await normalWolfGame();
+  await normalScriptGame();
+  await scriptBotDoesNotBlockReveal();
+  await oneWolfLeavesStillKills();
   await spyBotTakeover();
   await autoWinWhenThreatLeaves();
   await wolfBotTakeover();

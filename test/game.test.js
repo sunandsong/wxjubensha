@@ -324,27 +324,43 @@ async function resetClearsBots() {
   console.log('  ✅ 再来一局：上局退出的人被清掉，能正常开下一局');
 }
 
-// ── 主持人中途退出：转给还在的真人，本局继续 ──
-async function hostLeaveTransfers() {
-  const { game, db } = loadGame();
-  const H = 'hh';
-  const P = ['h1', 'h2', 'h3'];
-  const c = ok(await game.handle({ action: 'create', scriptId: 'test', nick: '主持人' }, H), '建房');
-  for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
-  for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
-  ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
+// ── 主持人退出 = 全场散场（游戏中、等待阶段都一样）──
+async function hostLeaveDissolves() {
+  // 游戏中
+  {
+    const { game, db } = loadGame();
+    const H = 'hh';
+    const P = ['h1', 'h2', 'h3'];
+    const c = ok(await game.handle({ action: 'create', scriptId: 'test', nick: '主持人' }, H), '建房');
+    for (const id of P) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+    for (const id of P) ok(await game.handle({ action: 'ready', roomId: c.roomId }, id), `${id} 准备`);
+    ok(await game.handle({ action: 'start', roomId: c.roomId }, H), '开始');
 
-  const r = ok(await game.handle({ action: 'leave', roomId: c.roomId }, H), '主持人退出');
-  assert.ok(!r.dissolved, '❌ 主持人退出就解散了，应先转移');
-  const after = room(db);
-  assert.ok(after, '❌ 房间没了');
-  assert.notStrictEqual(after.hostOpenid, H, '❌ 主持人没转移');
-  assert.ok(P.includes(after.hostOpenid), '❌ 新主持人应是还在的真人');
-
-  // 新主持人要真的能推进流程
-  const adv = await game.handle({ action: 'advance', roomId: c.roomId }, after.hostOpenid);
-  assert.ok(adv.ok, `❌ 新主持人推进不了: ${adv.msg}`);
-  console.log('  ✅ 主持人退出：转给真人，新主持人能推进');
+    const r = ok(await game.handle({ action: 'leave', roomId: c.roomId }, H), '主持人退出');
+    assert.strictEqual(r.dissolved, true, '❌ 主持人退出应解散整局');
+    assert.ok(!room(db), '❌ 房间应已删除');
+  }
+  // 等待阶段
+  {
+    const { game, db } = loadGame();
+    const H = 'hw';
+    const c = ok(await game.handle({ action: 'create', gameType: 'spy', nick: '房主' }, H), '建房');
+    ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: 'w1' }, 'w1'), 'w1 进房');
+    const r = ok(await game.handle({ action: 'leave', roomId: c.roomId }, H), '房主退出');
+    assert.strictEqual(r.dissolved, true, '❌ 等待阶段房主退出也应解散');
+    assert.ok(!room(db), '❌ 房间应已删除');
+  }
+  // 普通玩家退出不受影响：等待阶段只是移除自己
+  {
+    const { game, db } = loadGame();
+    const H = 'hp';
+    const c = ok(await game.handle({ action: 'create', gameType: 'spy', nick: '房主' }, H), '建房');
+    for (const id of ['a1', 'a2']) ok(await game.handle({ action: 'join', roomCode: c.roomCode, nick: id }, id), `${id} 进房`);
+    const r = ok(await game.handle({ action: 'leave', roomId: c.roomId }, 'a1'), 'a1 退出');
+    assert.ok(!r.dissolved, '❌ 普通玩家退出不该解散');
+    assert.ok(room(db) && !room(db).players.some((p) => p.openid === 'a1'), '❌ 退出者应被移除');
+  }
+  console.log('  ✅ 主持人退出：游戏中/等待阶段都解散，普通玩家退出不受影响');
 }
 
 // ── 旁观者：不占座、不准备、不投票；等待阶段可上桌 ──
@@ -400,7 +416,7 @@ async function lateJoinBecomesPlayer() {
   await scriptBotDoesNotBlockReveal();
   await oneWolfLeavesStillKills();
   await resetClearsBots();
-  await hostLeaveTransfers();
+  await hostLeaveDissolves();
   await spectatorFlow();
   await lateJoinBecomesPlayer();
   await spyBotTakeover();

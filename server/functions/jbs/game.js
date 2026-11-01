@@ -330,26 +330,18 @@ exports.handle = async (event, realOpenid) => {
         await rooms.doc(event.roomId).update({ data: { players: room.players.filter((p) => p.openid !== OPENID) } });
         return { ok: true };
       }
+      // 主持人退出 = 全场散场。局是他攒的、流程是他推的，他走了没人能继续。
+      if (room.hostOpenid === OPENID) {
+        await removeRoom(event.roomId);
+        return { ok: true, dissolved: true };
+      }
       // 游戏已开始：退出者的位置留下来交给机器人托管，本局继续。
       // 机器人仍是合法目标（能被刀/被投/被查，胜负照算），但不投票、不做夜间行动。
-      // 只有主持人解散、或真人全退光，本局才结束。
       if (room.status && room.status !== 'waiting') {
         const players = (room.players || []).map((p) =>
           p.openid === OPENID ? { ...p, bot: true, ready: false } : p
         );
         const humansLeft = players.filter((p) => !p.bot && !p.spectator && p.openid !== room.hostOpenid);
-        const hostGone = room.hostOpenid === OPENID;
-        // 主持人退出 → 顺位转给还在的真人；没有真人可转 → 本局到此为止
-        if (hostGone) {
-          const nextHost = humansLeft[0];
-          if (!nextHost) {
-            await removeRoom(event.roomId);
-            return { ok: true, dissolved: true };
-          }
-          // 新主持人不再占位当玩家：原来是机器人托管的话取消托管
-          await rooms.doc(event.roomId).update({ data: { players, hostOpenid: nextHost.openid } });
-          return { ok: true, hostTransferred: true };
-        }
         if (!humansLeft.length) {   // 玩家全退光，只剩主持人和机器人，没得玩了
           await removeRoom(event.roomId);
           return { ok: true, dissolved: true };
@@ -379,15 +371,13 @@ exports.handle = async (event, realOpenid) => {
         await rooms.doc(event.roomId).update({ data: { players } });
         return { ok: true, bot: true };
       }
+      // 等待阶段的普通玩家退出：直接移除（主持人退出已在上面解散掉了）
       const players = room.players.filter((p) => p.openid !== OPENID);
-      const nextHost = players.find((p) => !p.spectator);   // 房主只能转给玩家，不转给旁观者
-      if (!nextHost) {
+      if (!players.some((p) => !p.spectator)) {   // 人走空了
         await removeRoom(event.roomId);
         return { ok: true, dissolved: true };
       }
-      const data = { players };
-      if (room.hostOpenid === OPENID) data.hostOpenid = nextHost.openid; // 房主退出则转移房主
-      await rooms.doc(event.roomId).update({ data });
+      await rooms.doc(event.roomId).update({ data: { players } });
       return { ok: true };
     }
 

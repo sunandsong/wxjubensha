@@ -7,8 +7,9 @@
 ## 改完代码先跑测试，再说「改好了」
 
 ```bash
-node test/selftest.js    # wxml 标签配平（12 个文件）+ 资料门判断
-node test/game.test.js   # 对局逻辑：内存数据库驱动真实 action 跑完整对局
+node test/selftest.js        # wxml 标签配平（12 个文件）+ 资料门判断
+node test/game.test.js       # 对局逻辑：内存数据库驱动真实 action 跑完整对局
+node test/fuzz.test.js 300   # 随机退出压力测试：600 局，0.7 秒，断言永不卡死
 ```
 
 两条都要过。`node --check` 只管 JS 语法，**管不了 wxml，也管不了逻辑**。
@@ -24,6 +25,13 @@ for i in $(seq 1 10); do node test/game.test.js >/dev/null || echo "第 $i 次�
 - 资料门靠昵称长相判断，漏过测试身份留下的「玩家F」
 - 女巫等「狼人动手」，狼全是机器人就永远等不到 → 整局死锁
 - `leave` 分支引用后面声明的 `const` → TDZ，`WOLF_NAMES is not defined`
+- 剧本杀公布真相 / 狼人确认刀 / 天黑投票：都把机器人算进「人齐了吗」→ 卡死
+- `reset` 漏清机器人 → 再来一局永远开不了，房间废掉
+- 「真人是否走光」没排除死人 → 活人全退后天黑卡在「还没有人投票」
+
+**加了阻塞条件就想一下机器人**：凡是「还有 N 人没投票 / 没行动」这类判断，
+机器人（`p.bot`）永远不会满足它。fuzz 跑 300 局能把这类问题撞出来，
+失败会打印 `seed=N step=M`，固定种子可复现。
 
 改了 `server/functions/jbs/` 要**部署**才生效（`cd server && tcb fn code update jbs`），
 光发小程序版本没用；改了页面要**重新上传发版**，光部署云函数没用。

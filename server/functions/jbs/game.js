@@ -341,7 +341,8 @@ exports.handle = async (event, realOpenid) => {
         const players = (room.players || []).map((p) =>
           p.openid === OPENID ? { ...p, bot: true, ready: false } : p
         );
-        const humansLeft = players.filter((p) => !p.bot && !p.spectator && p.openid !== room.hostOpenid);
+        // 还活着的真人。死人不算——活人全退光了，局就推不下去了（天黑会卡在「还没有人投票」）
+        const humansLeft = players.filter((p) => !p.bot && !p.spectator && !p.out && p.openid !== room.hostOpenid);
         if (!humansLeft.length) {   // 玩家全退光，只剩主持人和机器人，没得玩了
           await removeRoom(event.roomId);
           return { ok: true, dissolved: true };

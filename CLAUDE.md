@@ -10,9 +10,10 @@
 node test/selftest.js        # wxml 标签配平（12 个文件）+ 资料门判断
 node test/game.test.js       # 对局逻辑：内存数据库驱动真实 action 跑完整对局
 node test/fuzz.test.js 300   # 随机退出压力测试：600 局，0.7 秒，断言永不卡死
+node test/api.test.js        # 33 个 action 全打一遍：不抛异常、权限挡得住、新接口必须补用例
 ```
 
-两条都要过。`node --check` 只管 JS 语法，**管不了 wxml，也管不了逻辑**。
+四条都要过。`node --check` 只管 JS 语法，**管不了 wxml，也管不了逻辑**。
 
 对局逻辑是随机发牌的，改了狼人杀/卧底的流程就**连跑 5-10 次**再下结论：
 

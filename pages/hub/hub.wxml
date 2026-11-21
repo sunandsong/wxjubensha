@@ -12,6 +12,7 @@
       <view wx:else class="ub-img ub-ph">🐱</view>
     </view>
     <view class="ub-hi" bindtap="editProfile">Hi，{{nick}} <text class="ub-wave">👋</text></view>
+    <view class="ub-about" bindtap="showAbout">关于我们<text class="ub-q">?</text></view>
   </view>
 
   <!-- 剧本杀 · 招牌大横幅 -->
@@ -43,6 +44,8 @@
       </view>
     </view>
   </view>
+
+  <view class="copyright">泉都发科技有限公司</view>
 
   <!-- 悬浮圆钮：回房间 / 快速进房（可拖动，位置记忆） -->
   <view class="fab {{fabRoom ? 'fab-back' : ''}}" style="left:{{fabX}}px; top:{{fabY}}px;"
@@ -90,6 +93,17 @@
 
       <!-- 名字是进游戏的必填项，不给跳；只改资料时可以直接关 -->
       <view wx:if="{{!needNick}}" class="login-skip" bindtap="closeLogin">跳过</view>
+    </view>
+  </view>
+
+
+  <!-- 关于我们：公司介绍 + 联系邮箱（点一下复制），和《登天闯关》里那页一致 -->
+  <view class="about-mask" wx:if="{{showAbout}}" bindtap="hideAbout" catchtouchmove="noop">
+    <view class="about-card" catchtap="noop">
+      <view class="about-title">关于我们</view>
+      <view class="about-text">{{aboutText}}</view>
+      <view class="about-foot" bindtap="copyMail">点此复制邮箱</view>
+      <view class="about-close" bindtap="hideAbout">✕</view>
     </view>
   </view>
 

@@ -5,6 +5,26 @@ const IMGS = ['https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qclo
 const TITLES = ['群本玩 · 拉个群开一局，揪出真凶', '谁在说谎？拉群来一局剧本杀 🔍', '一局一故事，一人一面具'];
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
+// 关于我们（提审要求的主体信息）。文案与《登天闯关》那一页保持一致，改这里即可
+const MAIL = 'quandoufa@quandoufa.cn';
+const ABOUT_TEXT = [
+  '济南泉都发科技有限公司',
+  '',
+  '我们是来自泉城济南的一支小团队，',
+  '专注于制作好玩、耐玩的原创游戏。',
+  '',
+  '《群本玩》由我们独立设计与开发，',
+  '剧本杀、谁是卧底、狼人杀、海龟汤、数字炸弹，',
+  '每个玩法都用心打磨。',
+  '',
+  '使用中遇到问题，或有任何意见和建议，',
+  '欢迎来信：',
+  '',
+  MAIL,
+  '',
+  '感谢你的游玩！',
+].join('\n');
+
 // 游戏图在云存储 games/ 下；包内只留 th_*.jpg 极小缩略图占位，云图 bindload 后淡入替换
 const GBASE = 'https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qcloud.la/jbs/games';
 const gimg = (name) => `${GBASE}/${name}`;
@@ -20,6 +40,8 @@ Page({
     fabRoom: false,              // 悬浮钮形态：true=回房间 false=进房间
     fabX: 0, fabY: 0,            // 悬浮钮位置（可拖动，本地记忆）
     showQuickJoin: false, quickCode: '', joinSpec: false,   // joinSpec：快速进房勾了「只旁观」
+    showAbout: false,            // 关于我们弹窗
+    aboutText: ABOUT_TEXT,
     manShift: '', bgShift: '',   // 陀螺仪视差位移(裸眼3D)
     bg: gimg('hero_bg.jpg'), bgTh: gth('hero_bg.jpg'), bgOk: false,           // 全屏夜幕背景
     heroMan: gimg('hero_man.png'), heroManTh: gth('hero_man.png'), heroOk: false, // 侦探立绘
@@ -138,6 +160,13 @@ Page({
       loginNick: wx.getStorageSync('nick') || '',
       loginGender: wx.getStorageSync('gender') || '',
     });
+  },
+
+  // ── 关于我们 ──
+  showAbout() { this.setData({ showAbout: true }); },
+  hideAbout() { this.setData({ showAbout: false }); },
+  copyMail() {
+    wx.setClipboardData({ data: MAIL, success: () => wx.showToast({ title: '邮箱已复制', icon: 'none' }) });
   },
 
   // ── 资料设置：头像 → 昵称 → 性别，每步可跳过 ──

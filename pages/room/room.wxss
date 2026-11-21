@@ -66,3 +66,6 @@ page { background: radial-gradient(85% 45% at 50% 0%, rgba(140, 100, 255, 0.12),
   margin-left: 8rpx; padding: 0 8rpx; border-radius: 6rpx;
   font-size: 20rpx; color: #b3a6cc; background: rgba(255,255,255,0.10);
 }
+
+/* 流量主广告：跟玩家列表留点距离，拉不到广告时整块不占位 */
+.rm-ad { display: block; margin: 28rpx 0 4rpx; }

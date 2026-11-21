@@ -37,6 +37,10 @@
     </view>
   </view>
 
+  <!-- 流量主：等待房间底部。勾了 16:9 / 20:7 两种横版卡片，高度不固定，
+       所以放在正常文档流里跟着往下排，不用绝对定位，免得压到下面的按钮 -->
+  <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
+
   <!-- 房主视角 -->
   <block wx:if="{{isHost}}">
     <view wx:if="{{!canStart}}" class="muted center rm-count">{{realCount < needPlayers ? '还差 ' + (needPlayers - realCount) + ' 名玩家 · 主持人不占角色' : '等待玩家准备 ' + readyCount + '/' + realCount}}</view>

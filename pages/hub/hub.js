@@ -5,9 +5,11 @@ const IMGS = ['https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qclo
 const TITLES = ['群本玩 · 拉个群开一局，揪出真凶', '谁在说谎？拉群来一局剧本杀 🔍', '一局一故事，一人一面具'];
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
-// 小程序版本号。只有正式版/体验版拿得到，开发版这里是空串 —— 空就不显示「· v」那段
+// 小程序版本号。正式版/体验版能从 getAccountInfoSync 拿到真值，开发版拿到的是
+// 空串，所以兜一个写死的 —— 每次 cli upload -v 时跟着改这里。
+const APP_VER = '1.1.7';
 const VER = (() => {
-  try { return wx.getAccountInfoSync().miniProgram.version || ''; } catch (e) { return ''; }
+  try { return wx.getAccountInfoSync().miniProgram.version || APP_VER; } catch (e) { return APP_VER; }
 })();
 
 // 关于我们（提审要求的主体信息）。文案与《登天闯关》那一页保持一致，改这里即可

@@ -1,5 +1,7 @@
 page { background: #1d1730; }
-.page { position: relative; min-height: 100vh; padding: 0 32rpx 60rpx; box-sizing: border-box; overflow: hidden; }
+/* 加了广告之后这一屏的瓶颈是高度，rpx 只按屏幕宽换算、管不了高，
+   所以吃高度的尺寸一律改 vh：矮屏自动缩，广告永远露得出来。 */
+.page { position: relative; min-height: 100vh; padding: 0 32rpx calc(env(safe-area-inset-bottom) + 1.4vh); box-sizing: border-box; overflow: hidden; }
 
 /* 外星酒馆氛围底图：全屏垫底,云图加载完淡入 */
 .scene-bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 0;
@@ -8,7 +10,7 @@ page { background: #1d1730; }
 .tavernline, .h-row, .flavors, .empty-state, .soup-zone { position: relative; z-index: 1; }
 
 /* ── 顶部舷窗条 ── */
-.tavernline { height: 150rpx; margin: 0 -32rpx 20rpx; overflow: hidden;
+.tavernline { height: 9vh; margin: 0 -32rpx 1.2vh; overflow: hidden;
   background: linear-gradient(180deg, #100c22 0%, #221a3e 78%, rgba(29,23,48,0) 100%); }
 .tstar { position: absolute; width: 4rpx; height: 4rpx; border-radius: 50%; background: #fff; opacity: 0.7;
   animation: twk 3s ease-in-out infinite; }
@@ -44,11 +46,11 @@ page { background: #1d1730; }
 }
 
 /* ── 标题行 / 口味 ── */
-.h-row { display: flex; justify-content: space-between; align-items: baseline; margin: 24rpx 4rpx 14rpx; }
+.h-row { display: flex; justify-content: space-between; align-items: baseline; margin: 1.3vh 4rpx 0.8vh; }
 .h-b { font-size: 26rpx; font-weight: 700; letter-spacing: 2rpx; color: #ece8f5; }
 .h-s { font-size: 20rpx; color: #9d8fbe; }
 .flavors { display: flex; gap: 16rpx; }
-.fl { flex: 1; height: 76rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center;
+.fl { flex: 1; height: 4.6vh; border-radius: 999rpx; display: flex; align-items: center; justify-content: center;
   font-size: 24rpx; font-weight: 600; color: #b9aed6; background: #2a2342;
   border: 1rpx solid rgba(255,255,255,0.14); transition: all 0.25s; }
 .fl:active { transform: scale(0.96); }
@@ -68,23 +70,23 @@ page { background: #1d1730; }
 /* ── 端汤上桌 ── */
 .soup-zone { animation: serve 0.45s cubic-bezier(0.2, 1.2, 0.4, 1); }
 @keyframes serve { 0% { opacity: 0; transform: translateY(36rpx); } 100% { opacity: 1; transform: none; } }
-.soup-card { position: relative; margin-top: 20rpx; border-radius: 36rpx; padding: 34rpx 32rpx 38rpx;
+.soup-card { position: relative; margin-top: 1.2vh; border-radius: 36rpx; padding: 1.8vh 32rpx 2vh;
   background: linear-gradient(170deg, #473a7d, #332a58);
   border: 3rpx solid rgba(127,208,255,0.75);
   box-shadow: 0 0 56rpx rgba(77,184,255,0.24), 0 18rpx 52rpx rgba(0,0,0,0.5),
     inset 0 2rpx 0 rgba(255,255,255,0.14); }
 .sc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 20rpx; }
-.sc-title { font-size: 42rpx; font-weight: 900; letter-spacing: 2rpx; color: #fff; text-shadow: 0 0 20rpx rgba(127,208,255,0.3); }
+.sc-title { font-size: 2.8vh; font-weight: 900; letter-spacing: 2rpx; color: #fff; text-shadow: 0 0 20rpx rgba(127,208,255,0.3); }
 .sc-tags { flex: none; display: flex; gap: 10rpx; }
 .sc-tag { font-size: 19rpx; padding: 4rpx 18rpx; border-radius: 999rpx; font-weight: 600;
   color: #7fd0ff; background: rgba(77,184,255,0.12); border: 1rpx solid rgba(77,184,255,0.32); }
 .sc-tag.hong { color: #ffb3a8; background: rgba(255,106,92,0.12); border-color: rgba(255,106,92,0.35); }
 .sc-tag.diff { color: #ffe3a0; background: rgba(255,206,84,0.1); border-color: rgba(255,206,84,0.3); }
-.sc-story { font-size: 36rpx; line-height: 2.0; margin-top: 22rpx; color: #ffffff; }
-.sc-foot { margin-top: 24rpx; font-size: 20rpx; color: #9d8fbe; }
+.sc-story { font-size: 2.3vh; line-height: 1.75; margin-top: 1.2vh; color: #ffffff; }
+.sc-foot { margin-top: 1.3vh; font-size: 1.4vh; color: #9d8fbe; }
 
 /* ── 汤底：按住弹出 ── */
-.peek-pill { margin-top: 24rpx; height: 92rpx; border-radius: 999rpx;
+.peek-pill { margin-top: 1.3vh; height: 5.4vh; border-radius: 999rpx;
   display: flex; align-items: center; justify-content: center; gap: 10rpx;
   font-size: 26rpx; font-weight: 600; letter-spacing: 1rpx; color: #b9aed6;
   background: #241d3a; border: 3rpx dashed rgba(127,208,255,0.5); }
@@ -119,18 +121,18 @@ page { background: #1d1730; }
   100% { opacity: 1; filter: blur(0); transform: none; }
 }
 /* 群友揭晓：金边真相卡 */
-.reveal-card { margin-top: 24rpx; border-radius: 32rpx; padding: 32rpx 34rpx;
+.reveal-card { margin-top: 1.3vh; border-radius: 32rpx; padding: 1.8vh 34rpx;
   background: #2c2449; border: 2rpx solid rgba(255,206,84,0.5);
   box-shadow: 0 14rpx 40rpx rgba(0,0,0,0.45); }
 .rc-t { font-size: 24rpx; font-weight: 800; color: #ffe3a0; letter-spacing: 3rpx; }
-.rc-a { font-size: 30rpx; line-height: 2.0; color: #fff; margin-top: 16rpx; }
-.guest-lock { margin-top: 24rpx; padding: 32rpx; border-radius: 32rpx; text-align: center;
+.rc-a { font-size: 2.1vh; line-height: 1.75; color: #fff; margin-top: 0.9vh; }
+.guest-lock { margin-top: 1.3vh; padding: 1.8vh 32rpx; border-radius: 32rpx; text-align: center;
   font-size: 22rpx; color: #b9aed6; background: #241d3a;
   border: 3rpx dashed rgba(255,255,255,0.16); line-height: 1.8; }
 
 /* ── 分享按钮 ── */
-.share-row { display: flex; gap: 20rpx; margin-top: 28rpx; }
-.btn { flex: 1; height: 92rpx; display: flex; align-items: center; justify-content: center;
+.share-row { display: flex; gap: 20rpx; margin-top: 1.5vh; }
+.btn { flex: 1; height: 5.4vh; display: flex; align-items: center; justify-content: center;
   border-radius: 999rpx; font-size: 27rpx; font-weight: 800; letter-spacing: 2rpx; color: #0e2438;
   background: linear-gradient(135deg, #7fd0ff, #4db8ff); box-shadow: 0 12rpx 36rpx rgba(77,184,255,0.3); }
 .btn::after { border: none; }
@@ -138,11 +140,11 @@ page { background: #1d1730; }
   border: 1rpx solid rgba(255,255,255,0.18); font-weight: 600; }
 
 /* 空碗态：进页未点汤 */
-.empty-bowl { text-align: center; padding: 90rpx 30rpx; }
-.eb-icon { font-size: 120rpx; animation: ebfloat 3.5s ease-in-out infinite; }
+.empty-bowl { text-align: center; padding: 4vh 30rpx; }
+.eb-icon { font-size: 8vh; animation: ebfloat 3.5s ease-in-out infinite; }
 @keyframes ebfloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14rpx); } }
-.eb-t { font-size: 34rpx; font-weight: 900; color: #fff; margin-top: 20rpx; letter-spacing: 2rpx; }
-.eb-s { font-size: 24rpx; color: #b9aed6; margin-top: 12rpx; }
+.eb-t { font-size: 2.4vh; font-weight: 900; color: #fff; margin-top: 1.2vh; letter-spacing: 2rpx; }
+.eb-s { font-size: 1.7vh; color: #b9aed6; margin-top: 0.7vh; }
 
 /* 流量主广告：背景图是 fixed z-index:0，这里不抬层级会被盖住 */
 .rm-ad { display: block; position: relative; z-index: 1; margin: 28rpx 0 4rpx; }

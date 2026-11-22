@@ -61,11 +61,11 @@
         <button class="btn" open-type="share" data-what="story">分享汤面到群</button>
         <button class="btn ghost" open-type="share" data-what="answer">分享汤底到群</button>
       </view>
-
-      <!-- 流量主：汤面底下。没抽汤时整块不存在，不会一进来就是广告 -->
-      <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
     </view>
   </block>
+
+  <!-- 流量主：常驻，空碗态也显示 -->
+  <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
 
   <!-- 汤底浮层：按住起雾,雾向两侧拨开,真相从迷雾里显形;松手盖回 -->
   <view class="peek-ov" wx:if="{{peeking}}" catch:touchend="peekOff" catch:touchcancel="peekOff">

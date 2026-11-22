@@ -5,6 +5,11 @@ const IMGS = ['https://7265-renshengqingdan-d9fc03opf3bac6ba-1478597699.tcb.qclo
 const TITLES = ['群本玩 · 拉个群开一局，揪出真凶', '谁在说谎？拉群来一局剧本杀 🔍', '一局一故事，一人一面具'];
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
+// 小程序版本号。只有正式版/体验版拿得到，开发版这里是空串 —— 空就不显示「· v」那段
+const VER = (() => {
+  try { return wx.getAccountInfoSync().miniProgram.version || ''; } catch (e) { return ''; }
+})();
+
 // 关于我们（提审要求的主体信息）。文案与《登天闯关》那一页保持一致，改这里即可
 const MAIL = 'quandoufa@quandoufa.cn';
 const ABOUT_TEXT = [
@@ -41,6 +46,7 @@ Page({
     fabX: 0, fabY: 0,            // 悬浮钮位置（可拖动，本地记忆）
     showQuickJoin: false, quickCode: '', joinSpec: false,   // joinSpec：快速进房勾了「只旁观」
     showAbout: false,            // 关于我们弹窗
+    ver: VER,
     aboutText: ABOUT_TEXT,
     manShift: '', bgShift: '',   // 陀螺仪视差位移(裸眼3D)
     bg: gimg('hero_bg.jpg'), bgTh: gth('hero_bg.jpg'), bgOk: false,           // 全屏夜幕背景

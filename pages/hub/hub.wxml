@@ -45,7 +45,7 @@
     </view>
   </view>
 
-  <view class="copyright">泉都发科技有限公司</view>
+  <view class="copyright">泉都发科技有限公司{{ver ? ' · v' + ver : ''}}</view>
 
   <!-- 悬浮圆钮：回房间 / 快速进房（可拖动，位置记忆） -->
   <view class="fab {{fabRoom ? 'fab-back' : ''}}" style="left:{{fabX}}px; top:{{fabY}}px;"

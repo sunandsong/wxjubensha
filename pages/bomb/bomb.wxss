@@ -1,18 +1,20 @@
 page { background: #2b2436; }
-.page { padding: 60rpx 40rpx 80rpx; text-align: center; }
+/* 加了广告之后这一屏的瓶颈是高度，rpx 只按屏幕宽换算、管不了高，
+   所以吃高度的尺寸一律改 vh：矮屏自动缩，广告永远露得出来、不出滚动条。 */
+.page { padding: 1.6vh 40rpx calc(env(safe-area-inset-bottom) + 1.6vh); text-align: center; }
 
-.bomb-ico { font-size: 120rpx; filter: drop-shadow(0 8rpx 20rpx rgba(255,120,60,0.35)); }
-.title { margin-top: 10rpx; font-size: 44rpx; font-weight: 900; letter-spacing: 4rpx;
+.bomb-ico { font-size: 11vh; filter: drop-shadow(0 8rpx 20rpx rgba(255,120,60,0.35)); }
+.title { margin-top: 0.4vh; font-size: 3.2vh; font-weight: 900; letter-spacing: 4rpx;
   background: linear-gradient(95deg, #fff, #ffce54, #ff7a45);
   -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
-.rule { margin: 18rpx auto 0; max-width: 560rpx; font-size: 24rpx; line-height: 1.7; color: #b9a7e6; }
+.rule { margin: 1.1vh auto 0; max-width: 560rpx; font-size: 1.7vh; line-height: 1.55; color: #b9a7e6; }
 
 /* 抽数展示区 */
-.num-box { margin: 56rpx auto 0; width: 460rpx; padding: 56rpx 0 48rpx; border-radius: 40rpx;
+.num-box { margin: 2.4vh auto 0; width: 460rpx; padding: 2.6vh 0 2.2vh; border-radius: 40rpx;
   background: rgba(255,255,255,0.06); border: 1rpx solid rgba(255,255,255,0.14); }
 .num-box.lit { background: rgba(255,206,84,0.08); border-color: rgba(255,206,84,0.35);
   box-shadow: 0 0 40rpx rgba(255,190,70,0.18); }
-.num { font-size: 180rpx; font-weight: 900; line-height: 1; color: #ffce54;
+.num { font-size: 11vh; font-weight: 900; line-height: 1; color: #ffce54;
   text-shadow: 0 6rpx 26rpx rgba(255,200,80,0.4); }
 /* 爆炸动效：全屏地震 + 盒子猛晃 + 💥 炸开 + 数字弹出 */
 .page.quake { animation: quake 0.62s ease; }
@@ -52,21 +54,21 @@ page { background: #2b2436; }
   88% { transform: scale(1.05) rotate(1deg); }
   100% { transform: scale(1) rotate(0); opacity: 1; }
 }
-.meta { margin-top: 26rpx; }
-.meta-ln { font-size: 22rpx; color: rgba(255,255,255,0.6); line-height: 1.8; }
+.meta { margin-top: 1.4vh; }
+.meta-ln { font-size: 1.5vh; color: rgba(255,255,255,0.6); line-height: 1.8; }
 .meta-ln.code { color: #8be0c9; font-weight: 700; letter-spacing: 2rpx; }
 
 /* 按钮 */
-.gen-btn { margin: 56rpx auto 0; width: 480rpx; height: 100rpx; display: flex; align-items: center; justify-content: center;
+.gen-btn { margin: 2.4vh auto 0; width: 480rpx; height: 6.2vh; display: flex; align-items: center; justify-content: center;
   border-radius: 999rpx; font-size: 32rpx; font-weight: 700; color: #fff;
   background: linear-gradient(135deg, #ff7a45, #ff4d6a); box-shadow: 0 8rpx 22rpx rgba(255,100,70,0.4); }
 .gen-btn::after { border: none; }
-.save-btn { margin: 26rpx auto 0; width: 480rpx; height: 100rpx; display: flex; align-items: center; justify-content: center;
+.save-btn { margin: 1.4vh auto 0; width: 480rpx; height: 6.2vh; display: flex; align-items: center; justify-content: center;
   border-radius: 999rpx; font-size: 32rpx; font-weight: 700; color: #fff;
   background: linear-gradient(135deg, #8b5cff, #c44dff); box-shadow: 0 8rpx 22rpx rgba(150,80,255,0.45); }
 .save-btn::after { border: none; }
 .save-btn[disabled] { opacity: 0.6; color: #fff; }
-.tip { margin-top: 24rpx; font-size: 22rpx; color: rgba(255,255,255,0.45); }
+.tip { margin-top: 1.2vh; font-size: 1.5vh; color: rgba(255,255,255,0.45); }
 
 /* 离屏画布：移出可视区，仅用于绘制留证图 */
 .proof-canvas { position: fixed; left: -9999rpx; top: 0; width: 900px; height: 1200px; }
@@ -78,7 +80,7 @@ page { background: #2b2436; }
 /* 内容抬到底图之上 */
 .bomb-ico, .bomb-hero, .title, .rule, .num-box, .gen-btn, .save-btn, .tip { position: relative; z-index: 1; }
 /* 炸弹立绘（替换 emoji 主视觉） */
-.bomb-hero { width: 240rpx; height: 240rpx; margin: 0 auto; display: block;
+.bomb-hero { width: 22vh; height: 22vh; margin: 0 auto; display: block;
   filter: drop-shadow(0 10rpx 24rpx rgba(255,120,60,0.3)); }
 
 /* 顶部炸弹点火泵动：生成时放大-压缩-回弹 */
@@ -98,4 +100,4 @@ page { background: #2b2436; }
 @keyframes whiteflash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
 
 /* 流量主广告：背景图是 fixed z-index:0，这里不抬层级会被盖住 */
-.rm-ad { display: block; position: relative; z-index: 1; margin: 28rpx 0 4rpx; }
+.rm-ad { display: block; position: relative; z-index: 1; margin: 1.6vh 0 0; }

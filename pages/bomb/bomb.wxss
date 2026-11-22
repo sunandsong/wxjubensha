@@ -3,7 +3,7 @@ page { background: #2b2436; }
    所以吃高度的尺寸一律改 vh：矮屏自动缩，广告永远露得出来、不出滚动条。 */
 .page { padding: 1.6vh 40rpx calc(env(safe-area-inset-bottom) + 1.6vh); text-align: center; }
 
-.bomb-ico { font-size: 11vh; filter: drop-shadow(0 8rpx 20rpx rgba(255,120,60,0.35)); }
+.bomb-ico { font-size: 8.5vh; filter: drop-shadow(0 8rpx 20rpx rgba(255,120,60,0.35)); }
 .title { margin-top: 0.4vh; font-size: 3.2vh; font-weight: 900; letter-spacing: 4rpx;
   background: linear-gradient(95deg, #fff, #ffce54, #ff7a45);
   -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
@@ -59,11 +59,11 @@ page { background: #2b2436; }
 .meta-ln.code { color: #8be0c9; font-weight: 700; letter-spacing: 2rpx; }
 
 /* 按钮 */
-.gen-btn { margin: 2.4vh auto 0; width: 480rpx; height: 6.2vh; display: flex; align-items: center; justify-content: center;
+.gen-btn { flex: 1; min-width: 0; height: 6.2vh; display: flex; align-items: center; justify-content: center;
   border-radius: 999rpx; font-size: 32rpx; font-weight: 700; color: #fff;
   background: linear-gradient(135deg, #ff7a45, #ff4d6a); box-shadow: 0 8rpx 22rpx rgba(255,100,70,0.4); }
 .gen-btn::after { border: none; }
-.save-btn { margin: 1.4vh auto 0; width: 480rpx; height: 6.2vh; display: flex; align-items: center; justify-content: center;
+.save-btn { flex: 1; min-width: 0; height: 6.2vh; display: flex; align-items: center; justify-content: center;
   border-radius: 999rpx; font-size: 32rpx; font-weight: 700; color: #fff;
   background: linear-gradient(135deg, #8b5cff, #c44dff); box-shadow: 0 8rpx 22rpx rgba(150,80,255,0.45); }
 .save-btn::after { border: none; }
@@ -78,9 +78,11 @@ page { background: #2b2436; }
   opacity: 0; transition: opacity 0.5s ease; }
 .scene-bg.on { opacity: 0.32; }
 /* 内容抬到底图之上 */
-.bomb-ico, .bomb-hero, .title, .rule, .num-box, .gen-btn, .save-btn, .tip { position: relative; z-index: 1; }
+.bomb-ico, .bomb-hero, .title, .rule, .num-box, .btn-row, .tip { position: relative; z-index: 1; }
+/* 生成 / 保存并排一行，整行居中，窄屏也不挤 */
+.btn-row { display: flex; gap: 20rpx; justify-content: center; margin: 2.4vh auto 0; max-width: 620rpx; }
 /* 炸弹立绘（替换 emoji 主视觉） */
-.bomb-hero { width: 22vh; height: 22vh; margin: 0 auto; display: block;
+.bomb-hero { width: 17vh; height: 17vh; margin: 0 auto; display: block;
   filter: drop-shadow(0 10rpx 24rpx rgba(255,120,60,0.3)); }
 
 /* 顶部炸弹点火泵动：生成时放大-压缩-回弹 */

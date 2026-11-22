@@ -21,8 +21,10 @@
   </view>
 
   <!-- 操作 -->
-  <button class="gen-btn" bindtap="gen">{{num ? '重新生成' : '生成炸弹数'}}</button>
-  <button wx:if="{{num}}" class="save-btn" bindtap="save" disabled="{{saving}}">保存为图片 🖼️</button>
+  <view class="btn-row">
+    <button class="gen-btn" bindtap="gen">{{num ? '重新生成' : '生成炸弹数'}}</button>
+    <button wx:if="{{num}}" class="save-btn" bindtap="save" disabled="{{saving}}">保存为图片 🖼️</button>
+  </view>
   <view wx:if="{{num}}" class="tip">保存的图片带时间和防伪码，改图对不上号，赖不掉～</view>
 
   <!-- 流量主：抽出炸弹数之后才出现，不挡「生成炸弹数」这一步 -->

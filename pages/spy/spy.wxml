@@ -94,6 +94,10 @@
         </view>
       </view>
 
+      <!-- 流量主：等待房间底部（同 pages/room 用一个广告位）。横版卡片高度不固定，
+           放在文档流里跟着排，不绝对定位，免得压到「开始游戏」 -->
+      <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
+
       <button wx:if="{{isHost}}" hover-class="none" class="btn start-btn {{(starting || !canStart) ? 'btn-dim' : ''}}" bindtap="startGame" disabled="{{starting || !canStart}}">开始游戏</button>
       <view wx:if="{{isHost && !canStart}}" class="center muted rm-count">{{players.length < 4 ? '满 4 人才能开始' : '等所有玩家点「准备好了」'}}</view>
       <block wx:if="{{!isHost && iAmSpectator}}">

@@ -180,7 +180,9 @@ page { background: #2b2436; }
   transition: transform 0.1s ease;
 }
 .fab:active { transform: scale(0.92); }
-.fab-back { background: linear-gradient(135deg, #ff4d7e, #ff85a8); box-shadow: 0 8rpx 30rpx rgba(255, 77, 126, 0.45); }
+.fab-back { background: linear-gradient(135deg, #ff4d7e, #ff85a8); box-shadow: 0 8rpx 30rpx rgba(255, 77, 126, 0.45);
+  /* 原来是 ↩，iOS 会把它渲染成彩色 emoji，白字圆钮里很突兀；换成文字，顺带说清楚点它干嘛 */
+  font-size: 26rpx; font-weight: 600; letter-spacing: 0; }
 
 /* 快速进房弹框 */
 .jmask { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;

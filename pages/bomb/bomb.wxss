@@ -97,3 +97,5 @@ page { background: #2b2436; }
 .flash.on { animation: whiteflash 0.45s ease-out; }
 @keyframes whiteflash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
 
+/* 流量主广告：背景图是 fixed z-index:0，这里不抬层级会被盖住 */
+.rm-ad { display: block; position: relative; z-index: 1; margin: 28rpx 0 4rpx; }

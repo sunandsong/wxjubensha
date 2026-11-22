@@ -25,6 +25,9 @@
   <button wx:if="{{num}}" class="save-btn" bindtap="save" disabled="{{saving}}">保存为图片 🖼️</button>
   <view wx:if="{{num}}" class="tip">保存的图片带时间和防伪码，改图对不上号，赖不掉～</view>
 
+  <!-- 流量主：抽出炸弹数之后才出现，不挡「生成炸弹数」这一步 -->
+  <ad wx:if="{{num}}" class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
+
   <!-- 离屏画布：留证图片在这里画 -->
   <canvas id="proof" type="2d" class="proof-canvas"></canvas>
 </view>

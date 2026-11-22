@@ -143,3 +143,6 @@ page { background: #1d1730; }
 @keyframes ebfloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14rpx); } }
 .eb-t { font-size: 34rpx; font-weight: 900; color: #fff; margin-top: 20rpx; letter-spacing: 2rpx; }
 .eb-s { font-size: 24rpx; color: #b9aed6; margin-top: 12rpx; }
+
+/* 流量主广告：背景图是 fixed z-index:0，这里不抬层级会被盖住 */
+.rm-ad { display: block; position: relative; z-index: 1; margin: 28rpx 0 4rpx; }

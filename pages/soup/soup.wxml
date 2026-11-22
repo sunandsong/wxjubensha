@@ -61,6 +61,9 @@
         <button class="btn" open-type="share" data-what="story">分享汤面到群</button>
         <button class="btn ghost" open-type="share" data-what="answer">分享汤底到群</button>
       </view>
+
+      <!-- 流量主：汤面底下。没抽汤时整块不存在，不会一进来就是广告 -->
+      <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
     </view>
   </block>
 

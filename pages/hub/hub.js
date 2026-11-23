@@ -7,7 +7,7 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 // 小程序版本号。正式版/体验版能从 getAccountInfoSync 拿到真值，开发版拿到的是
 // 空串，所以兜一个写死的 —— 每次 cli upload -v 时跟着改这里。
-const APP_VER = '1.2.0';
+const APP_VER = '1.2.1';
 const VER = (() => {
   try { return wx.getAccountInfoSync().miniProgram.version || APP_VER; } catch (e) { return APP_VER; }
 })();
@@ -169,6 +169,10 @@ Page({
       loginGender: wx.getStorageSync('gender') || '',
     });
   },
+
+  // 关掉资料弹窗。叉号只在「只是改改资料」时才渲染（进游戏的资料门没有叉号，
+  // 必须填名字），所以这里直接关掉就行，不用去接着做 _afterLogin 那件事
+  closeLogin() { this._afterLogin = null; this.setData({ needLogin: false }); },
 
   // ── 关于我们 ──
   showAbout() { this.setData({ showAbout: true }); },

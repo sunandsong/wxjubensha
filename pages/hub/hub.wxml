@@ -91,8 +91,6 @@
         {{loginUploading ? '头像上传中…' : (needNick ? '进入游戏' : '保存')}}
       </button>
 
-      <!-- 名字是进游戏的必填项，不给跳；只改资料时可以直接关 -->
-      <view wx:if="{{!needNick}}" class="login-skip" bindtap="closeLogin">跳过</view>
     </view>
   </view>
 

@@ -86,4 +86,23 @@ function loadApp(storage = {}) {
   assert.ok(avatar, '默认头像不能为空');
 }
 
-console.log(`✅ wxml 配平 ${wxmls.length} 个文件 · 资料门判断全部通过`);
+// ── 3. 资料门必须留出口 ──
+// 2026-11-23 栽过一次：审核以「登录环节未提供可取消/拒绝按钮、强制登录才能体验、
+// 反复弹窗」为由打回。下面四条是当时的整改要点，改 hub 时别又给弄没了。
+function profileGateHasExit() {
+  const wxml = fs.readFileSync(path.join(ROOT, 'pages/hub/hub.wxml'), 'utf8');
+  const js = fs.readFileSync(path.join(ROOT, 'pages/hub/hub.js'), 'utf8');
+
+  const closeLine = wxml.split('\n').find((l) => l.includes('class="login-close"')) || '';
+  assert.ok(closeLine, '资料弹窗必须有叉号（login-close）');
+  assert.ok(!/wx:if/.test(closeLine), '叉号不能挂 wx:if —— 任何情况下都要能关掉');
+  assert.ok(wxml.includes('class="login-skip"'), '资料弹窗必须有「跳过」出口');
+
+  assert.ok(/_gate\([\s\S]*?nickAsked/.test(js), '_gate 要看 nickAsked，问过一次就不能再弹');
+  const close = js.slice(js.indexOf('closeLogin()'), js.indexOf('closeLogin()') + 400);
+  assert.ok(/after\(\)/.test(close), 'closeLogin 取消后要继续执行原动作，不能把人挡在游戏外');
+  assert.ok(!/起个名字才能进游戏/.test(js), '不能再强制填昵称');
+}
+
+profileGateHasExit();
+console.log(`✅ wxml 配平 ${wxmls.length} 个文件 · 资料门判断 + 登录出口全部通过`);

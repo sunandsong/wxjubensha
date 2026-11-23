@@ -65,14 +65,15 @@
     </view>
   </view>
 
-  <!-- 首次进入的资料设置：头像 → 昵称 → 性别，每步可跳过；可关闭，大厅照常逛 -->
-  <!-- 资料弹窗：头像 / 昵称 / 性别同屏。进游戏必须有名字，头像性别可留空 -->
-  <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop">
-    <view class="login-card">
-      <!-- 进游戏的资料门不给关：必须起名。从「Hi，昵称」点进来改资料时才有叉号 -->
-      <view wx:if="{{!needNick}}" class="login-close" bindtap="closeLogin">✕</view>
+  <!-- 资料弹窗：头像 / 昵称 / 性别同屏，全部可留空。
+       2026-11-23 审核打回：「登录环节需提供显著有效的可取消/拒绝或返回按钮，
+       不得反复弹窗或强制用户登录才能体验」。所以叉号常在、跳过常在、空昵称也放行，
+       而且只问一次（closeLogin / loginDone 都会写 nickAsked）。 -->
+  <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop" bindtap="closeLogin">
+    <view class="login-card" catchtap="noop">
+      <view class="login-close" bindtap="closeLogin">✕</view>
       <view class="login-brand">群本玩</view>
-      <view class="login-sub">用微信头像和昵称，点一下就好</view>
+      <view class="login-sub">{{needNick ? '设个昵称方便同局的人认出你，不设也能直接玩' : '用微信头像和昵称，点一下就好'}}</view>
 
       <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
         <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
@@ -91,6 +92,8 @@
         {{loginUploading ? '头像上传中…' : (needNick ? '进入游戏' : '保存')}}
       </button>
 
+      <!-- 「可取消/拒绝」的出口：不设资料也能直接玩，用系统默认昵称 -->
+      <view class="login-skip" bindtap="closeLogin">{{needNick ? '跳过，直接开始玩' : '跳过'}}</view>
     </view>
   </view>
 

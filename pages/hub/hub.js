@@ -7,7 +7,7 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 // 小程序版本号。正式版/体验版能从 getAccountInfoSync 拿到真值，开发版拿到的是
 // 空串，所以兜一个写死的 —— 每次 cli upload -v 时跟着改这里。
-const APP_VER = '1.2.6';
+const APP_VER = '1.2.7';
 const VER = (() => {
   try { return wx.getAccountInfoSync().miniProgram.version || APP_VER; } catch (e) { return APP_VER; }
 })();
@@ -170,9 +170,15 @@ Page({
     });
   },
 
-  // 关掉资料弹窗。叉号只在「只是改改资料」时才渲染（进游戏的资料门没有叉号，
-  // 必须填名字），所以这里直接关掉就行，不用去接着做 _afterLogin 那件事
-  closeLogin() { this._afterLogin = null; this.setData({ needLogin: false }); },
+  // 关掉资料弹窗 —— 叉号 / 跳过 / 点遮罩都走这里。
+  // 关键：取消之后要接着把原来那件事做完（进游戏），不能一关了之把人挡在外面；
+  // 同时写下 nickAsked，下次不再弹，避免「反复弹窗」。
+  closeLogin() {
+    wx.setStorageSync('nickAsked', 1);
+    const after = this._afterLogin; this._afterLogin = null;
+    this.setData({ needLogin: false });
+    if (after) after();          // 用系统默认昵称继续，照样能玩
+  },
 
   // ── 关于我们 ──
   showAbout() { this.setData({ showAbout: true }); },
@@ -199,12 +205,15 @@ Page({
   onLoginNick(e) { this.setData({ loginNick: e.detail.value }); },
   pickLoginGender(e) { this.setData({ loginGender: e.currentTarget.dataset.g }); },
 
-  // 进游戏前问一次资料（首页不弹，审核红线是「不得强制」而非「不得询问」）：
-  // 每步可跳过、右上角可关闭，跳过即用默认昵称+头像，照样进得去。问过一次就不再问。
+  // 进游戏前问一次资料。2026-11-23 审核打回后的规矩（必须守住，否则又被退）：
+  //   1. 有显著的取消出口（叉号 / 跳过 / 点遮罩）
+  //   2. 不填也能玩 —— 取消后用 ensureProfile 补的默认昵称继续原动作
+  //   3. 不反复弹 —— 问过一次就写 nickAsked，之后永不再问
   // 返回 true 表示已弹窗、调用方应中断；补完或跳过后自动继续原动作。
   _gate(after) {
     app.ensureProfile();
     if (app.getTestUid()) return false;
+    if (wx.getStorageSync('nickAsked')) return false;   // 问过了就别再烦人（审核：不得反复弹窗）
     if (!app.isDefaultNick()) return false;        // 已经自己起过名，放行
     this._afterLogin = after || null;
     const cur = wx.getStorageSync('nick') || '';
@@ -219,9 +228,9 @@ Page({
   loginDone() {
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
     const nick = (this.data.loginNick || '').trim().slice(0, 8);
-    // 头像和性别可跳过；进游戏必须有名字——同房间的人要靠它认人
-    if (!nick && this.data.needNick) return wx.showToast({ title: '起个名字才能进游戏', icon: 'none' });
+    // 昵称、头像、性别全都可以留空：空着就沿用 ensureProfile 补的默认值，照样进得去
     if (nick) { wx.setStorageSync('nick', nick); wx.setStorageSync('nickSet', 1); }
+    wx.setStorageSync('nickAsked', 1);
     if (this.data.loginGender) wx.setStorageSync('gender', this.data.loginGender);
     app.ensureProfile();
     this.setData({ needLogin: false, nick: wx.getStorageSync('nick'), avatar: wx.getStorageSync('avatar') });

@@ -252,6 +252,9 @@ page { background: #2b2436; }
 .login-btn[disabled] { opacity: 0.4; color: #fff !important;
   background: linear-gradient(90deg, #7b5cff, #c44dff) !important; }
 
+.login-skip { margin-top: 24rpx; text-align: center; font-size: 26rpx; color: #b3a6cc;
+  text-decoration: underline; }
+
 /* 资料门右上角关闭：门不再强制，随时可退回大厅 */
 .login-close {
   position: absolute; top: 16rpx; right: 24rpx;

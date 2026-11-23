@@ -67,11 +67,10 @@
 
   <!-- 资料弹窗：头像 / 昵称 / 性别同屏，全部可留空。
        2026-11-23 审核打回：「登录环节需提供显著有效的可取消/拒绝或返回按钮，
-       不得反复弹窗或强制用户登录才能体验」。所以叉号常在、跳过常在、空昵称也放行，
+       不得反复弹窗或强制用户登录才能体验」。出口=底部取消按钮+点遮罩，空昵称也放行，
        而且只问一次（closeLogin / loginDone 都会写 nickAsked）。 -->
   <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop" bindtap="closeLogin">
     <view class="login-card" catchtap="noop">
-      <view class="login-close" bindtap="closeLogin">✕</view>
       <view class="login-brand">群本玩</view>
       <view class="login-sub">{{needNick ? '设个昵称方便同局的人认出你，不设也能直接玩' : '用微信头像和昵称，点一下就好'}}</view>
 
@@ -92,8 +91,9 @@
         {{loginUploading ? '头像上传中…' : (needNick ? '进入游戏' : '保存')}}
       </button>
 
-      <!-- 「可取消/拒绝」的出口：不设资料也能直接玩，用系统默认昵称 -->
-      <view class="login-skip" bindtap="closeLogin">{{needNick ? '跳过，直接开始玩' : '跳过'}}</view>
+      <!-- 「可取消/拒绝」的出口。叉号按要求去掉了，这里就是唯一显眼的取消按钮，
+           所以做成正经按钮而不是小字链接 —— 审核要的是「显著有效」 -->
+      <button class="login-cancel" bindtap="closeLogin">{{needNick ? '跳过，直接开始玩' : '取消'}}</button>
     </view>
   </view>
 

@@ -93,10 +93,14 @@ function profileGateHasExit() {
   const wxml = fs.readFileSync(path.join(ROOT, 'pages/hub/hub.wxml'), 'utf8');
   const js = fs.readFileSync(path.join(ROOT, 'pages/hub/hub.js'), 'utf8');
 
-  const closeLine = wxml.split('\n').find((l) => l.includes('class="login-close"')) || '';
-  assert.ok(closeLine, '资料弹窗必须有叉号（login-close）');
-  assert.ok(!/wx:if/.test(closeLine), '叉号不能挂 wx:if —— 任何情况下都要能关掉');
-  assert.ok(wxml.includes('class="login-skip"'), '资料弹窗必须有「跳过」出口');
+  // 出口可以是叉号也可以是取消按钮，但至少得有一个、且不能挂 wx:if 藏起来
+  const exits = wxml.split('\n').filter((l) => /class="(login-close|login-cancel|login-skip)"/.test(l));
+  assert.ok(exits.length, '资料弹窗必须有取消出口（login-cancel / login-close / login-skip）');
+  for (const line of exits) {
+    assert.ok(!/wx:if/.test(line), `取消出口不能挂 wx:if —— 任何情况下都要能关掉：${line.trim()}`);
+  }
+  const mask = wxml.split('\n').find((l) => l.includes('class="login-mask"')) || '';
+  assert.ok(/bindtap="closeLogin"/.test(mask), '点遮罩也应该能关，多一个出口');
 
   assert.ok(/_gate\([\s\S]*?nickAsked/.test(js), '_gate 要看 nickAsked，问过一次就不能再弹');
   const close = js.slice(js.indexOf('closeLogin()'), js.indexOf('closeLogin()') + 400);

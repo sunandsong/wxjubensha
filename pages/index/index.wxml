@@ -70,10 +70,6 @@
       </view>
     </view>
   </scroll-view>
-
-  <!-- 流量主：剧本库底部常驻。.pick-mask 是 flex 列、列表 flex:1，
-       广告作为固定高度的兄弟节点挂在底下，列表自己让出空间 -->
-  <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
 </view>
 
 <!-- 进入房间弹层（主题色，替代原生 showModal）-->

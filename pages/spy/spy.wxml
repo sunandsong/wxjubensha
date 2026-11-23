@@ -19,6 +19,9 @@
       <button class="btn btn-ghost" bindtap="showJoinModal">输入房间号加入</button>
     </view>
 
+    <!-- 流量主：大厅底部，创建/加入按钮下面的空白处 -->
+    <ad class="rm-ad" unit-id="adunit-77e33867d2a888e0"></ad>
+
   </block>
 
   <!-- 加入弹框 -->

@@ -26,10 +26,10 @@
 .invite-tip { margin-top: 18rpx; }
 
 .row-between { display: flex; align-items: center; justify-content: space-between; }
-.sec-title { font-size: 30rpx; font-weight: 600; }
+.sec-title { font-size: 1.9vh; font-weight: 600; }
 
 /* 大厅板子说明 */
-.board-line { font-size: 26rpx; color: #ddd6ee; margin-top: 14rpx; line-height: 1.6; }
+.board-line { font-size: 1.75vh; color: #ddd6ee; margin-top: 0.8vh; line-height: 1.45; }
 
 /* 公告条 */
 .announce { font-size: 28rpx; font-weight: 600; color: #ffb347; line-height: 1.6; }
@@ -223,7 +223,8 @@
 
 /* ── 游戏中卡片:实底,不透背景(对齐海龟汤风格) ── */
 .card { background: #2c2447; border: 1rpx solid rgba(255,255,255,0.16);
-  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.35); }
+  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.35);
+  padding: 1.6vh 28rpx; margin-top: 1.4vh; }   /* 全局是 28rpx/24rpx，这里按屏幕高收一道 */
 .phase-card { background: #322a52; }           /* 阶段卡稍亮一档,做主角 */
 .phase-card.p-day { background: #43324a; }      /* 白天暖调实底 */
 .btn-ghost { background: #2a2342; }

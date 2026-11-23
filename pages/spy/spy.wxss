@@ -29,7 +29,8 @@
 .invite-tip { margin-top: 18rpx; }
 
 .row-between { display: flex; align-items: center; justify-content: space-between; }
-.sec-title { font-size: 30rpx; font-weight: 600; }
+.sec-title { font-size: 1.9vh; font-weight: 600; }
+.card { padding: 1.6vh 28rpx; margin-top: 1.4vh; }   /* 全局是 28rpx/24rpx，这里按屏幕高收一道 */
 
 /* 玩家网格（对齐 room 页） */
 .players { display: flex; flex-wrap: wrap; justify-content: center; gap: 24rpx; margin-top: 24rpx; }
@@ -62,9 +63,9 @@
 .start-btn { margin-top: 1.6vh; padding: 2.2vh 0; font-size: 2.2vh; }
 
 /* 卧底人数选项 */
-.opts { display: flex; gap: 18rpx; margin-top: 22rpx; }
+.opts { display: flex; gap: 18rpx; margin-top: 1.2vh; }
 .opt {
-  flex: 1; text-align: center; padding: 20rpx 0; border-radius: 16rpx; font-size: 27rpx;
+  flex: 1; text-align: center; padding: 1.2vh 0; border-radius: 16rpx; font-size: 1.8vh;
   color: #b3a6cc; background: rgba(255,255,255,0.06); border: 1rpx solid rgba(255,255,255,0.12);
 }
 .opt.on {

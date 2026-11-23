@@ -283,9 +283,12 @@
 .copy-report-btn { background: linear-gradient(90deg, #7b5cff, #c44dff); color: #fff; }
 
 /* 大厅顶部立绘（与卧底大厅一致） */
-.lobby-hero { display: block; width: 300rpx; height: 300rpx; margin: 0 auto -10rpx;
+.lobby-hero { display: block; width: 14vh; height: 14vh; margin: 0 auto -0.6vh;
   position: relative; z-index: 1;
   filter: drop-shadow(0 14rpx 30rpx rgba(0,0,0,0.5)); }
+/* 大厅标题也跟着按屏幕高缩，底下才留得出广告的位置（.title/.subtitle 全局是 rpx，这里只覆盖本页）*/
+.title { font-size: 3vh; }
+.subtitle { font-size: 1.8vh; margin-top: 0.6vh; }
 
 /* 次要操作（解散/退出）：矮一档 */
 .btn-slim { padding: 1.2vh 0; font-size: 1.8vh; }

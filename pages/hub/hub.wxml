@@ -67,10 +67,14 @@
 
   <!-- 资料弹窗：头像 / 昵称 / 性别同屏，全部可留空。
        2026-11-23 审核打回：「登录环节需提供显著有效的可取消/拒绝或返回按钮，
-       不得反复弹窗或强制用户登录才能体验」。出口=底部取消按钮+点遮罩，空昵称也放行，
+       不得反复弹窗或强制用户登录才能体验」。出口=底部那个整宽取消按钮，空昵称也放行，
        而且只问一次（closeLogin / loginDone 都会写 nickAsked）。 -->
-  <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop" bindtap="closeLogin">
-    <view class="login-card" catchtap="noop">
+  <!-- 别给遮罩加 bindtap、也别给卡片加 catchtap：catchtap 会把卡片内的点击全吃掉，
+       open-type="chooseAvatar" 的头像按钮和 type="nickname" 的输入框就都失灵了
+       （1.2.7 为了「点遮罩关闭」加过一次，直接把微信头像昵称授权弄挂了）。
+       取消出口有底部那个整宽按钮就够了。 -->
+  <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop">
+    <view class="login-card">
       <view class="login-brand">群本玩</view>
       <view class="login-sub">{{needNick ? '设个昵称方便同局的人认出你，不设也能直接玩' : '用微信头像和昵称，点一下就好'}}</view>
 

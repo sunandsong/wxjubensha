@@ -7,7 +7,7 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 // 小程序版本号。正式版/体验版能从 getAccountInfoSync 拿到真值，开发版拿到的是
 // 空串，所以兜一个写死的 —— 每次 cli upload -v 时跟着改这里。
-const APP_VER = '1.2.8';
+const APP_VER = '1.2.9';
 const VER = (() => {
   try { return wx.getAccountInfoSync().miniProgram.version || APP_VER; } catch (e) { return APP_VER; }
 })();

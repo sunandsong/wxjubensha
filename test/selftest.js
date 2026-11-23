@@ -99,8 +99,10 @@ function profileGateHasExit() {
   for (const line of exits) {
     assert.ok(!/wx:if/.test(line), `取消出口不能挂 wx:if —— 任何情况下都要能关掉：${line.trim()}`);
   }
-  const mask = wxml.split('\n').find((l) => l.includes('class="login-mask"')) || '';
-  assert.ok(/bindtap="closeLogin"/.test(mask), '点遮罩也应该能关，多一个出口');
+  // 反过来守一条：弹窗卡片不能挂 catchtap，否则会把 chooseAvatar 按钮和
+  // nickname 输入框的点击全吃掉（1.2.7 真这么干过，微信头像昵称直接失灵）
+  const card = wxml.split('\n').find((l) => l.includes('class="login-card"')) || '';
+  assert.ok(!/catchtap|catch:tap/.test(card), 'login-card 不能挂 catchtap，会吃掉头像/昵称按钮的点击');
 
   assert.ok(/_gate\([\s\S]*?nickAsked/.test(js), '_gate 要看 nickAsked，问过一次就不能再弹');
   const close = js.slice(js.indexOf('closeLogin()'), js.indexOf('closeLogin()') + 400);

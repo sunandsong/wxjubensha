@@ -32,6 +32,15 @@ App({
     roomAutoResumed: false,   // 启动后首页只自动续房一次，点 home 回大厅不再被弹回
   },
 
+  // ── 埋点：存自己的库（云函数 jbs 的 track → events 集合），不走微信的数据分析 ──
+  // fire-and-forget：不 await、不转圈、不弹错，失败就当没这回事。
+  // 埋点永远不能拖慢或挡住任何一次交互，所以连 catch 都是空的。
+  track(name, data) {
+    try {
+      this.callGame({ action: 'track', name, data: data || {} }).catch(() => {});
+    } catch (e) {}
+  },
+
   // ── 测试身份（仅开发/体验版）──
   getTestUid() {
     return this.globalData.testUid;

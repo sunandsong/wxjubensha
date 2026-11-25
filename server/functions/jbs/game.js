@@ -5,6 +5,7 @@ const _ = db.command;
 const rooms = db.collection('rooms');
 const scriptsCol = db.collection('scripts');   // 剧本内容集合（后台可配；首次以种子兜底）
 const secrets = db.collection('spySecrets');   // 卧底局的词与身份（仅云函数可读，防 watch 泄底）
+const events = db.collection('events');        // 埋点流水（自己存，不走微信的数据分析）
 const SEED = require('./scriptsSeed.json');     // 打包种子：灌库 + 兜底
 const SPY_PAIRS = require('./spywords.json');   // 谁是卧底词对库
 
@@ -191,6 +192,23 @@ exports.handle = async (event, realOpenid) => {
   }
 
   try {
+    // ── 埋点：一条事件一行流水，前端 fire-and-forget ──
+    // 字段只留必要的：谁、什么事件、附带参数、什么时候。参数做了三道限制，
+    // 免得前端哪天传个大对象把库撑爆：最多 10 个键、键名和值都截断、只收标量。
+    if (action === 'track') {
+      const name = String(event.name || '').slice(0, 40);
+      if (!name) return { ok: false, msg: '缺少事件名' };
+      const data = {};
+      const src = (event.data && typeof event.data === 'object') ? event.data : {};
+      Object.keys(src).slice(0, 10).forEach((k) => {
+        const v = src[k];
+        if (v === null || v === undefined || typeof v === 'object') return;
+        data[String(k).slice(0, 30)] = typeof v === 'number' ? v : String(v).slice(0, 100);
+      });
+      await events.add({ data: { openid: OPENID, name, data, ts: db.serverDate() } }).catch(() => {});
+      return { ok: true };
+    }
+
     // ── 获取自己的 openid ──
     if (action === 'whoami') {
       return { ok: true, openid: OPENID };

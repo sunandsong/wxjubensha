@@ -46,7 +46,7 @@ const ok = (r, label) => { assert.ok(r && r.ok, `${label} 失败: ${JSON.stringi
 
 // ── 1. 不依赖房间的接口 ──
 async function standalone() {
-  const { game } = loadGame();
+  const { game, db } = loadGame();
   const call = caller(game);
 
   const me = ok(await call({ action: 'whoami' }, 'u1'), 'whoami');
@@ -62,7 +62,29 @@ async function standalone() {
   const g = await call({ action: 'getRoom', roomId: 'nope' }, 'u1');
   assert.ok(g.ok && !g.room, 'getRoom 拿不到房间应回 room 为空');
 
-  console.log('  ✅ 无房接口：whoami / getScripts / uploadSign / getRoom');
+  // 埋点：写一行流水，并确认那三道防撑爆的限制是真生效的
+  ok(await call({ action: 'track', name: 'game_enter', data: { game: 'spy', n: 3 } }, 'u1'), 'track');
+  const rows = Object.values(game && db && db._store ? db._store.events || {} : {});
+  assert.strictEqual(rows.length, 1, 'track 应写下一行');
+  assert.strictEqual(rows[0].openid, 'u1', '流水要记是谁上报的');
+  assert.deepStrictEqual(rows[0].data, { game: 'spy', n: 3 }, '数字保持数字，字符串保持字符串');
+
+  assert.ok(!(await call({ action: 'track' }, 'u1')).ok, '没事件名应被拒');
+
+  const many = {};
+  for (let i = 0; i < 30; i++) many['k' + i] = 'v';
+  many.obj = { a: 1 };                      // 对象要被丢掉
+  many.long = 'x'.repeat(500);              // 超长值要被截断
+  ok(await call({ action: 'track', name: 'z'.repeat(100), data: many }, 'u1'), 'track 超限参数');
+  const last = Object.values(db._store.events).pop();
+  assert.ok(last.name.length <= 40, '事件名要截到 40');
+  assert.ok(Object.keys(last.data).length <= 10, '参数最多 10 个键');
+  Object.values(last.data).forEach((v) => {
+    assert.ok(typeof v !== 'object', '对象参数要被丢掉');
+    assert.ok(String(v).length <= 100, '超长值要截断');
+  });
+
+  console.log('  ✅ 无房接口：whoami / getScripts / uploadSign / getRoom / track');
 }
 
 // ── 2. 管理员三件套：ADMIN_KEY 把门 ──

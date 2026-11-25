@@ -33,6 +33,23 @@ App({
   },
 
   // ── 测试身份（仅开发/体验版）──
+  // ── 埋点 ──
+  // 走微信自带的「自定义分析」：后台（数据分析 → 自定义分析 → 事件管理）把事件和
+  // 字段建好，这里 reportAnalytics 就能出漏斗报表，不用自建后端、不占数据库。
+  // 事件没在后台建过会静默失败，字段值只支持 string / number。
+  // 埋点绝不能影响功能，所以整段包在 try 里，连参数拼装都在里面。
+  track(name, data) {
+    try {
+      const d = {};
+      Object.keys(data || {}).forEach((k) => {
+        const v = data[k];
+        if (v === undefined || v === null) return;
+        d[k] = typeof v === 'number' ? v : String(v);
+      });
+      wx.reportAnalytics(name, d);
+    } catch (e) {}
+  },
+
   getTestUid() {
     return this.globalData.testUid;
   },

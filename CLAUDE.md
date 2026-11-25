@@ -36,3 +36,23 @@ for i in $(seq 1 10); do node test/game.test.js >/dev/null || echo "第 $i 次�
 
 改了 `server/functions/jbs/` 要**部署**才生效（`cd server && tcb fn code update jbs`），
 光发小程序版本没用；改了页面要**重新上传发版**，光部署云函数没用。
+
+## 云环境是跟「人生清单」共用的，新建集合必须带 `jbs` 前缀
+
+`renshengqingdan-d9fc03opf3bac6ba` 这个 CloudBase 环境里同时跑着另一个项目。
+埋点集合当初叫 `events`，结果人生清单早就占了这个名字（字段 `uid/event/props/at`，
+事件名如 `wish_add`），两套数据差点混进一个集合——赶在写数据之前才发现。
+
+**新建集合前先查一下有没有被占**：
+
+```bash
+cd server && npx -y -p @cloudbase/cli cloudbase db nosql execute \
+  -e renshengqingdan-d9fc03opf3bac6ba \
+  --command '[{"TableName":"XXX","CommandType":"COMMAND","Command":"{\"find\":\"XXX\",\"limit\":1}"}]'
+```
+
+现有集合：`rooms` / `scripts` / `spySecrets` 是我们的（历史遗留，没冲突），
+`jbsEvents` 是埋点流水。再加新的一律 `jbs` 开头。
+
+部署只用 `fn code update`，**绝不用 `fn deploy`**——后者会重置环境变量，
+把 `WX_APPSECRET` / `JWT_SECRET` / `ADMIN_KEY` 冲掉。

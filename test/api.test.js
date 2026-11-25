@@ -64,7 +64,7 @@ async function standalone() {
 
   // 埋点：写一行流水，并确认那三道防撑爆的限制是真生效的
   ok(await call({ action: 'track', name: 'game_enter', data: { game: 'spy', n: 3 } }, 'u1'), 'track');
-  const rows = Object.values(game && db && db._store ? db._store.events || {} : {});
+  const rows = Object.values(game && db && db._store ? db._store.jbsEvents || {} : {});
   assert.strictEqual(rows.length, 1, 'track 应写下一行');
   assert.strictEqual(rows[0].openid, 'u1', '流水要记是谁上报的');
   assert.deepStrictEqual(rows[0].data, { game: 'spy', n: 3 }, '数字保持数字，字符串保持字符串');
@@ -76,7 +76,7 @@ async function standalone() {
   many.obj = { a: 1 };                      // 对象要被丢掉
   many.long = 'x'.repeat(500);              // 超长值要被截断
   ok(await call({ action: 'track', name: 'z'.repeat(100), data: many }, 'u1'), 'track 超限参数');
-  const last = Object.values(db._store.events).pop();
+  const last = Object.values(db._store.jbsEvents).pop();
   assert.ok(last.name.length <= 40, '事件名要截到 40');
   assert.ok(Object.keys(last.data).length <= 10, '参数最多 10 个键');
   Object.values(last.data).forEach((v) => {

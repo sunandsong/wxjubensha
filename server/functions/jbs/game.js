@@ -5,7 +5,9 @@ const _ = db.command;
 const rooms = db.collection('rooms');
 const scriptsCol = db.collection('scripts');   // 剧本内容集合（后台可配；首次以种子兜底）
 const secrets = db.collection('spySecrets');   // 卧底局的词与身份（仅云函数可读，防 watch 泄底）
-const events = db.collection('events');        // 埋点流水（自己存，不走微信的数据分析）
+// 埋点流水。注意集合名带 jbs 前缀：这个 CloudBase 环境跟「人生清单」共用，
+// 它已经占了 events（字段是 uid/event/props/at），不加前缀两套数据会混在一起。
+const events = db.collection('jbsEvents');
 const SEED = require('./scriptsSeed.json');     // 打包种子：灌库 + 兜底
 const SPY_PAIRS = require('./spywords.json');   // 谁是卧底词对库
 

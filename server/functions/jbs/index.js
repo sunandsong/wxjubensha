@@ -54,7 +54,7 @@ exports.main = async (event) => {
     const auth = (event.headers && (event.headers.authorization || event.headers.Authorization)) || '';
     const payload = verifyJwt(auth.replace(/^Bearer\s+/i, ''), JWT_SECRET);
     if (!payload || !payload.sub) return reply(401, { ok: false, msg: 'unauthorized' });
-    await ensureCollections(['rooms', 'scripts', 'spySecrets', 'events']);
+    await ensureCollections(['rooms', 'scripts', 'spySecrets', 'jbsEvents']);
     return reply(200, await game.handle(body, payload.sub));
   }
 

@@ -166,8 +166,7 @@ Page({
       return wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
     this.setData({ starting: false });
-    if (res && res.result && !res.result.ok) return wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
-    app.track('game_start', { game: 'jbs', players: this.data.realCount });
+    if (res && res.result && !res.result.ok) wx.showToast({ title: res.result.msg || '开始失败', icon: 'none' });
   },
 
 

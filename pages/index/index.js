@@ -284,7 +284,6 @@ Page({
     const r = res && res.result;
     if (!r) return;                         // 被防抖忽略
     if (!r.ok) return wx.showToast({ title: r.msg || '创建失败', icon: 'none' });
-    app.track('room_create', { game: 'jbs', script: scriptId });
     app.setLogin(r.openid);
     app.saveSession({ roomId: r.roomId, roomCode: r.roomCode });
     wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });
@@ -307,7 +306,6 @@ Page({
     const r = res && res.result;
     if (!r) return;                         // 被防抖忽略
     if (!r.ok) return wx.showToast({ title: r.msg || '加入失败', icon: 'none' });
-    app.track('room_join', { game: 'jbs', spectator: spectator ? 1 : 0 });
     app.setLogin(r.openid);
     app.saveSession({ roomId: r.roomId, roomCode: r.roomCode });
     wx.reLaunch({ url: `/pages/room/room?roomId=${r.roomId}&roomCode=${r.roomCode}` });

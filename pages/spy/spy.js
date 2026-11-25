@@ -105,7 +105,6 @@ Page({
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
     const r = res && res.result;
     if (!r || !r.ok) return wx.showToast({ title: (r && r.msg) || '创建失败', icon: 'none' });
-    app.track('room_create', { game: 'spy' });
     this._enterRoom(r.roomId, r.roomCode);
   },
 
@@ -133,7 +132,6 @@ Page({
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
     const r = res && res.result;
     if (!r || !r.ok) return wx.showToast({ title: (r && r.msg) || '加入失败', icon: 'none' });
-    app.track('room_join', { game: 'spy', spectator: spectator ? 1 : 0 });
     if (r.gameType && r.gameType !== 'spy') return wx.showToast({ title: '这是剧本杀房间，请从剧本页进入', icon: 'none' });
     this._enterRoom(r.roomId, r.roomCode);
   },
@@ -353,7 +351,6 @@ Page({
     this.setData({ starting: false });
     const r = res && res.result;
     if (r && !r.ok) return wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
-    app.track('game_start', { game: 'spy', players: (this.data.players || []).length });
     this._refresh();   // 不干等 watch 推送，主动拉一次进入游戏界面
   },
 

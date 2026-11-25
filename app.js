@@ -33,27 +33,6 @@ App({
   },
 
   // ── 测试身份（仅开发/体验版）──
-  // ── 埋点 ──
-  // 微信有新旧两套自定义埋点，后台长相不一样、API 也不一样：
-  //   旧「自定义分析」(mp 后台 数据分析→自定义分析)  → wx.reportAnalytics
-  //   新「We分析」(wedata.weixin.qq.com，行为分析)   → wx.reportEvent
-  // 账号用的是哪套不一定，官方文档页是 JS 渲染的也抓不到正文，所以两个都报：
-  // 各自包 try，哪套认就哪套收，另一套静默失败，反正不影响功能。
-  // 两边的事件名用同一个（后台建事件时照抄），字段值只支持 string / number。
-  track(name, data) {
-    let d;
-    try {
-      d = {};
-      Object.keys(data || {}).forEach((k) => {
-        const v = data[k];
-        if (v === undefined || v === null) return;
-        d[k] = typeof v === 'number' ? v : String(v);
-      });
-    } catch (e) { return; }
-    try { wx.reportAnalytics && wx.reportAnalytics(name, d); } catch (e) {}
-    try { wx.reportEvent && wx.reportEvent(name, d); } catch (e) {}
-  },
-
   getTestUid() {
     return this.globalData.testUid;
   },

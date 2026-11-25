@@ -175,7 +175,6 @@ Page({
   // 同时写下 nickAsked，下次不再弹，避免「反复弹窗」。
   closeLogin() {
     wx.setStorageSync('nickAsked', 1);
-    app.track('profile_close', { action: 'skip' });
     const after = this._afterLogin; this._afterLogin = null;
     this.setData({ needLogin: false });
     if (after) after();          // 用系统默认昵称继续，照样能玩
@@ -217,7 +216,6 @@ Page({
     if (wx.getStorageSync('nickAsked')) return false;   // 问过了就别再烦人（审核：不得反复弹窗）
     if (!app.isDefaultNick()) return false;        // 已经自己起过名，放行
     this._afterLogin = after || null;
-    app.track('profile_popup', {});
     const cur = wx.getStorageSync('nick') || '';
     this.setData({
       needLogin: true, needNick: true,
@@ -233,7 +231,6 @@ Page({
     // 昵称、头像、性别全都可以留空：空着就沿用 ensureProfile 补的默认值，照样进得去
     if (nick) { wx.setStorageSync('nick', nick); wx.setStorageSync('nickSet', 1); }
     wx.setStorageSync('nickAsked', 1);
-    app.track('profile_close', { action: nick ? 'done' : 'empty' });
     if (this.data.loginGender) wx.setStorageSync('gender', this.data.loginGender);
     app.ensureProfile();
     this.setData({ needLogin: false, nick: wx.getStorageSync('nick'), avatar: wx.getStorageSync('avatar') });
@@ -333,13 +330,11 @@ Page({
   // 进各玩法页不拦资料（审核要求先体验）；剧本杀在开本/进房时才弹资料门
   goScripts() {
     if (this._gate(() => this.goScripts())) return;
-    app.track('game_enter', { game: 'jbs' });
     wx.navigateTo({ url: '/pages/index/index' });
   },
   goGame(e) {
     const id = e && e.currentTarget && e.currentTarget.dataset.game;
     if (this._gate(() => this.goGame(e))) return;
-    app.track('game_enter', { game: id });
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
     if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });
     // 卧底/狼人杀：已在房间里 → 带 resume=1 直达房间，否则进大厅

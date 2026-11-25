@@ -124,7 +124,6 @@ Page({
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
     const r = res && res.result;
     if (!r || !r.ok) return wx.showToast({ title: (r && r.msg) || '创建失败', icon: 'none' });
-    app.track('room_create', { game: 'wolf' });
     this._enterRoom(r.roomId, r.roomCode);
   },
 
@@ -152,7 +151,6 @@ Page({
     } catch (e) { return wx.showToast({ title: '网络异常，请重试', icon: 'none' }); }
     const r = res && res.result;
     if (!r || !r.ok) return wx.showToast({ title: (r && r.msg) || '加入失败', icon: 'none' });
-    app.track('room_join', { game: 'wolf', spectator: spectator ? 1 : 0 });
     if (r.gameType !== 'wolf') return wx.showToast({ title: '这不是狼人杀房间，请从对应游戏页进入', icon: 'none' });
     this._enterRoom(r.roomId, r.roomCode);
   },
@@ -563,8 +561,7 @@ Page({
     }
     this.setData({ starting: false });
     const r = res && res.result;
-    if (r && !r.ok) return wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
-    app.track('game_start', { game: 'wolf', players: (this.data.players || []).length });
+    if (r && !r.ok) wx.showToast({ title: r.msg || '开始失败', icon: 'none' });
   },
 
   // ── 身份卡：点击翻转/盖回 ──

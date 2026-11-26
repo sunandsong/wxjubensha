@@ -7,7 +7,7 @@ const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 
 // 小程序版本号。正式版/体验版能从 getAccountInfoSync 拿到真值，开发版拿到的是
 // 空串，所以兜一个写死的 —— 每次 cli upload -v 时跟着改这里。
-const APP_VER = '1.3.2';
+const APP_VER = '1.3.3';
 const VER = (() => {
   try { return wx.getAccountInfoSync().miniProgram.version || APP_VER; } catch (e) { return APP_VER; }
 })();
@@ -59,8 +59,9 @@ Page({
       { id: 'soup', name: '海龟汤',   ico: '🥣', d1: '脑洞提问', d2: '神奇汤面', count: '6.3k', c: '#4db8ff', img: gimg('soup.jpg'), th: gth('soup.jpg'), ok: false },
       { id: 'bomb', name: '数字炸弹', ico: '💣', d1: '猜数字',   d2: '别踩雷',   count: '9.1k', c: '#ffce54', img: gimg('bomb_fire.jpg'), th: gth('bomb_fire.jpg'), ok: false },
     ],
-    // 强制登录门：头像 → 昵称 → 性别（缺任一就弹，填全才能进）
-    needLogin: false, needNick: false, loginNick: '', loginAvatar: '', loginGender: '', loginUploading: false,
+    // 资料弹窗：只有用户自己点「Hi，昵称」才打开，任何流程都不会自动弹（审核红线）
+    needNickTip: false,
+    needLogin: false, loginNick: '', loginAvatar: '', loginGender: '', loginUploading: false,
   },
 
   // 云图加载完成 → 淡入盖过缩略图
@@ -136,6 +137,9 @@ Page({
     this.setData({
       nick: savedNick || '群友',
       avatar: savedAvatar,
+      // 昵称还是系统默认的 → 首页一直用小手指着「Hi，昵称」提醒改。
+      // 不能改成弹窗：2026-11-27 审核第二次打回就是因为玩游戏时弹资料窗。
+      needNickTip: app.isDefaultNick(),
     });
     const jb = app.getSession && app.getSession();
     const sp = app.getSpySession && app.getSpySession();
@@ -163,22 +167,17 @@ Page({
   editProfile() {
     if (app.getTestUid()) return;
     this.setData({
-      needLogin: true, needNick: false,
+      needLogin: true,
       loginAvatar: app.isDefaultAvatar() ? '' : wx.getStorageSync('avatar'),
       loginNick: wx.getStorageSync('nick') || '',
       loginGender: wx.getStorageSync('gender') || '',
     });
   },
 
-  // 关掉资料弹窗 —— 叉号 / 跳过 / 点遮罩都走这里。
-  // 关键：取消之后要接着把原来那件事做完（进游戏），不能一关了之把人挡在外面；
-  // 同时写下 nickAsked，下次不再弹，避免「反复弹窗」。
+  // 关掉资料弹窗。弹窗现在只由用户自己点「Hi，昵称」打开，关掉就是关掉。
   closeLogin() {
-    wx.setStorageSync('nickAsked', 1);
     app.track('profile_close', { action: 'skip' });
-    const after = this._afterLogin; this._afterLogin = null;
     this.setData({ needLogin: false });
-    if (after) after();          // 用系统默认昵称继续，照样能玩
   },
 
   // ── 关于我们 ──
@@ -206,45 +205,20 @@ Page({
   onLoginNick(e) { this.setData({ loginNick: e.detail.value }); },
   pickLoginGender(e) { this.setData({ loginGender: e.currentTarget.dataset.g }); },
 
-  // 进游戏前问一次资料。2026-11-23 审核打回后的规矩（必须守住，否则又被退）：
-  //   1. 有显著的取消出口（叉号 / 跳过 / 点遮罩）
-  //   2. 不填也能玩 —— 取消后用 ensureProfile 补的默认昵称继续原动作
-  //   3. 不反复弹 —— 问过一次就写 nickAsked，之后永不再问
-  // 返回 true 表示已弹窗、调用方应中断；补完或跳过后自动继续原动作。
-  _gate(after) {
-    app.ensureProfile();
-    if (app.getTestUid()) return false;
-    if (wx.getStorageSync('nickAsked')) return false;   // 问过了就别再烦人（审核：不得反复弹窗）
-    if (!app.isDefaultNick()) return false;        // 已经自己起过名，放行
-    this._afterLogin = after || null;
-    app.track('profile_popup', {});
-    const cur = wx.getStorageSync('nick') || '';
-    this.setData({
-      needLogin: true, needNick: true,
-      loginNick: app.isAutoNick(cur) ? '' : cur,                       // 老用户预填，点一下就过
-      loginAvatar: app.isDefaultAvatar() ? '' : wx.getStorageSync('avatar'),
-      loginGender: wx.getStorageSync('gender') || '',
-    });
-    return true;
-  },
   loginDone() {
     if (this.data.loginUploading) return wx.showToast({ title: '头像上传中…', icon: 'none' });
     const nick = (this.data.loginNick || '').trim().slice(0, 8);
     // 昵称、头像、性别全都可以留空：空着就沿用 ensureProfile 补的默认值，照样进得去
     if (nick) { wx.setStorageSync('nick', nick); wx.setStorageSync('nickSet', 1); }
-    wx.setStorageSync('nickAsked', 1);
     app.track('profile_close', { action: nick ? 'done' : 'empty' });
     if (this.data.loginGender) wx.setStorageSync('gender', this.data.loginGender);
     app.ensureProfile();
-    this.setData({ needLogin: false, nick: wx.getStorageSync('nick'), avatar: wx.getStorageSync('avatar') });
-    const after = this._afterLogin; this._afterLogin = null;
-    if (after) return after();          // 补完资料接着做刚才那件事
-    this.onShow();
+    this.setData({ needLogin: false });
+    this.onShow();                      // 顺手刷新昵称/头像和小手提示
   },
 
   // ── 悬浮钮：有房回房，没房快速进房 ──
   fabTap() {
-    if (this._gate(() => this.fabTap())) return;
     const jb = app.getSession && app.getSession();
     if (jb && jb.roomId) return wx.reLaunch({ url: `/pages/room/room?roomId=${jb.roomId}&roomCode=${jb.roomCode}` });
     const sp = app.getSpySession && app.getSpySession();
@@ -265,7 +239,6 @@ Page({
   },
   // 按房间类型分流：卧底 → spy 页；剧本杀 → room 页
   async _quickJoin(code, spectator) {
-    if (this._gate(() => this._quickJoin(code, spectator))) return;
     if (app.blockIfInRoom()) return;
     const nick = wx.getStorageSync('nick') || '玩家';
     let res;
@@ -330,15 +303,12 @@ Page({
   tapCard(e) {
     e.currentTarget.dataset.main ? this.goScripts() : this.goGame();
   },
-  // 进各玩法页不拦资料（审核要求先体验）；剧本杀在开本/进房时才弹资料门
   goScripts() {
-    if (this._gate(() => this.goScripts())) return;
     app.track('game_enter', { game: 'jbs' });
     wx.navigateTo({ url: '/pages/index/index' });
   },
   goGame(e) {
     const id = e && e.currentTarget && e.currentTarget.dataset.game;
-    if (this._gate(() => this.goGame(e))) return;
     app.track('game_enter', { game: id });
     if (id === 'bomb') return wx.navigateTo({ url: '/pages/bomb/bomb' });
     if (id === 'soup') return wx.navigateTo({ url: '/pages/soup/soup' });

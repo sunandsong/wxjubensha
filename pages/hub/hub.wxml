@@ -13,6 +13,10 @@
     </view>
     <view class="ub-hi" bindtap="editProfile">Hi，{{nick}} <text class="ub-wave">👋</text></view>
     <view class="ub-about" bindtap="showAbout">关于我们<text class="ub-q">?</text></view>
+    <!-- 没改过昵称 → 小手一直指着上面的「Hi，昵称」。替代以前进游戏前的弹窗 -->
+    <view class="ub-tip" wx:if="{{needNickTip}}" bindtap="editProfile">
+      <text class="ub-hand">👆</text>点这里改昵称
+    </view>
   </view>
 
   <!-- 剧本杀 · 招牌大横幅 -->
@@ -66,9 +70,10 @@
   </view>
 
   <!-- 资料弹窗：头像 / 昵称 / 性别同屏，全部可留空。
-       2026-11-23 审核打回：「登录环节需提供显著有效的可取消/拒绝或返回按钮，
-       不得反复弹窗或强制用户登录才能体验」。出口=底部那个整宽取消按钮，空昵称也放行，
-       而且只问一次（closeLogin / loginDone 都会写 nickAsked）。 -->
+       只有用户自己点「Hi，昵称」才会打开 —— 任何游戏流程都不自动弹。
+       2026-11-23 第一次打回「登录环节需提供可取消按钮、不得反复弹窗或强制登录」，
+       改成「可跳过的一次性弹窗」后 2026-11-27 又被判强制登录，于是彻底不弹，
+       改用首页小手引导（.ub-tip）。别再往任何流程里塞这个弹窗。 -->
   <!-- 别给遮罩加 bindtap、也别给卡片加 catchtap：catchtap 会把卡片内的点击全吃掉，
        open-type="chooseAvatar" 的头像按钮和 type="nickname" 的输入框就都失灵了
        （1.2.7 为了「点遮罩关闭」加过一次，直接把微信头像昵称授权弄挂了）。
@@ -76,7 +81,7 @@
   <view class="login-mask" wx:if="{{needLogin}}" catchtouchmove="noop">
     <view class="login-card">
       <view class="login-brand">群本玩</view>
-      <view class="login-sub">{{needNick ? '设个昵称方便同局的人认出你，不设也能直接玩' : '用微信头像和昵称，点一下就好'}}</view>
+      <view class="login-sub">用微信头像和昵称，点一下就好</view>
 
       <button class="login-avatar" open-type="chooseAvatar" bind:chooseavatar="onLoginAvatar">
         <image wx:if="{{loginAvatar}}" class="la-img" src="{{loginAvatar}}" mode="aspectFill" />
@@ -92,12 +97,12 @@
       </view>
 
       <button class="login-btn" bindtap="loginDone" disabled="{{loginUploading}}">
-        {{loginUploading ? '头像上传中…' : (needNick ? '进入游戏' : '保存')}}
+        {{loginUploading ? '头像上传中…' : '保存'}}
       </button>
 
       <!-- 「可取消/拒绝」的出口。叉号按要求去掉了，这里就是唯一显眼的取消按钮，
            所以做成正经按钮而不是小字链接 —— 审核要的是「显著有效」 -->
-      <button class="login-cancel" bindtap="closeLogin">{{needNick ? '跳过，直接开始玩' : '取消'}}</button>
+      <button class="login-cancel" bindtap="closeLogin">取消</button>
     </view>
   </view>
 

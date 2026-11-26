@@ -54,41 +54,30 @@ function loadApp(storage = {}) {
   return { app: captured, storage };
 }
 
-// 自动补的占位昵称都要认出来，否则门会被绕过
-{
-  const { app } = loadApp();
-  for (const n of ['', '玩家37', '玩家99', '玩家F', '玩家A']) {
-    assert.strictEqual(app.isAutoNick(n), true, `「${n}」应判为系统占位昵称`);
-  }
-  for (const n of ['阿强', '小美', '张松', 'Bob']) {
-    assert.strictEqual(app.isAutoNick(n), false, `「${n}」是真名，不该判成占位`);
-  }
-}
-
-// 没设过名 → 必须拦；设过 → 放行。注意不能靠昵称长相判断
+// 没设过名 → 要提示；设过 → 不提示。注意不能靠昵称长相判断
 {
   let { app, storage } = loadApp({ nick: '玩家F' });       // 测试身份残留
-  assert.strictEqual(app.isDefaultNick(), true, '测试身份残留的昵称必须拦住');
+  assert.strictEqual(app.isDefaultNick(), true, '测试身份残留的昵称要提示改名');
 
   ({ app, storage } = loadApp({ nick: '阿强' }));          // 老用户，没打过标记
-  assert.strictEqual(app.isDefaultNick(), true, '没确认过的老用户要问一次');
+  assert.strictEqual(app.isDefaultNick(), true, '没确认过的老用户也提示一下');
 
   ({ app, storage } = loadApp({ nick: '阿强', nickSet: 1 }));
-  assert.strictEqual(app.isDefaultNick(), false, '确认过就不再问');
+  assert.strictEqual(app.isDefaultNick(), false, '自己设过名就不再提示');
 }
 
-// ensureProfile 补的默认昵称，自己必须认得出来（否则门永远不触发）
+// ensureProfile 补的默认资料不能把人算成「设过名」，否则小手引导永远不出来
 {
   const { app, storage } = loadApp();
   const { nick, avatar } = app.ensureProfile();
-  assert.ok(app.isAutoNick(nick), `ensureProfile 补的「${nick}」必须被 isAutoNick 认出`);
+  assert.ok(/^玩家\d+$/.test(nick), `ensureProfile 该补「玩家NN」，实际「${nick}」`);
   assert.strictEqual(app.isDefaultNick(), true, '补完默认资料仍算没设过名');
   assert.ok(avatar, '默认头像不能为空');
 }
 
-// ── 3. 资料门必须留出口 ──
-// 2026-11-23 栽过一次：审核以「登录环节未提供可取消/拒绝按钮、强制登录才能体验、
-// 反复弹窗」为由打回。下面四条是当时的整改要点，改 hub 时别又给弄没了。
+// ── 3. 资料弹窗不许自动弹，且必须留出口 ──
+// 2026-11-23 以「登录环节未提供可取消按钮、强制登录才能体验、反复弹窗」打回；
+// 改成「可跳过的一次性弹窗」后 2026-11-27 又被判强制登录。现在彻底不自动弹。
 function profileGateHasExit() {
   const wxml = fs.readFileSync(path.join(ROOT, 'pages/hub/hub.wxml'), 'utf8');
   const js = fs.readFileSync(path.join(ROOT, 'pages/hub/hub.js'), 'utf8');
@@ -104,9 +93,10 @@ function profileGateHasExit() {
   const card = wxml.split('\n').find((l) => l.includes('class="login-card"')) || '';
   assert.ok(!/catchtap|catch:tap/.test(card), 'login-card 不能挂 catchtap，会吃掉头像/昵称按钮的点击');
 
-  assert.ok(/_gate\([\s\S]*?nickAsked/.test(js), '_gate 要看 nickAsked，问过一次就不能再弹');
-  const close = js.slice(js.indexOf('closeLogin()'), js.indexOf('closeLogin()') + 400);
-  assert.ok(/after\(\)/.test(close), 'closeLogin 取消后要继续执行原动作，不能把人挡在游戏外');
+  // 2026-11-27 又栽一次：进游戏前弹昵称窗，审核还是判「强制登录」。
+  // 现在彻底不自动弹 —— 首页小手引导（needNickTip），只有用户点「Hi，昵称」才弹。
+  assert.ok(!/_gate/.test(js), '不许再有 _gate：玩游戏前一律不能弹资料窗（审核两次打回在此）');
+  assert.ok(/needNickTip/.test(js) && /needNickTip/.test(wxml), '要用首页小手引导代替弹窗');
   assert.ok(!/起个名字才能进游戏/.test(js), '不能再强制填昵称');
 }
 

@@ -280,7 +280,17 @@ page { background: #2b2436; }
 }
 .ub-q { margin-left: 6rpx; font-size: 28rpx; color: rgba(255,255,255,0.6); }
 
-/* 改昵称的引导：一只马里奥式的胖手套，挂在「Hi，昵称」下沿一直点，不占位
+/* 新手引导第一层：没设过昵称时把「Hi，昵称」用金框圈住，一闪一闪 */
+.ub-hi-on {
+  padding: 4rpx 16rpx; border-radius: 22rpx; border: 2rpx solid rgba(255,206,84,0.5);
+  animation: ubGlow 1.1s ease-in-out infinite;
+}
+@keyframes ubGlow {
+  0%, 100% { border-color: rgba(255,206,84,0.3); background: rgba(255,206,84,0.05); box-shadow: 0 0 0 rgba(255,206,84,0); }
+  50%      { border-color: rgba(255,206,84,1);   background: rgba(255,206,84,0.22); box-shadow: 0 0 18rpx rgba(255,206,84,0.6); }
+}
+
+/* 第二层：一只马里奥式的胖手套，挂在「Hi，昵称」下沿一直点，不占位
    （userbar z-index 3，盖得住下面的 hero）。
    手是内联 SVG（白手套 + 红袖口，两遍描边法画的），不走云存储，也不占图片请求。 */
 .ub-hand {

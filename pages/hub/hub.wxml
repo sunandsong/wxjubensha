@@ -11,7 +11,7 @@
       <image wx:if="{{avatar}}" class="ub-img" src="{{avatar}}" mode="aspectFill" />
       <view wx:else class="ub-img ub-ph">🐱</view>
     </view>
-    <view class="ub-hi" bindtap="editProfile">Hi，{{nick}} <text class="ub-wave">👋</text></view>
+    <view class="ub-hi {{needNickTip ? 'ub-hi-on' : ''}}" bindtap="editProfile">Hi，{{nick}} <text class="ub-wave">👋</text></view>
     <view class="ub-about" bindtap="showAbout">关于我们<text class="ub-q">?</text></view>
     <!-- 没改过昵称 → 一只小手一直指着上面的「Hi，昵称」。替代以前进游戏前的弹窗 -->
     <view class="ub-hand" wx:if="{{needNickTip}}" bindtap="editProfile"></view>
